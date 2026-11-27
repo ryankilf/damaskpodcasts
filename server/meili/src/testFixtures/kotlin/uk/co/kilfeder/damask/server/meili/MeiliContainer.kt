@@ -16,7 +16,9 @@ object MeiliContainer {
     private const val PORT = 7700
 
     private val container: GenericContainer<*> by lazy {
-        val image = System.getProperty("damask.meili.image") ?: "getmeili/meilisearch:v1.58.0"
+        val image = requireNotNull(System.getProperty("damask.meili.image")) {
+            "damask.meili.image is set by Gradle from the version catalog"
+        }
         GenericContainer(DockerImageName.parse(image))
             .withExposedPorts(PORT)
             .withEnv("MEILI_MASTER_KEY", MASTER_KEY)

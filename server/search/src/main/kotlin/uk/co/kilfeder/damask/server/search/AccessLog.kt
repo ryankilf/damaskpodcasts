@@ -29,7 +29,9 @@ val AccessLog = createApplicationPlugin("AccessLog", ::AccessLogConfig) {
     val sink = pluginConfig.sink
     onCall { call -> call.attributes.put(StartedAt, System.nanoTime()) }
     on(ResponseSent) { call ->
+        // A call can send twice (an auth challenge, then StatusPages' JSON body): log it once.
         val started = call.attributes.getOrNull(StartedAt) ?: return@on
+        call.attributes.remove(StartedAt)
         val latencyMs = (System.nanoTime() - started) / NANOS_PER_MS
         val status = call.response.status()?.value ?: 0
         // path() is the path only: no query string.

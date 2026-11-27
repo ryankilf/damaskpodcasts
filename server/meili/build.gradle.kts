@@ -30,5 +30,5 @@ dependencies {
 }
 
 tasks.test {
-    systemProperty("damask.meili.image", "getmeili/meilisearch:v1.58.0")
+    systemProperty("damask.meili.image", "getmeili/meilisearch:${libs.versions.meilisearch.get()}")
 }

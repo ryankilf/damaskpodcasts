@@ -43,5 +43,5 @@ dependencies {
 
 tasks.test {
     // The Meilisearch integration tests need Docker; they're skipped (not failed) without it.
-    systemProperty("damask.meili.image", "getmeili/meilisearch:v1.58.0")
+    systemProperty("damask.meili.image", "getmeili/meilisearch:${libs.versions.meilisearch.get()}")
 }

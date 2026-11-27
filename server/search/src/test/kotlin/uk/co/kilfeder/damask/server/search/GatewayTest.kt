@@ -148,6 +148,19 @@ class AccessLogTest {
     }
 }
 
+class AccessLogOnceTest {
+    @Test
+    fun eachRequestIsLoggedExactlyOnce() {
+        val lines = mutableListOf<String>()
+        gatewayTest(deps(log = { lines += it })) { client ->
+            client.get("/v1/search?q=x") // no token: challenge + JSON body
+            client.get("/v1/search?q=x") { bearerAuth("wrong") }
+            client.get("/v1/search?q=x") { bearerAuth(PRIVATE_TOKEN) }
+        }
+        assertEquals(listOf("401", "401", "200"), lines.map { it.split(' ')[2] })
+    }
+}
+
 class HealthTest {
     @Test
     fun okWhenTheIndexIsUpAndNoCertificateToCheck() = gatewayTest(deps(FakeSource(healthy = true))) { client ->

@@ -35,7 +35,7 @@ dependencies {
 }
 
 tasks.test {
-    systemProperty("damask.meili.image", "getmeili/meilisearch:v1.58.0")
+    systemProperty("damask.meili.image", "getmeili/meilisearch:${libs.versions.meilisearch.get()}")
     val fixture = rootProject.file("deploy/fixtures/podcasts.sql")
     inputs.file(fixture).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("fixture")
     systemProperty("damask.fixture.sql", fixture.absolutePath)
