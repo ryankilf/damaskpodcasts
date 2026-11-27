@@ -67,7 +67,9 @@ internal fun LatestShowCard(latest: LatestShowUi?, modifier: Modifier = Modifier
     val shown = rememberPacedLatest(latest, slideMs)
     val fromEnd = if (LocalLayoutDirection.current == LayoutDirection.Ltr) 1 else -1
     BoxWithConstraints(contentAlignment = Alignment.Center, modifier = modifier) {
-        val side = min(min(maxWidth, maxHeight * CARD_SHARE_OF_HEIGHT), Sizes.ImportCoverMax)
+        // Leave room for the ambient glow around the card.
+        val glow = Sizes.AmbientGlowInset * 2
+        val side = min(min(maxWidth - glow, maxHeight * CARD_SHARE_OF_HEIGHT - glow), Sizes.ImportCoverMax)
         AnimatedContent(
             targetState = shown,
             transitionSpec = {
@@ -107,13 +109,15 @@ private fun Cover(show: LatestShowUi, side: Dp, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(Spacing.Space2),
         modifier = modifier.semantics { label?.let { contentDescription = it } },
     ) {
-        ElevatedCard(shape = MaterialTheme.shapes.medium, modifier = Modifier.size(side)) {
-            AsyncImage(
-                model = show.artworkUrl,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.aspectRatio(1f),
-            )
+        AmbientGlow(show.artworkUrl) {
+            ElevatedCard(shape = MaterialTheme.shapes.medium, modifier = Modifier.size(side)) {
+                AsyncImage(
+                    model = show.artworkUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.aspectRatio(1f),
+                )
+            }
         }
         show.name?.let {
             Text(

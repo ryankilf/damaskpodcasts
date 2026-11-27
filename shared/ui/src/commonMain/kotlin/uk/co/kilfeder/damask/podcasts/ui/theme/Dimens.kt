@@ -56,6 +56,10 @@ object Sizes {
     /** The progress ring around a row's play control. */
     val ProgressRingStroke = 3.dp
 
+    /** Ambient light around artwork (NowPlayingPane artboard): how far it spreads, and its blur. */
+    val AmbientGlowInset = 40.dp
+    val AmbientGlowBlur = 40.dp
+
     /** The import's latest-show cover card, at most. */
     val ImportCoverMax = 280.dp
 
