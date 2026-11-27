@@ -102,15 +102,27 @@ class DatabaseTest {
     }
 
     @Test
-    fun showNotesAreReadOneEpisodeAtATime() {
+    fun notesAndMediaAreReadOneEpisodeAtATime() {
         show("s", "uncategorised")
         feedEpisode("s", "e")
-        val notes = EpisodeNotes(db)
-        assertEquals("<p>Notes for e</p>", notes.of(key("s", "e")))
-        assertNull(notes.of(key("s", "missing")))
+        val lookup = EpisodeLookup(db)
+        assertEquals("<p>Notes for e</p>", lookup.notes(key("s", "e")))
+        assertNull(lookup.notes(key("s", "missing")))
+        assertEquals(EpisodeMedia("https://cdn.example.com/e.mp3", null), lookup.media(key("s", "e")))
+        assertNull(lookup.media(key("s", "missing")))
     }
 
     // --- User state ----------------------------------------------------------------------------
+
+    @Test
+    fun listenTimeAddsUpPerDayAndCategory() {
+        store.addListenTime(CategoryId("news"), "2026-11-27", wallMs = 60_000, contentMs = 90_000)
+        store.addListenTime(CategoryId("news"), "2026-11-27", wallMs = 30_000, contentMs = 30_000)
+        store.addListenTime(CategoryId("news"), "2026-11-27", wallMs = 0, contentMs = 0)
+        val row = db.listenStatsQueries.selectByDevice(clock.deviceId).executeAsList().single()
+        assertEquals(90_000, row.wall_ms)
+        assertEquals(120_000, row.content_ms)
+    }
 
     @Test
     fun savingPositionCreatesTheMinimalRecordForPlayed() {

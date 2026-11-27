@@ -2,6 +2,7 @@ package uk.co.kilfeder.damask.podcasts.presentation.app
 
 import app.cash.sqldelight.coroutines.asFlow
 import io.ktor.client.HttpClient
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -16,7 +17,7 @@ import kotlinx.coroutines.withContext
 import uk.co.kilfeder.damask.podcasts.core.data.CategoryPrefill
 import uk.co.kilfeder.damask.podcasts.core.data.DeviceClock
 import uk.co.kilfeder.damask.podcasts.core.data.DriverFactory
-import uk.co.kilfeder.damask.podcasts.core.data.EpisodeNotes
+import uk.co.kilfeder.damask.podcasts.core.data.EpisodeLookup
 import uk.co.kilfeder.damask.podcasts.core.data.FeedStore
 import uk.co.kilfeder.damask.podcasts.core.data.LibraryRepository
 import uk.co.kilfeder.damask.podcasts.core.data.UserStateStore
@@ -35,6 +36,9 @@ import uk.co.kilfeder.damask.podcasts.presentation.genres.GenresViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.home.HomeViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.importer.ImportViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.played.PlayedViewModel
+import uk.co.kilfeder.damask.podcasts.presentation.playback.AudioEngine
+import uk.co.kilfeder.damask.podcasts.presentation.playback.NoAudioEngine
+import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaybackController
 import uk.co.kilfeder.damask.podcasts.presentation.settings.SettingsViewModel
 import kotlin.time.Clock
 
@@ -51,6 +55,8 @@ class AppGraph internal constructor(
     driverFactory: DriverFactory,
     internal val wallClockMs: () -> Long = { Clock.System.now().toEpochMilliseconds() },
     fetcher: FeedFetcher = FeedFetcher.create(),
+    engineFactory: () -> AudioEngine = { NoAudioEngine },
+    mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) {
     internal val dbDispatcher = Dispatchers.IO.limitedParallelism(1)
     internal val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -61,8 +67,8 @@ class AppGraph internal constructor(
     internal val userState = UserStateStore(db, clock)
     internal val feeds = FeedStore(db, clock, rules)
     internal val settings = Settings(db)
-    internal val notes = EpisodeNotes(db)
-    private val repository = LibraryRepository(db)
+    internal val lookup = EpisodeLookup(db)
+    internal val repository = LibraryRepository(db)
     internal val importer = OpmlImporter(fetcher, feeds, CategoryPrefill(db))
     internal val refresher = FeedRefresher(fetcher, feeds)
 
@@ -88,6 +94,11 @@ class AppGraph internal constructor(
     ) { _, _, _, _, _ -> }
         .mapLatest { onDb { repository.load() } }
         .shareIn(scope, SharingStarted.WhileSubscribed(SHARE_TIMEOUT_MS), replay = 1)
+
+    /** The one playback controller; the engine is created on first use, on the main thread. */
+    val playback: PlaybackController by lazy {
+        PlaybackController(this, engineFactory(), CoroutineScope(SupervisorJob() + mainDispatcher))
+    }
 
     /** A rotation over the current snapshot, computed off the main thread. */
     internal val rotation: Flow<Rotation> = library
@@ -120,3 +131,10 @@ class AppGraph internal constructor(
         private const val SHARE_TIMEOUT_MS = 5_000L
     }
 }
+
+/**
+ * A rotation over a snapshot read now, for decisions made straight after a write (autoplay).
+ * [AppGraph.rotation] may still be holding the snapshot from before it.
+ */
+internal suspend fun AppGraph.freshRotation(): Rotation =
+    Rotation(onDb { repository.load() }, rules, wallClockMs())

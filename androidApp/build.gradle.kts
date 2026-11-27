@@ -14,6 +14,8 @@ dependencies {
     implementation(project(":shared:ui"))
 
     implementation(libs.androidx.activity.compose)
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.session)
 
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)

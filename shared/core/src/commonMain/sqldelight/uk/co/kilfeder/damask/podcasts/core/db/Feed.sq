@@ -54,6 +54,10 @@ ON CONFLICT (show_id, guid) DO UPDATE SET
   duration_ms = excluded.duration_ms,
   notes_html = excluded.notes_html;
 
+-- Playback: where to get the audio (a downloaded file wins over the feed's address).
+selectMedia:
+SELECT enclosure_url, download_path FROM episode WHERE show_id = :show_id AND guid = :guid;
+
 -- The episode page: its show notes (kept out of the library snapshot, which never needs them).
 selectNotes:
 SELECT notes_html FROM episode WHERE show_id = :show_id AND guid = :guid;

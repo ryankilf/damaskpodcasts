@@ -63,7 +63,7 @@ class EpisodeViewModel internal constructor(
             if (episode == null) {
                 EpisodeUiState(loading = false)
             } else {
-                stateFor(episode, library, rotation, ShowNotes.parse(graph.onDb { graph.notes.of(key) }))
+                stateFor(episode, library, rotation, ShowNotes.parse(graph.onDb { graph.lookup.notes(key) }))
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), EpisodeUiState())
 

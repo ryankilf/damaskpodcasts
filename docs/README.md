@@ -16,6 +16,7 @@ The docs don't repeat either. They describe the implementation and record every 
 | [Rotation](rotation.md) | The listening rules, the rotation (LRP), autoplay and retention, as implemented |
 | [Data](data.md) | The SQLite schema, last-write-wins merging, HLC timestamps, migrations |
 | [Feeds](feeds.md) | OPML import, fetching, parsing, refresh, category prefill |
+| [Playback](playback.md) | The playback controller and its rules, the platform engines, Android's media service and cache |
 | [Guardrails](guardrails.md) | Lint, architecture tests and build checks, and what each one enforces |
 | [Branding](branding.md) | The app icon and how it's generated for every platform |
 | [Decisions](decisions.md) | Where the code interprets or deviates from the spec, and why |
@@ -25,7 +26,8 @@ The docs don't repeat either. They describe the implementation and record every 
 | Area | State |
 |---|---|
 | Core rules (rotation, listening, autoplay, retention) | Done, tested |
-| Database (schema 3, data layer) | Done, tested |
+| Database (schema 4, data layer) | Done, tested |
+| Playback | Shared controller done and tested; Android engine (Media3) in progress; desktop (FFmpeg spike) and iOS not started |
 | OPML import, feed fetch / parse / refresh | Done, tested; a real 78-feed Pocket Casts export imports cleanly (2 feeds are dead upstream) |
 | Presentation and screens | Import, Home, Genres, genre queue, Played, Settings done and tested; Search is a placeholder until the gateway merges; Now Playing waits on playback; tablet/desktop two-pane layouts not started |
 | Playback (Android Media3, desktop FFmpeg), Android Auto | Not started |

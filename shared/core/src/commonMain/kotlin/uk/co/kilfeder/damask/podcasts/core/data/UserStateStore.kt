@@ -1,6 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.core.data
 
 import uk.co.kilfeder.damask.podcasts.core.db.DamaskDatabase
+import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
 import uk.co.kilfeder.damask.podcasts.core.model.EpisodeKey
 import uk.co.kilfeder.damask.podcasts.core.model.Hlc
 import uk.co.kilfeder.damask.podcasts.core.model.PlayContext
@@ -70,6 +71,22 @@ class UserStateStore(
             title = meta.title,
             published_at = meta.published_at,
             duration_ms = durationMs,
+            hlc = issue().value,
+        )
+    }
+
+    /**
+     * Adds listening time to today's `listen_stats` row for [categoryId]: [wallMs] of real time,
+     * [contentMs] of audio (more than wall time when sped up). Time skipped by seeking isn't added.
+     */
+    fun addListenTime(categoryId: CategoryId, day: String, wallMs: Long, contentMs: Long) {
+        if (wallMs <= 0 && contentMs <= 0) return
+        db.listenStatsQueries.addLocal(
+            device_id = clock.deviceId,
+            day = day,
+            category_id = categoryId.value,
+            wall_ms = wallMs,
+            content_ms = contentMs,
             hlc = issue().value,
         )
     }
