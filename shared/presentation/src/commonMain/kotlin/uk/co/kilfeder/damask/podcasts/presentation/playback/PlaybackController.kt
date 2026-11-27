@@ -11,6 +11,10 @@ import uk.co.kilfeder.damask.podcasts.presentation.episodes.toKey
 /** What's playing, for the mini-player and the episode screen. null = nothing loaded. */
 data class NowPlaying(
     val id: EpisodeId,
+    /** For system media controls (notification, Now Playing, MPRIS). */
+    val title: String,
+    val showTitle: String,
+    val artworkUrl: String?,
     val isPlaying: Boolean,
     val buffering: Boolean,
     val positionMs: Long,

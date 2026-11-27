@@ -6,12 +6,17 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import org.jetbrains.skia.Image
 import uk.co.kilfeder.damask.podcasts.playback.FfmpegEngine
+import uk.co.kilfeder.damask.podcasts.playback.SystemMediaControls
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 import uk.co.kilfeder.damask.podcasts.presentation.app.create
 import uk.co.kilfeder.damask.podcasts.ui.App
 
 fun main() {
     val graph = AppGraph.create { FfmpegEngine() }
+    SystemMediaControls.start(graph.playback, CoroutineScope(SupervisorJob() + Dispatchers.Main))
     val icon = loadIcon()
     application {
         Window(onCloseRequest = ::exitApplication, title = "Damask", icon = icon) {

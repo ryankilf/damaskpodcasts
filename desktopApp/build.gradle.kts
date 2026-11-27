@@ -30,6 +30,8 @@ dependencies {
     implementation(libs.ffmpeg)
     runtimeOnly(variantOf(libs.javacpp) { classifier(nativePlatform) })
     runtimeOnly(variantOf(libs.ffmpeg) { classifier(nativePlatform) })
+    // OS media keys and Now Playing: MPNowPlayingInfoCenter (macOS), SMTC (Windows), MPRIS (Linux).
+    implementation(libs.nucleus.mediaControl)
 
     implementation(compose.desktop.currentOs)
     implementation(libs.kotlinx.coroutinesSwing)

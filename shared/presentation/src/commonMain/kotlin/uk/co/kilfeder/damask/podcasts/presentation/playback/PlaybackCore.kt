@@ -73,6 +73,9 @@ internal class PlaybackCore(
         engine.load(plan.request, playWhenReady = true)
         _state.value = NowPlaying(
             id = EpisodeId(key.showId.value, key.guid),
+            title = plan.request.title,
+            showTitle = plan.request.showTitle,
+            artworkUrl = plan.request.artworkUrl,
             isPlaying = false,
             buffering = true,
             positionMs = plan.request.startMs,
