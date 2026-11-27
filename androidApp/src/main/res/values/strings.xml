@@ -4,4 +4,6 @@
     <string name="playback_error_missing">The show’s host didn’t send this episode’s audio. It may have moved or been taken down.</string>
     <string name="playback_error_insecure">This episode’s audio is only offered over an insecure connection, which your phone blocks.</string>
     <string name="playback_error_other">This episode couldn’t be played.</string>
+    <string name="playback_skip_back">Back 10 seconds</string>
+    <string name="playback_skip_forward">Forward 30 seconds</string>
 </resources>

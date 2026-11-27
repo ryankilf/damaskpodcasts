@@ -37,6 +37,7 @@ iOS has no engine yet (`NoAudioEngine`), so its controls show disabled.
 - **"Playing" means playWhenReady**, the listener's intent, not "making sound". Buffering mid-episode isn't a stop, so it doesn't save or trigger the finish rule.
 - **Streaming cache.** Audio streams through one `SimpleCache` in `cacheDir/audio`, at most the smaller of the OS's cache quota and 5% of free space, least recently used evicted first. Listening again or seeking back doesn't download again.
 - **Plain `http://` enclosures are asked for over HTTPS.** Android blocks cleartext traffic and most hosts serve both. An episode only offered over HTTP fails with a plain-English message; allowing cleartext for audio is an open question.
+- **System media controls** (the player in Quick Settings, the lock screen) show back 10 s, play/pause and forward 30 s, with the artwork and a seek bar. Headphones, cars and Bluetooth "next" and "previous" skip forward 30 s and back 10 s (`SkipsForNextAndPrevious`), since there's no next track within an episode.
 - Errors reach the UI in plain English (`androidApp` string resources).
 
 ## Desktop
