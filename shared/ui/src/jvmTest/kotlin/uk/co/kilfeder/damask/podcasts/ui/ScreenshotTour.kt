@@ -22,7 +22,7 @@ import javax.imageio.ImageIO
 import kotlin.test.Test
 
 /**
- * Opt-in tour of the real app at phone size: age gate, import, Home, Genres. Renders offscreen
+ * Opt-in tour of the real app at phone size: empty states, then Home and Genres after an import. Renders offscreen
  * and writes PNGs; uses a throwaway database and (with an OPML file) real network fetches.
  *
  *     ./gradlew :shared:ui:jvmTest --tests '*ScreenshotTour*' \
@@ -43,12 +43,12 @@ class ScreenshotTour {
             setContent {
                 CompositionLocalProvider(LocalViewModelStoreOwner provides owner) { App(graph) }
             }
-            waitForText("I’m 18 or over")
-            shoot(out, "1-age-gate")
-            onNodeWithText("I’m 18 or over").performClick()
-
-            waitForText("Choose OPML file")
-            shoot(out, "2-import")
+            waitForText("No podcasts yet")
+            shoot(out, "1-home-empty")
+            onNodeWithText("Genres").performClick()
+            waitForText("No genres yet")
+            shoot(out, "2-genres-empty")
+            onNodeWithText("Home").performClick()
 
             val opml = System.getProperty("damask.opml")?.let(::File) ?: return@runDesktopComposeUiTest
             val import = graph.importViewModel()

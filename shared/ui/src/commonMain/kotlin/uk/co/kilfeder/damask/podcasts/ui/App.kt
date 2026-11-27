@@ -49,7 +49,6 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.tab_genres
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_home
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_played
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_search
-import uk.co.kilfeder.damask.podcasts.ui.screens.AgeGateScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.GenreQueueScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.GenresScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.HomeScreen
@@ -76,15 +75,6 @@ fun App(
         Surface(modifier.fillMaxSize()) {
             when (state.stage) {
                 Stage.LOADING -> Loading()
-                Stage.AGE_GATE -> AgeGateScreen(onConfirm = viewModel::onConfirmAge)
-                Stage.WELCOME -> Shell(
-                    state = state,
-                    graph = graph,
-                    onSelectTab = viewModel::onSelectTab,
-                    onNavigate = viewModel::onNavigate,
-                    onBack = viewModel::onBack,
-                    welcome = true,
-                )
                 Stage.MAIN -> Shell(
                     state = state,
                     graph = graph,
@@ -106,7 +96,6 @@ private fun Shell(
     onNavigate: (Destination) -> Unit,
     onBack: () -> Boolean,
     modifier: Modifier = Modifier,
-    welcome: Boolean = false,
 ) {
     val top = state.nav.top
     BackHandler(enabled = top != null) { onBack() }
@@ -114,19 +103,18 @@ private fun Shell(
         modifier = modifier,
         topBar = {
             TopBar(
-                title = if (welcome) Res.string.import_from_settings else titleOf(state),
+                title = titleOf(state),
                 showBack = top != null,
-                showSettings = !welcome && top == null,
+                showSettings = top == null,
                 onBack = { onBack() },
                 onSettings = { onNavigate(Destination.Settings) },
             )
         },
-        bottomBar = { if (!welcome) TabBar(state.nav.tab, onSelectTab) },
+        bottomBar = { TabBar(state.nav.tab, onSelectTab) },
     ) { padding ->
         Box(contentAlignment = Alignment.TopCenter, modifier = Modifier.padding(padding).fillMaxSize()) {
             val content = Modifier.widthIn(max = Sizes.MaxContentWidth).fillMaxSize()
             when {
-                welcome -> ImportScreen(graph, content)
                 top is Destination.GenreQueue -> GenreQueueScreen(graph, top.categoryId, content)
                 top == Destination.Settings ->
                     SettingsScreen(graph, onImport = { onNavigate(Destination.Import) }, content)

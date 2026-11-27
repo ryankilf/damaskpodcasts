@@ -19,7 +19,8 @@ Now specified in [spec › Search](spec.md#search) and [spec › Compliance](spe
 - **"6 Nov 2026" is a Friday.** The design hand-off's exact-value example says "Thu 6 Nov 2026, 21:14"; the code formats the real weekday.
 - **Icons are Material Icons Rounded** (`material-icons-extended`, the last published version, 1.7.3), the closest Compose equivalent of the design's Material Symbols Rounded.
 - **Apostrophes in UI strings are typographic (’).** Compose Multiplatform resources don't unescape Android-style `\'`, which showed as a literal backslash.
-- **The 18+ declaration is local** (`app_setting`) until store age signals and accounts arrive with v1.
+- **The app always opens on Home.** With no subscriptions, Home, Genres and Played show empty states, and Home points to Search and to Settings › Import from OPML. There is no first-run import screen (27 Nov, at the user's request).
+- **No over-18 self-declaration screen** (removed 27 Nov at the user's request; spec › Compliance updated). The 18+ store rating and the v1 minor-signal block remain.
 - **Up Next and genre queues load 30 rows at a time**, with "Show more".
 - **Swipe actions:** swiping an Up Next or genre-queue row marks it played; on Played, swiping a played episode marks it unplayed. Both are also accessibility actions, because a swipe alone isn't usable with a screen reader.
 - **A 12dp gap** between row artwork and text comes from the EpisodeRow artboard but isn't in `tokens.json`; it's `Spacing.Space3`.

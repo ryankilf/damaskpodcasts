@@ -58,7 +58,7 @@ Seeded rows use HLC 0, so any user rename, merge or delete wins over them.
 
 ## Schema 3: preferences
 
-`app_setting` (local only) holds this device's preferences as key/value text: the 18+ self-declaration, "Hide explicit" and "Use wallpaper colours". `presentation/app/Settings` reads and writes it.
+`app_setting` (local only) holds this device's preferences as key/value text: "Hide explicit" and "Use wallpaper colours". `presentation/app/Settings` reads and writes it.
 
 ## Planned: schema 4
 

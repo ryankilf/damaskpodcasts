@@ -19,6 +19,8 @@ import uk.co.kilfeder.damask.podcasts.presentation.episodes.toRow
 
 data class HomeUiState(
     val loading: Boolean = true,
+    /** False until the first subscription: Home shows how to add podcasts instead of empty lists. */
+    val hasSubscriptions: Boolean = false,
     val inProgress: List<EpisodeRowUi> = emptyList(),
     val upNext: List<EpisodeRowUi> = emptyList(),
     /** True when Up Next may have more to show. */
@@ -41,6 +43,7 @@ class HomeViewModel internal constructor(private val graph: AppGraph) : ViewMode
         val upNext = rotation.upNext().take(size + 1).toList()
         HomeUiState(
             loading = false,
+            hasSubscriptions = library.subscribedShows.isNotEmpty(),
             inProgress = rotation.inProgress().map { it.toRow(library, rotation, now) },
             upNext = upNext.take(size).map { it.toRow(library, rotation, now) },
             canLoadMore = upNext.size > size,

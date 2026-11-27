@@ -28,7 +28,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/** Age gate -> first run -> import -> Home -> mark played -> undo from Played, on a real database. */
+/** Empty Home -> import -> Home -> mark played -> undo from Played, on a real database. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class FirstRunTest {
     private val now = 1_795_780_800_000L // 27 Nov 2026
@@ -65,10 +65,9 @@ class FirstRunTest {
     @Test
     fun firstRunThroughToUndo() = runBlocking {
         val app = graph.appViewModel()
-        app.uiState.await { it.stage == Stage.AGE_GATE }
-
-        app.onConfirmAge()
-        app.uiState.await { it.stage == Stage.WELCOME }
+        app.uiState.await { it.stage == Stage.MAIN }
+        val home = graph.homeViewModel()
+        home.uiState.await { !it.loading && !it.hasSubscriptions }
 
         val import = graph.importViewModel()
         import.onFileChosen(OPML)
@@ -79,9 +78,7 @@ class FirstRunTest {
 
         import.onConfirm()
         import.uiState.await { it == ImportUiState.Done(2) }
-        app.uiState.await { it.stage == Stage.MAIN }
 
-        val home = graph.homeViewModel()
         val upNext = home.uiState.await { it.upNext.size == 4 }.upNext
         assertEquals("History Hour", upNext.first().showTitle, "never-listened categories by name: History first")
         assertEquals("2 days ago", upNext.first().published.summary)

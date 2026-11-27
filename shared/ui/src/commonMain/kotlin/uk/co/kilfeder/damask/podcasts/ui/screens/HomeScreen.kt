@@ -18,6 +18,8 @@ import uk.co.kilfeder.damask.podcasts.ui.components.EpisodeRow
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.home_empty
 import uk.co.kilfeder.damask.podcasts.ui.resources.home_in_progress
+import uk.co.kilfeder.damask.podcasts.ui.resources.home_no_shows_body
+import uk.co.kilfeder.damask.podcasts.ui.resources.home_no_shows_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.home_up_next
 import uk.co.kilfeder.damask.podcasts.ui.resources.mark_played
 
@@ -48,6 +50,14 @@ private fun HomeContent(
 ) {
     if (state.loading) {
         Loading(modifier)
+        return
+    }
+    if (!state.hasSubscriptions) {
+        EmptyState(
+            title = stringResource(Res.string.home_no_shows_title),
+            body = stringResource(Res.string.home_no_shows_body),
+            modifier = modifier,
+        )
         return
     }
     val markPlayed = stringResource(Res.string.mark_played)

@@ -16,6 +16,7 @@ import uk.co.kilfeder.damask.podcasts.ui.components.EpisodeRow
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.mark_unplayed
 import uk.co.kilfeder.damask.podcasts.ui.resources.played_empty
+import uk.co.kilfeder.damask.podcasts.ui.resources.played_empty_title
 
 @Composable
 internal fun PlayedScreen(
@@ -37,11 +38,16 @@ private fun PlayedContent(
         Loading(modifier)
         return
     }
+    if (state.rows.isEmpty()) {
+        EmptyState(
+            title = stringResource(Res.string.played_empty_title),
+            body = stringResource(Res.string.played_empty),
+            modifier = modifier,
+        )
+        return
+    }
     val markUnplayed = stringResource(Res.string.mark_unplayed)
     LazyColumn(modifier) {
-        if (state.rows.isEmpty()) {
-            item(key = "empty") { EmptyMessage(stringResource(Res.string.played_empty)) }
-        }
         items(state.rows, key = { "${it.episode.id.showId}-${it.episode.id.guid}" }) { row ->
             // Only played episodes can be marked unplayed; in-progress ones are just listed.
             if (row.isPlayed) {

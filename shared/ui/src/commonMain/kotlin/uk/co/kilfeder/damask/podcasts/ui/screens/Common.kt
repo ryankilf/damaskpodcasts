@@ -1,6 +1,8 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -14,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
@@ -36,6 +39,30 @@ internal fun EmptyMessage(text: String, modifier: Modifier = Modifier) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier.padding(Spacing.Space4),
     )
+}
+
+/** A centred empty state: what this screen is for, and how to fill it. */
+@Composable
+internal fun EmptyState(title: String, body: String, modifier: Modifier = Modifier) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Spacing.Space2, Alignment.CenterVertically),
+        modifier = modifier.fillMaxSize().padding(Spacing.Space6),
+    ) {
+        Text(
+            text = title,
+            style = DamaskTextStyles.TitleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.semantics { heading() },
+        )
+        Text(
+            text = body,
+            style = DamaskTextStyles.Body,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+    }
 }
 
 internal fun LazyListScope.sectionHeader(key: String, stringResourceKey: StringResource) {

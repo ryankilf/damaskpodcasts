@@ -12,15 +12,13 @@
     <string name="tab_played">Played</string>
     <string name="tab_search">Search</string>
 
-    <!-- Age gate -->
-    <string name="age_title">Damask is for over-18s</string>
-    <string name="age_body">Search covers the whole podcast directory, which includes adult shows. Please confirm you are 18 or over to continue.</string>
-    <string name="age_confirm">I’m 18 or over</string>
 
     <!-- Home -->
     <string name="home_in_progress">In Progress</string>
     <string name="home_up_next">Up Next</string>
     <string name="home_refresh">Check for new episodes</string>
+    <string name="home_no_shows_title">No podcasts yet</string>
+    <string name="home_no_shows_body">Find shows in Search, or bring your podcasts across from Pocket Casts with Settings › Import from OPML.</string>
     <string name="home_empty">Nothing to play yet. New episodes appear here after the next refresh.</string>
     <string name="mark_played">Mark played</string>
     <string name="mark_unplayed">Mark unplayed</string>
@@ -36,11 +34,14 @@
         <item quantity="one">%1$d show</item>
         <item quantity="other">%1$d shows</item>
     </plurals>
+    <string name="genres_empty_title">No genres yet</string>
+    <string name="genres_empty_body">Each show you follow goes into a genre, and Damask takes turns between them so no single genre takes over.</string>
     <string name="genres_never">Not played yet</string>
     <string name="genres_last">Last played %1$s</string>
     <string name="genre_queue_empty">Nothing waiting in this genre.</string>
 
     <!-- Played -->
+    <string name="played_empty_title">Nothing played yet</string>
     <string name="played_empty">Episodes you play appear here.</string>
     <string name="played_last">Last played %1$s</string>
 

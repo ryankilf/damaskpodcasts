@@ -24,6 +24,8 @@ import uk.co.kilfeder.damask.podcasts.presentation.genres.GenresUiState
 import uk.co.kilfeder.damask.podcasts.presentation.genres.GenresViewModel
 import uk.co.kilfeder.damask.podcasts.ui.components.ExactValueText
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
+import uk.co.kilfeder.damask.podcasts.ui.resources.genres_empty_body
+import uk.co.kilfeder.damask.podcasts.ui.resources.genres_empty_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.genres_last
 import uk.co.kilfeder.damask.podcasts.ui.resources.genres_never
 import uk.co.kilfeder.damask.podcasts.ui.resources.genres_shows
@@ -47,6 +49,14 @@ internal fun GenresScreen(
 private fun GenresContent(state: GenresUiState, onOpenGenre: (String) -> Unit, modifier: Modifier = Modifier) {
     if (state.loading) {
         Loading(modifier)
+        return
+    }
+    if (state.genres.isEmpty()) {
+        EmptyState(
+            title = stringResource(Res.string.genres_empty_title),
+            body = stringResource(Res.string.genres_empty_body),
+            modifier = modifier,
+        )
         return
     }
     LazyColumn(modifier) {
