@@ -33,10 +33,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,7 +71,6 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.import_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_category
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_choose
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_confirm
-import uk.co.kilfeder.damask.podcasts.ui.resources.import_done
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_failed
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_problem
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_reading
@@ -87,10 +88,19 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 @Composable
 internal fun ImportScreen(
     graph: AppGraph,
+    onFinish: (count: Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ImportViewModel = viewModel { graph.importViewModel() },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // Finished: hand over to the app (Home plus a snackbar) and reset for next time.
+    val finish by rememberUpdatedState(onFinish)
+    (state as? ImportUiState.Done)?.let { done ->
+        LaunchedEffect(done) {
+            finish(done.count)
+            viewModel.onStartAgain()
+        }
+    }
     val scope = rememberCoroutineScope()
     val picker = rememberFilePickerLauncher(type = FileKitType.File("opml", "xml")) { file ->
         if (file != null) scope.launch { viewModel.onFileChosen(file.readString()) }
@@ -154,10 +164,8 @@ private fun ImportContent(
                 fill = false,
             )
         }
-        is ImportUiState.Done -> Message(
-            title = stringResource(Res.string.import_done, state.count),
-            modifier = modifier,
-        )
+        // Momentary: the app leaves this screen as soon as it sees Done.
+        is ImportUiState.Done -> Unit
         is ImportUiState.Failed -> Message(
             title = stringResource(Res.string.import_failed),
             action = stringResource(Res.string.import_start_again),

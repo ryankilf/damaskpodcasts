@@ -18,21 +18,39 @@ enum class Stage {
     MAIN,
 }
 
+/** One-off messages the UI shows once (as a snackbar) and then reports shown. */
+sealed interface AppMessage {
+    data class ShowsAdded(val count: Int) : AppMessage
+}
+
 data class AppUiState(
     val stage: Stage = Stage.LOADING,
     val nav: NavState = NavState(),
     val useWallpaperColours: Boolean = false,
+    /** Show once, then call [AppViewModel.onMessageShown]. */
+    val message: AppMessage? = null,
 )
 
 /** Top-level state: navigation and appearance. Every launch opens on Home. */
 class AppViewModel internal constructor(private val graph: AppGraph) : ViewModel() {
     private val nav = MutableStateFlow(NavState())
+    private val message = MutableStateFlow<AppMessage?>(null)
 
-    val uiState: StateFlow<AppUiState> = combine(graph.settings.values, nav) { settings, nav ->
-        AppUiState(Stage.MAIN, nav, settings.useWallpaperColours)
+    val uiState: StateFlow<AppUiState> = combine(graph.settings.values, nav, message) { settings, nav, message ->
+        AppUiState(Stage.MAIN, nav, settings.useWallpaperColours, message)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), AppUiState())
 
     fun onSelectTab(tab: Tab) = nav.update { it.select(tab) }
+
+    /** An import finished: go to Home, where the new shows are, and say how many were added. */
+    fun onImportFinished(count: Int) {
+        nav.value = NavState(tab = Tab.HOME)
+        message.value = AppMessage.ShowsAdded(count)
+    }
+
+    fun onMessageShown() {
+        message.value = null
+    }
 
     fun onNavigate(destination: Destination) = nav.update { it.push(destination) }
 

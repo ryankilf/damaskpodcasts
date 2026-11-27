@@ -18,10 +18,15 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -34,8 +39,10 @@ import coil3.compose.setSingletonImageLoaderFactory
 import coil3.request.crossfade
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
+import uk.co.kilfeder.damask.podcasts.presentation.app.AppMessage
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppUiState
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.app.Stage
@@ -46,6 +53,7 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.app_name
 import uk.co.kilfeder.damask.podcasts.ui.resources.back
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_screen_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.settings
+import uk.co.kilfeder.damask.podcasts.ui.resources.shows_added
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_genres
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_home
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_played
@@ -86,6 +94,8 @@ fun App(
                     onSelectTab = viewModel::onSelectTab,
                     onNavigate = viewModel::onNavigate,
                     onBack = viewModel::onBack,
+                    onImportFinish = viewModel::onImportFinished,
+                    onMessageShow = viewModel::onMessageShown,
                 )
             }
         }
@@ -100,9 +110,22 @@ private fun Shell(
     onSelectTab: (Tab) -> Unit,
     onNavigate: (Destination) -> Unit,
     onBack: () -> Boolean,
+    onImportFinish: (Int) -> Unit,
+    onMessageShow: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val top = state.nav.top
+    val snackbars = remember { SnackbarHostState() }
+    val messageShown by rememberUpdatedState(onMessageShow)
+    state.message?.let { message ->
+        val text = when (message) {
+            is AppMessage.ShowsAdded -> pluralStringResource(Res.plurals.shows_added, message.count, message.count)
+        }
+        LaunchedEffect(message) {
+            messageShown()
+            snackbars.showSnackbar(text)
+        }
+    }
     BackHandler(enabled = top != null) { onBack() }
     Scaffold(
         modifier = modifier,
@@ -116,6 +139,7 @@ private fun Shell(
             )
         },
         bottomBar = { TabBar(state.nav.tab, onSelectTab) },
+        snackbarHost = { SnackbarHost(snackbars) },
     ) { padding ->
         Box(contentAlignment = Alignment.TopCenter, modifier = Modifier.padding(padding).fillMaxSize()) {
             val content = Modifier.widthIn(max = Sizes.MaxContentWidth).fillMaxSize()
@@ -123,7 +147,7 @@ private fun Shell(
                 top is Destination.GenreQueue -> GenreQueueScreen(graph, top.categoryId, content)
                 top == Destination.Settings ->
                     SettingsScreen(graph, onImport = { onNavigate(Destination.Import) }, content)
-                top == Destination.Import -> ImportScreen(graph, content)
+                top == Destination.Import -> ImportScreen(graph, onFinish = onImportFinish, modifier = content)
                 else -> TabContent(state.nav.tab, graph, onNavigate, onSelectTab, content)
             }
         }

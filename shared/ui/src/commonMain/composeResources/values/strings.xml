@@ -63,7 +63,10 @@
     <string name="import_latest">Latest: %1$s</string>
     <string name="import_all_shows">All shows</string>
     <string name="import_subscribing">Adding your shows: %1$d of %2$d</string>
-    <string name="import_done">Added %1$d shows.</string>
+    <plurals name="shows_added">
+        <item quantity="one">Added %1$d show</item>
+        <item quantity="other">Added %1$d shows</item>
+    </plurals>
     <string name="import_problem">Couldn’t reach this show right now: %1$s. If you add it, we’ll keep trying.</string>
     <string name="import_failed">That doesn’t look like a list of podcasts. Try saving it from your old app again.</string>
     <string name="import_start_again">Choose a different file</string>

@@ -69,6 +69,7 @@ sealed interface ImportUiState {
         val latest: LatestShowUi? = null,
     ) : ImportUiState
 
+    /** Finished: the screen hands [count] to the app (which goes to Home) and resets. */
     data class Done(val count: Int) : ImportUiState
 
     data class Failed(val message: String) : ImportUiState

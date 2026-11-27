@@ -19,6 +19,9 @@ import uk.co.kilfeder.damask.podcasts.core.data.DriverFactory
 import uk.co.kilfeder.damask.podcasts.core.db.DamaskDatabase
 import uk.co.kilfeder.damask.podcasts.core.feed.FeedFetcher
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
+import uk.co.kilfeder.damask.podcasts.presentation.app.AppMessage
+import uk.co.kilfeder.damask.podcasts.presentation.navigation.NavState
+import uk.co.kilfeder.damask.podcasts.presentation.navigation.Tab
 import uk.co.kilfeder.damask.podcasts.presentation.app.Stage
 import uk.co.kilfeder.damask.podcasts.presentation.importer.ImportUiState
 import java.util.Properties
@@ -85,8 +88,15 @@ class FirstRunTest {
         import.onSelectAllChanged(true)
         assertTrue((import.uiState.value as ImportUiState.Review).allSelected)
 
+        app.onNavigate(uk.co.kilfeder.damask.podcasts.presentation.navigation.Destination.Settings)
         import.onConfirm()
         import.uiState.await { it == ImportUiState.Done(2) }
+        app.onImportFinished(2)
+        val afterImport = app.uiState.await { it.message != null }
+        assertEquals(AppMessage.ShowsAdded(2), afterImport.message)
+        assertEquals(NavState(tab = Tab.HOME), afterImport.nav, "back on Home, Settings closed")
+        app.onMessageShown()
+        app.uiState.await { it.message == null }
 
         val upNext = home.uiState.await { it.upNext.size == 4 }.upNext
         assertEquals("History Hour", upNext.first().showTitle, "never-listened categories by name: History first")
