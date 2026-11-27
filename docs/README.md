@@ -28,7 +28,7 @@ The docs don't repeat either. They describe the implementation and record every 
 | Presentation (ViewModels), screens | Not started (template greeting screen only) |
 | Playback (Android Media3, desktop FFmpeg), Android Auto | Not started |
 | Downloads, background refresh scheduling | Not started |
-| Search (Podcast Index) | Not started; waiting on an API key |
+| Search (hosted Podcast Index dataset) | Not started; design changing (see [decisions](decisions.md)), revised spec to follow |
 | Sync, sign-in, billing | v1, not started |
 
 ## Keeping these docs current

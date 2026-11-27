@@ -2,6 +2,16 @@
 
 Places where the code interprets the spec, fills a gap, or deviates from it. Each entry says what was decided, why, and where it lives. Newest first within each section.
 
+## Search and age rating (27 Nov 2026; revised spec to follow)
+
+These replace parts of spec › Compliance and the search design. The revised spec will supersede this section.
+
+- **Search runs over our own hosted copy of Podcast Index's published dataset**, not their live API. This follows clause 3 of the Podcast Index terms. Hosting it is ours to solve: Supabase's free plan caps the database at 500 MB, so it will need a filtered subset or a bigger plan.
+- **The app is rated 18+ everywhere.** The dataset has nothing usable for age-limiting search results. Per-country ages of majority may come later; the rules differ by country, so it's one rating for now. The band-based age logic (most restrictive band wins, explicit filter for `unknown` and minors) is superseded, pending the revised spec.
+- **No separate live-API path for the private build.** It's a staging post, not worth its own search implementation. Search waits for the hosted dataset.
+- **No partial gating** (for example, turning Search off for under-18 bands). A solicitor will review this if the app goes well.
+- **Unchanged:** searching a single directory (the Online Safety Act scope argument), and the library explicit filter, which works from the feeds' `itunes:explicit`.
+
 ## Rotation and listening
 
 - **Re-listening a played episode** puts it in Home › In Progress but not in genre queues, following the spec's "stays played and out of the queues". `Rotation.genreQueue`.
