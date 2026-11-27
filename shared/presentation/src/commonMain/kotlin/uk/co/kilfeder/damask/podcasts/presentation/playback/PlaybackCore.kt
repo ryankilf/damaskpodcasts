@@ -114,6 +114,9 @@ internal class PlaybackCore(
     }
 
     private suspend fun onPlayingChanged(current: ListeningSession, playing: Boolean) {
+        // Engines may repeat a state (Media3 after a load); only real changes start or end a stretch.
+        if (_state.value?.isPlaying == playing && (playing || current.hasStarted)) return
+        current.hasStarted = true
         _state.update { it?.copy(isPlaying = playing, buffering = false, error = null) }
         if (playing) {
             current.startStretch(engine.positionMs)

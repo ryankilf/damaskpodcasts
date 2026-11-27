@@ -27,6 +27,9 @@ internal class ListeningSession(
 
     var durationMs: Long? = null
 
+    /** The engine has reported a play state for this episode at least once. */
+    var hasStarted = false
+
     fun startStretch(positionMs: Long) {
         stretchWallMs = graph.wallClockMs()
         stretchPositionMs = positionMs

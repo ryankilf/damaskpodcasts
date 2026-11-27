@@ -36,6 +36,7 @@ private class FakeEngine : AudioEngine {
     override fun load(request: MediaRequest, playWhenReady: Boolean) {
         loads += request
         positionMs = request.startMs
+        emit(EngineEvent.PlayingChanged(playWhenReady))
     }
 
     override fun play() = emit(EngineEvent.PlayingChanged(true))
@@ -134,6 +135,17 @@ class PlaybackControllerTest {
         playback.play(EpisodeId("hist", "h1"), context = null)
         awaitThat("back on h1") { playback.state.value?.id == EpisodeId("hist", "h1") }
         assertEquals(20 * MINUTE, engine.loads.last().startMs)
+    }
+
+    @Test
+    fun switchingEpisodesWhilePlayingKeepsTheNewOnePlayingAndPausable() = runBlocking {
+        seed()
+        startPlaying(EpisodeId("hist", "h1"), PlayContext.None)
+        playback.play(EpisodeId("pol", "p1"), PlayContext.None)
+        val p1 = EpisodeId("pol", "p1")
+        awaitThat("p1 playing") { playback.state.value?.let { it.id == p1 && it.isPlaying } == true }
+        playback.togglePlayPause()
+        awaitThat("paused") { playback.state.value?.isPlaying == false }
     }
 
     @Test

@@ -21,7 +21,8 @@ import uk.co.kilfeder.damask.podcasts.presentation.playback.MediaRequest
  * from the notification or headphones reaches the shared controller just like one from the app.
  *
  * "Playing" means playWhenReady (the listener's intent), not "producing sound": buffering
- * mid-episode isn't a stop, so it doesn't trigger saves or the finish rule.
+ * mid-episode isn't a stop, so it doesn't trigger saves or the finish rule. Every load reports
+ * the play state, because the engine contract says so and Media3 only reports changes.
  */
 class Media3Engine(private val context: Context) : AudioEngine {
     override val available = true
@@ -72,6 +73,9 @@ class Media3Engine(private val context: Context) : AudioEngine {
             it.setPlaybackSpeed(request.speed)
             it.prepare()
             it.playWhenReady = playWhenReady
+            // Starting another episode while one plays leaves playWhenReady unchanged, so Media3
+            // sends no event; report it so the shared controller knows this episode is playing.
+            emit(EngineEvent.PlayingChanged(playWhenReady))
         }
     }
 

@@ -48,6 +48,7 @@ interface AudioEngine {
 
     fun setListener(listener: (EngineEvent) -> Unit)
 
+    /** Loads [request]. Must then report [EngineEvent.PlayingChanged], even if nothing changed. */
     fun load(request: MediaRequest, playWhenReady: Boolean)
 
     fun play()
