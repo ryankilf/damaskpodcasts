@@ -124,7 +124,7 @@ private fun Shell(
                 top == Destination.Settings ->
                     SettingsScreen(graph, onImport = { onNavigate(Destination.Import) }, content)
                 top == Destination.Import -> ImportScreen(graph, content)
-                else -> TabContent(state.nav.tab, graph, onNavigate, content)
+                else -> TabContent(state.nav.tab, graph, onNavigate, onSelectTab, content)
             }
         }
     }
@@ -164,9 +164,20 @@ private fun TopBar(
 }
 
 @Composable
-private fun TabContent(tab: Tab, graph: AppGraph, onNavigate: (Destination) -> Unit, modifier: Modifier = Modifier) {
+private fun TabContent(
+    tab: Tab,
+    graph: AppGraph,
+    onNavigate: (Destination) -> Unit,
+    onSelectTab: (Tab) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     when (tab) {
-        Tab.HOME -> HomeScreen(graph, modifier)
+        Tab.HOME -> HomeScreen(
+            graph = graph,
+            onSearch = { onSelectTab(Tab.SEARCH) },
+            onImport = { onNavigate(Destination.Import) },
+            modifier = modifier,
+        )
         Tab.GENRES -> GenresScreen(graph, onOpenGenre = { onNavigate(Destination.GenreQueue(it)) }, modifier)
         Tab.PLAYED -> PlayedScreen(graph, modifier)
         Tab.SEARCH -> SearchScreen(modifier)

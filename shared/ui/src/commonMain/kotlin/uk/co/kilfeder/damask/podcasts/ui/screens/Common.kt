@@ -3,6 +3,7 @@ package uk.co.kilfeder.damask.podcasts.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -41,9 +42,14 @@ internal fun EmptyMessage(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** A centred empty state: what this screen is for, and how to fill it. */
+/** A centred empty state: what this screen is for, and how to fill it, with optional [actions]. */
 @Composable
-internal fun EmptyState(title: String, body: String, modifier: Modifier = Modifier) {
+internal fun EmptyState(
+    title: String,
+    body: String,
+    modifier: Modifier = Modifier,
+    actions: @Composable ColumnScope.() -> Unit = {},
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.Space2, Alignment.CenterVertically),
@@ -62,6 +68,7 @@ internal fun EmptyState(title: String, body: String, modifier: Modifier = Modifi
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
+        actions()
     }
 }
 

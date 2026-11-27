@@ -2,7 +2,11 @@ package uk.co.kilfeder.damask.podcasts.ui.screens
 
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,12 +24,17 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.home_empty
 import uk.co.kilfeder.damask.podcasts.ui.resources.home_in_progress
 import uk.co.kilfeder.damask.podcasts.ui.resources.home_no_shows_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.home_no_shows_title
+import uk.co.kilfeder.damask.podcasts.ui.resources.home_search
+import uk.co.kilfeder.damask.podcasts.ui.resources.import_from_settings
 import uk.co.kilfeder.damask.podcasts.ui.resources.home_up_next
 import uk.co.kilfeder.damask.podcasts.ui.resources.mark_played
+import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 
 @Composable
 internal fun HomeScreen(
     graph: AppGraph,
+    onSearch: () -> Unit,
+    onImport: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel { graph.homeViewModel() },
 ) {
@@ -35,6 +44,8 @@ internal fun HomeScreen(
         onRefresh = viewModel::onRefresh,
         onDismissEpisode = viewModel::onMarkPlayed,
         onLoadMore = viewModel::onLoadMore,
+        onSearch = onSearch,
+        onImport = onImport,
         modifier = modifier,
     )
 }
@@ -46,6 +57,8 @@ private fun HomeContent(
     onRefresh: () -> Unit,
     onDismissEpisode: (EpisodeId) -> Unit,
     onLoadMore: () -> Unit,
+    onSearch: () -> Unit,
+    onImport: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (state.loading) {
@@ -57,7 +70,12 @@ private fun HomeContent(
             title = stringResource(Res.string.home_no_shows_title),
             body = stringResource(Res.string.home_no_shows_body),
             modifier = modifier,
-        )
+        ) {
+            Button(onClick = onSearch, modifier = Modifier.padding(top = Spacing.Space4)) {
+                Text(stringResource(Res.string.home_search))
+            }
+            OutlinedButton(onClick = onImport) { Text(stringResource(Res.string.import_from_settings)) }
+        }
         return
     }
     val markPlayed = stringResource(Res.string.mark_played)
