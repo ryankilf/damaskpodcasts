@@ -58,7 +58,7 @@ import uk.co.kilfeder.damask.podcasts.presentation.importer.ImportUiState
 import uk.co.kilfeder.damask.podcasts.presentation.importer.ImportViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.importer.matching
 import uk.co.kilfeder.damask.podcasts.ui.components.Artwork
-import uk.co.kilfeder.damask.podcasts.ui.components.ImportGrid
+import uk.co.kilfeder.damask.podcasts.ui.components.LatestShowCard
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.category_no_match
 import uk.co.kilfeder.damask.podcasts.ui.resources.category_search
@@ -125,7 +125,7 @@ private fun ImportContent(
             modifier = modifier,
         )
         is ImportUiState.Reading -> Column(modifier.fillMaxSize()) {
-            ImportGrid(state.tiles, Modifier.weight(1f).fillMaxWidth().padding(Spacing.Space4))
+            LatestShowCard(state.latest, Modifier.weight(1f).fillMaxWidth().padding(Spacing.Space4))
             Progress(
                 label = stringResource(Res.string.import_reading, state.done, state.total),
                 done = state.done,
@@ -143,7 +143,7 @@ private fun ImportContent(
             modifier = modifier,
         )
         is ImportUiState.Subscribing -> Column(modifier.fillMaxSize()) {
-            ImportGrid(state.tiles, Modifier.weight(1f).fillMaxWidth().padding(Spacing.Space4), revealAsLoaded = false)
+            LatestShowCard(state.latest, Modifier.weight(1f).fillMaxWidth().padding(Spacing.Space4))
             Progress(
                 label = stringResource(Res.string.import_subscribing, state.done, state.total),
                 done = state.done,

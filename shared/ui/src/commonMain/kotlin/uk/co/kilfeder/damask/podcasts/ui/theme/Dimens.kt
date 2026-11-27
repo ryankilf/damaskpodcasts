@@ -56,8 +56,8 @@ object Sizes {
     /** The progress ring around a row's play control. */
     val ProgressRingStroke = 3.dp
 
-    /** Import grid tiles never shrink below this; bigger libraries show as many as fit. */
-    val ImportTileMin = 32.dp
+    /** The import's latest-show cover card, at most. */
+    val ImportCoverMax = 280.dp
 
     /** Readable content width on wide windows. */
     val MaxContentWidth = 640.dp
