@@ -105,7 +105,7 @@ Recency still counts: a listed show silent for 5 years (`0.42 × 10 × 1.5 ≈ 6
 | `RANK_APPLE_LISTED_BOOST` | 1.5 | Multiplies `rankScore` for shows with an Apple Podcasts ID in the dump | Up: listed shows win against more popular unlisted ones. 1: off |
 | `RANK_FEED_AGE_BOOST` | 0.1 | The most a long-running feed gains (0.1 = 10%) | Up: established feeds win more. 0: off |
 | `RANK_FEED_AGE_FULL_YEARS` | 5 | Years since the oldest episode at which the feed-age gain is complete | Down: young feeds reach it sooner |
-| `RANK_STEP` | 0 (off) | Rounds `rankScore` down to a multiple of this, so near-equal scores tie and the title rules decide | Up: an exact title beats a slightly more popular or recent near-match |
+| `RANK_STEP` | 0 (off) | Rounds `rankScore` down to a multiple of this, so near-equal scores tie and the title rules decide | Leave it at 0. It turns the smooth score into bands with cliffs (8.9 vs 9.0 becomes a 0.5 gap; 9.0 vs 9.4 a tie). See [decisions › Server](decisions.md#server) before changing it |
 | `REGION_BOOST` (gateway) | 1.25 | Multiplies `rankScore` for shows in the user's exact region, at merge time | Up: the user's region wins more often. 1: off |
 
 **Tuning without a re-import.** `importer rescore` recomputes `rankScore` in place with Meilisearch's experimental edit-documents-by-function (a Rhai version of the same formula; `RescorerTest` keeps the two in step). It needs no download, but it is not faster: on the full index (2.8 M documents) it took 17 minutes on an M-series Mac, against 7 for a whole re-import, because Meilisearch re-indexes every edited document. Use it when the dump can't be fetched; otherwise a re-import with the new values (`-e RANK_HALF_LIFE_DAYS=180 importer`) is quicker:

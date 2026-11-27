@@ -40,7 +40,8 @@ data class RankScore(
     /**
      * Rounds the score down to a multiple of this (0 = off). Nearly equal scores then tie, so the
      * title rules after `rankScore` (attribute, exactness) decide between them. Higher: title
-     * matches matter more against small differences in popularity and recency.
+     * matches matter more against small differences in popularity and recency. Leave it at 0: bands
+     * make cliffs (see docs/decisions.md › Server, RANK_STEP).
      */
     val step: Double = DEFAULT_STEP,
 ) {
