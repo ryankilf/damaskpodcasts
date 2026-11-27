@@ -37,6 +37,7 @@ import uk.co.kilfeder.damask.podcasts.presentation.home.HomeViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.importer.ImportViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.played.PlayedViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.playback.AudioEngine
+import uk.co.kilfeder.damask.podcasts.presentation.playback.MiniPlayerViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.playback.NoAudioEngine
 import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaybackController
 import uk.co.kilfeder.damask.podcasts.presentation.settings.SettingsViewModel
@@ -104,11 +105,6 @@ class AppGraph internal constructor(
     internal val rotation: Flow<Rotation> = library
         .mapLatest { withContext(Dispatchers.Default) { Rotation(it, rules, wallClockMs()) } }
 
-    /**
-     * Refreshes every subscribed feed. Network fetches run concurrently; the refresher's writes go
-     * through the database thread because the whole run is confined to it.
-     */
-    internal suspend fun refreshFeeds() = withContext(dbDispatcher) { refresher.refreshAll() }
 
     // ViewModel factories: the UI creates every ViewModel through these.
     fun appViewModel() = AppViewModel(this)
@@ -122,6 +118,8 @@ class AppGraph internal constructor(
     fun playedViewModel() = PlayedViewModel(this)
 
     fun episodeViewModel(id: EpisodeId) = EpisodeViewModel(this, id)
+
+    fun miniPlayerViewModel() = MiniPlayerViewModel(this)
 
     fun importViewModel() = ImportViewModel(this)
 
@@ -138,3 +136,9 @@ class AppGraph internal constructor(
  */
 internal suspend fun AppGraph.freshRotation(): Rotation =
     Rotation(onDb { repository.load() }, rules, wallClockMs())
+
+/**
+ * Refreshes every subscribed feed. Network fetches run concurrently; the refresher's writes go
+ * through the database thread because the whole run is confined to it.
+ */
+internal suspend fun AppGraph.refreshFeeds() = withContext(dbDispatcher) { refresher.refreshAll() }

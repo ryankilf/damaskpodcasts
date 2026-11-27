@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import uk.co.kilfeder.damask.podcasts.core.model.PlayedBy
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 import uk.co.kilfeder.damask.podcasts.presentation.app.STOP_TIMEOUT_MS
+import uk.co.kilfeder.damask.podcasts.presentation.app.refreshFeeds
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeRowUi
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.toKey
@@ -55,6 +56,7 @@ class HomeViewModel internal constructor(private val graph: AppGraph) : ViewMode
 
     /** Swipe to mark played: the episode leaves every queue; undo from Played. */
     fun onMarkPlayed(id: EpisodeId) {
+        graph.playback.onMarkedPlayed(id)
         viewModelScope.launch { graph.onDb { graph.userState.markPlayed(id.toKey(), PlayedBy.MARKED) } }
     }
 

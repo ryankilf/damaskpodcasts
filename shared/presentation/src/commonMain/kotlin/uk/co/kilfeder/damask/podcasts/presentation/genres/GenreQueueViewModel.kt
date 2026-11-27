@@ -51,6 +51,7 @@ class GenreQueueViewModel internal constructor(
     fun onLoadMore() = size.update { it + PAGE_SIZE }
 
     fun onMarkPlayed(id: EpisodeId) {
+        graph.playback.onMarkedPlayed(id)
         viewModelScope.launch { graph.onDb { graph.userState.markPlayed(id.toKey(), PlayedBy.MARKED) } }
     }
 

@@ -91,6 +91,11 @@ object Sizes {
     val SheetCornerRadius = 28.dp
     val SheetHandleWidth = 32.dp
 
+    /** The mini-player above the tabs (MiniPlayer artboard): its height, artwork and progress bar. */
+    val MiniPlayerHeight = 64.dp
+    val MiniPlayerArtwork = 44.dp
+    val MiniPlayerProgressHeight = 3.dp
+
     /** Artwork in the show notes header (NowPlayingNotes artboard). */
     val NotesHeaderArtwork = 64.dp
 

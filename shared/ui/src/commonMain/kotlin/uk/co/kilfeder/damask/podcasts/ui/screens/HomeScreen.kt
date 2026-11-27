@@ -16,6 +16,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
+import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
 import uk.co.kilfeder.damask.podcasts.presentation.home.HomeUiState
 import uk.co.kilfeder.damask.podcasts.presentation.home.HomeViewModel
 import uk.co.kilfeder.damask.podcasts.ui.components.EpisodeRow
@@ -35,7 +36,7 @@ internal fun HomeScreen(
     graph: AppGraph,
     onSearch: () -> Unit,
     onImport: () -> Unit,
-    onOpenEpisode: (EpisodeId) -> Unit,
+    onOpenEpisode: (EpisodeId, PlaySource) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel { graph.homeViewModel() },
 ) {
@@ -61,7 +62,7 @@ private fun HomeContent(
     onLoadMore: () -> Unit,
     onSearch: () -> Unit,
     onImport: () -> Unit,
-    onOpenEpisode: (EpisodeId) -> Unit,
+    onOpenEpisode: (EpisodeId, PlaySource) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (state.loading) {
@@ -87,7 +88,7 @@ private fun HomeContent(
             if (state.inProgress.isNotEmpty()) {
                 sectionHeader("in-progress", stringResourceKey = Res.string.home_in_progress)
                 items(state.inProgress, key = { "p-${it.id.showId}-${it.id.guid}" }) { row ->
-                    EpisodeRow(row, onClick = { onOpenEpisode(row.id) })
+                    EpisodeRow(row, onClick = { onOpenEpisode(row.id, PlaySource.Resume) })
                 }
             }
             sectionHeader("up-next", stringResourceKey = Res.string.home_up_next)
@@ -97,7 +98,7 @@ private fun HomeContent(
             items(state.upNext, key = { "u-${it.id.showId}-${it.id.guid}" }) { row ->
                 EpisodeRow(
                     row = row,
-                    onClick = { onOpenEpisode(row.id) },
+                    onClick = { onOpenEpisode(row.id, PlaySource.UpNext) },
                     swipeLabel = markPlayed,
                     onSwipe = { onDismissEpisode(row.id) },
                 )

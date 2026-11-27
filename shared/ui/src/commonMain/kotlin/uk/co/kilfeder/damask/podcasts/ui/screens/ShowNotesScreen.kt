@@ -80,16 +80,21 @@ internal fun ShowNotesScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     Box(modifier) {
-        EpisodeLoaded(state) { episode -> ShowNotesContent(state, episode) }
+        EpisodeLoaded(state) { episode -> ShowNotesContent(state, episode, viewModel::onPlayPause) }
     }
 }
 
 @Composable
-private fun ShowNotesContent(state: EpisodeUiState, episode: EpisodeRowUi, modifier: Modifier = Modifier) {
+private fun ShowNotesContent(
+    state: EpisodeUiState,
+    episode: EpisodeRowUi,
+    onPlayPause: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val uriHandler = LocalUriHandler.current
     val links = remember(uriHandler) { SafeLinks(uriHandler) }
     Column(modifier.fillMaxSize()) {
-        Header(state, episode)
+        Header(state, episode, onPlayPause)
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.Space4),
             modifier = Modifier
@@ -116,7 +121,12 @@ private fun ShowNotesContent(state: EpisodeUiState, episode: EpisodeRowUi, modif
 }
 
 @Composable
-private fun Header(state: EpisodeUiState, episode: EpisodeRowUi, modifier: Modifier = Modifier) {
+private fun Header(
+    state: EpisodeUiState,
+    episode: EpisodeRowUi,
+    onPlayPause: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier.padding(horizontal = Spacing.Space3).padding(top = Spacing.Space2, bottom = Spacing.Space3)) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(Spacing.Space3),
@@ -144,14 +154,16 @@ private fun Header(state: EpisodeUiState, episode: EpisodeRowUi, modifier: Modif
                 size = Sizes.MinTouchTarget,
                 iconSize = Sizes.Icon,
                 pitch = Sizes.DamaskPitchSmall,
-                enabled = false,
-                onClick = {},
+                playing = state.isPlaying,
+                enabled = state.playbackAvailable,
+                onClick = onPlayPause,
             )
         }
         state.position?.let {
             PositionBar(
                 position = it,
                 showThumb = false,
+                onSeek = null,
                 modifier = Modifier.padding(horizontal = Spacing.Space3, vertical = Spacing.Space2),
             )
         }

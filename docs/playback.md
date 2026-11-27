@@ -23,6 +23,12 @@ Desktop and iOS have no engine yet (`NoAudioEngine`), so their controls show dis
 - **Mark played on the playing episode** stops it without saving a position over the mark.
 - **The player's duration** replaces the feed's once the media is prepared.
 
+## In the app
+
+- **Tapping an episode row plays it and opens its screen.** The row decides the context: Up Next rows play as Up Next, In Progress rows keep the context saved with them, genre queue rows play as that genre, Played rows play with no autoplay after. (`AppViewModel.onPlayEpisode`, `PlaySource`.)
+- **The mini-player** sits above the tabs on every screen while something is loaded: artwork, title, show, progress, play/pause. Tapping it opens the episode. It hides on that episode's own screen.
+- **The episode screen** has working controls once the episode is the one loaded: play/pause (the damask play button), back 10 s, forward 30 s, speed (steps through 0.8×, 1×, 1.2×, 1.5×, 1.8×, 2×), and the position bar (tap or drag; screen readers can set it). Play on an episode that isn't loaded starts it with its saved context. Errors show under the controls.
+
 ## Android
 
 - **Background playback.** `PlaybackService` runs ExoPlayer in a media session, so it keeps playing with the app closed, and the notification, lock screen, headphones and Bluetooth control it. Swiping the app away stops the service only when nothing is playing.

@@ -66,9 +66,6 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.PillShape
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 
-/** Playback isn't built yet: play, skip and speed show but stay disabled until it is. */
-private const val PLAYBACK_AVAILABLE = false
-
 /**
  * One episode, laid out like the design's Now Playing (NowPlayingPane), as an ordinary screen with
  * the top bar and tabs. Whether tapping an episode should also start playing it is still open.
@@ -92,7 +89,14 @@ internal fun NowPlayingScreen(
                 state = state,
                 episode = episode,
                 onOpenGenre = onOpenGenre,
-                onPlayedChange = { played -> if (played) viewModel.onMarkPlayed() else viewModel.onMarkUnplayed() },
+                controls = PlayerActions(
+                    onPlayPause = viewModel::onPlayPause,
+                    onSkipBack = viewModel::onSkipBack,
+                    onSkipForward = viewModel::onSkipForward,
+                    onCycleSpeed = viewModel::onCycleSpeed,
+                    onSeek = viewModel::onSeek,
+                    onPlayedChange = { played -> if (played) viewModel.onMarkPlayed() else viewModel.onMarkUnplayed() },
+                ),
                 onOpenNotes = onOpenNotes,
             )
         }
@@ -126,7 +130,7 @@ private fun Player(
     state: EpisodeUiState,
     episode: EpisodeRowUi,
     onOpenGenre: (String) -> Unit,
-    onPlayedChange: (Boolean) -> Unit,
+    controls: PlayerActions,
     onOpenNotes: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -134,12 +138,37 @@ private fun Player(
         Column(Modifier.weight(1f).padding(horizontal = Spacing.Space6)) {
             Artwork(episode.artworkUrl, Modifier.weight(1f).fillMaxWidth())
             Details(state, episode, onOpenGenre, Modifier.padding(top = Spacing.Space6))
-            state.position?.let { PositionBar(it, showThumb = true, modifier = Modifier.padding(top = Spacing.Space4)) }
-            Controls(state, onPlayedChange, Modifier.padding(top = Spacing.Space3))
+            state.position?.let {
+                PositionBar(
+                    position = it,
+                    showThumb = true,
+                    onSeek = controls.onSeek.takeIf { state.isCurrent },
+                    modifier = Modifier.padding(top = Spacing.Space4),
+                )
+            }
+            Controls(state, controls, Modifier.padding(top = Spacing.Space3))
+            state.error?.let {
+                Text(
+                    text = it,
+                    style = DamaskTextStyles.BodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = Spacing.Space2),
+                )
+            }
         }
         NotesPeek(state.notesPreview, onOpenNotes, Modifier.padding(top = Spacing.Space6))
     }
 }
+
+/** What the player's controls do. */
+internal class PlayerActions(
+    val onPlayPause: () -> Unit,
+    val onSkipBack: () -> Unit,
+    val onSkipForward: () -> Unit,
+    val onCycleSpeed: () -> Unit,
+    val onSeek: (Float) -> Unit,
+    val onPlayedChange: (Boolean) -> Unit,
+)
 
 /** The artwork fills the space left over, square, at most [Sizes.NowPlayingArtworkMax]. */
 @Composable
@@ -202,7 +231,8 @@ private fun Details(
 
 /** Speed, back 10, play, forward 30, mark played (NowPlayingPane artboard). */
 @Composable
-private fun Controls(state: EpisodeUiState, onPlayedChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+private fun Controls(state: EpisodeUiState, actions: PlayerActions, modifier: Modifier = Modifier) {
+    val live = state.playbackAvailable && state.isCurrent
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -210,20 +240,21 @@ private fun Controls(state: EpisodeUiState, onPlayedChange: (Boolean) -> Unit, m
     ) {
         val speedLabel = stringResource(Res.string.playback_speed, state.speed)
         TextButton(
-            onClick = {},
-            enabled = PLAYBACK_AVAILABLE,
+            onClick = actions.onCycleSpeed,
+            enabled = live,
             modifier = Modifier.semantics { contentDescription = speedLabel },
         ) { Text(state.speed, style = DamaskTextStyles.Label) }
-        SkipButton(Icons.Rounded.Replay10, stringResource(Res.string.skip_back))
+        SkipButton(Icons.Rounded.Replay10, stringResource(Res.string.skip_back), live, actions.onSkipBack)
         PlayButton(
             size = Sizes.NowPlayingPlayButton,
             iconSize = Sizes.NowPlayingPlayIcon,
             pitch = Sizes.DamaskPitchLarge,
-            enabled = PLAYBACK_AVAILABLE,
-            onClick = {},
+            playing = state.isPlaying,
+            enabled = state.playbackAvailable,
+            onClick = actions.onPlayPause,
         )
-        SkipButton(Icons.Rounded.Forward30, stringResource(Res.string.skip_forward))
-        PlayedToggle(state.isPlayed, onPlayedChange)
+        SkipButton(Icons.Rounded.Forward30, stringResource(Res.string.skip_forward), live, actions.onSkipForward)
+        PlayedToggle(state.isPlayed, actions.onPlayedChange)
     }
 }
 
@@ -241,8 +272,14 @@ private fun PlayedToggle(isPlayed: Boolean, onPlayedChange: (Boolean) -> Unit, m
 }
 
 @Composable
-private fun SkipButton(icon: ImageVector, label: String, modifier: Modifier = Modifier) {
-    IconButton(onClick = {}, enabled = PLAYBACK_AVAILABLE, modifier = modifier.size(Sizes.NowPlayingSkipButton)) {
+private fun SkipButton(
+    icon: ImageVector,
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    IconButton(onClick = onClick, enabled = enabled, modifier = modifier.size(Sizes.NowPlayingSkipButton)) {
         Icon(icon, contentDescription = label, modifier = Modifier.size(Sizes.NowPlayingSkipIcon))
     }
 }

@@ -1,6 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -47,6 +48,9 @@ import uk.co.kilfeder.damask.podcasts.presentation.app.AppUiState
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.app.Stage
 import uk.co.kilfeder.damask.podcasts.presentation.navigation.Destination
+import uk.co.kilfeder.damask.podcasts.ui.components.MiniPlayer
+import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.navigation.Tab
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.app_name
@@ -97,6 +101,7 @@ fun App(
                     graph = graph,
                     onSelectTab = viewModel::onSelectTab,
                     onNavigate = viewModel::onNavigate,
+                    onPlayEpisode = viewModel::onPlayEpisode,
                     onBack = viewModel::onBack,
                     onImportFinish = viewModel::onImportFinished,
                     onMessageShow = viewModel::onMessageShown,
@@ -113,6 +118,7 @@ private fun Shell(
     graph: AppGraph,
     onSelectTab: (Tab) -> Unit,
     onNavigate: (Destination) -> Unit,
+    onPlayEpisode: (EpisodeId, PlaySource) -> Unit,
     onBack: () -> Boolean,
     onImportFinish: (Int) -> Unit,
     onMessageShow: () -> Unit,
@@ -142,7 +148,7 @@ private fun Shell(
                 onSettings = { onNavigate(Destination.Settings) },
             )
         },
-        bottomBar = { TabBar(state.nav.tab, onSelectTab) },
+        bottomBar = { BottomBars(graph, state.nav.tab, top, onSelectTab, onNavigate) },
         snackbarHost = { SnackbarHost(snackbars) },
     ) { padding ->
         Box(contentAlignment = Alignment.TopCenter, modifier = Modifier.padding(padding).fillMaxSize()) {
@@ -151,7 +157,7 @@ private fun Shell(
                 top is Destination.GenreQueue -> GenreQueueScreen(
                     graph = graph,
                     categoryId = top.categoryId,
-                    onOpenEpisode = { onNavigate(Destination.Episode(it)) },
+                    onOpenEpisode = { onPlayEpisode(it, PlaySource.Genre(top.categoryId)) },
                     modifier = content,
                 )
                 top is Destination.Episode -> NowPlayingScreen(
@@ -165,7 +171,7 @@ private fun Shell(
                 top == Destination.Settings ->
                     SettingsScreen(graph, onImport = { onNavigate(Destination.Import) }, content)
                 top == Destination.Import -> ImportScreen(graph, onFinish = onImportFinish, modifier = content)
-                else -> TabContent(state.nav.tab, graph, onNavigate, onSelectTab, content)
+                else -> TabContent(state.nav.tab, graph, onNavigate, onPlayEpisode, onSelectTab, content)
             }
         }
     }
@@ -209,6 +215,7 @@ private fun TabContent(
     tab: Tab,
     graph: AppGraph,
     onNavigate: (Destination) -> Unit,
+    onPlayEpisode: (EpisodeId, PlaySource) -> Unit,
     onSelectTab: (Tab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -217,12 +224,33 @@ private fun TabContent(
             graph = graph,
             onSearch = { onSelectTab(Tab.SEARCH) },
             onImport = { onNavigate(Destination.Import) },
-            onOpenEpisode = { onNavigate(Destination.Episode(it)) },
+            onOpenEpisode = onPlayEpisode,
             modifier = modifier,
         )
         Tab.GENRES -> GenresScreen(graph, onOpenGenre = { onNavigate(Destination.GenreQueue(it)) }, modifier)
-        Tab.PLAYED -> PlayedScreen(graph, onOpenEpisode = { onNavigate(Destination.Episode(it)) }, modifier)
+        Tab.PLAYED -> PlayedScreen(graph, onOpenEpisode = { onPlayEpisode(it, PlaySource.Played) }, modifier)
         Tab.SEARCH -> SearchScreen(modifier)
+    }
+}
+
+/** The mini-player (when something is loaded) above the tabs. */
+@Composable
+private fun BottomBars(
+    graph: AppGraph,
+    tab: Tab,
+    top: Destination?,
+    onSelectTab: (Tab) -> Unit,
+    onNavigate: (Destination) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier) {
+        // On its own episode screen the mini-player would only repeat what's above it.
+        MiniPlayer(
+            graph = graph,
+            hiddenFor = (top as? Destination.Episode)?.id,
+            onOpen = { onNavigate(Destination.Episode(it)) },
+        )
+        TabBar(tab, onSelectTab)
     }
 }
 

@@ -8,7 +8,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.navigation.Destination
+import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
+import uk.co.kilfeder.damask.podcasts.presentation.playback.toContext
 import uk.co.kilfeder.damask.podcasts.presentation.navigation.NavState
 import uk.co.kilfeder.damask.podcasts.presentation.navigation.Tab
 
@@ -53,6 +56,13 @@ class AppViewModel internal constructor(private val graph: AppGraph) : ViewModel
     }
 
     fun onNavigate(destination: Destination) = nav.update { it.push(destination) }
+
+    /** Tapping an episode plays it and opens its screen (unless that's already showing). */
+    fun onPlayEpisode(id: EpisodeId, source: PlaySource) {
+        graph.playback.play(id, source.toContext())
+        val episode = Destination.Episode(id)
+        if (nav.value.top != episode) nav.update { it.push(episode) }
+    }
 
     /** Returns false when there was nothing to go back to, so the platform can handle back. */
     fun onBack(): Boolean {
