@@ -2,7 +2,6 @@ package uk.co.kilfeder.damask.podcasts.presentation.episodes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -31,8 +30,9 @@ data class PlayerPositionUi(
 data class NotesLink(val label: String, val url: String, val host: String)
 
 /**
- * Now Playing for one episode (design hand-off › NowPlayingPane, NowPlayingNotes): reached from
- * any episode row. Playback isn't built yet, so the transport controls are shown but disabled.
+ * One episode, laid out like the design's Now Playing (NowPlayingPane, NowPlayingNotes), as an
+ * ordinary pushed screen for now. Playback isn't built yet, so the transport controls are shown
+ * but disabled.
  */
 data class EpisodeUiState(
     val loading: Boolean = true,
@@ -50,24 +50,20 @@ data class EpisodeUiState(
     /** The first line of the notes, for the peek under the controls. */
     val notesPreview: String? = null,
     val links: List<NotesLink> = emptyList(),
-    /** The show notes view is open over the player. */
-    val notesOpen: Boolean = false,
 )
 
 class EpisodeViewModel internal constructor(
     private val graph: AppGraph,
     private val id: EpisodeId,
 ) : ViewModel() {
-    private val notesOpen = MutableStateFlow(false)
-
     val uiState: StateFlow<EpisodeUiState> =
-        combine(graph.library, graph.rotation, notesOpen) { library, rotation, open ->
+        combine(graph.library, graph.rotation) { library, rotation ->
             val key = id.toKey()
             val episode = library.episodesOf(key.showId).firstOrNull { it.key == key }
             if (episode == null) {
                 EpisodeUiState(loading = false)
             } else {
-                stateFor(episode, library, rotation, ShowNotes.parse(graph.onDb { graph.notes.of(key) }), open)
+                stateFor(episode, library, rotation, ShowNotes.parse(graph.onDb { graph.notes.of(key) }))
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), EpisodeUiState())
 
@@ -80,16 +76,11 @@ class EpisodeViewModel internal constructor(
         viewModelScope.launch { graph.onDb { graph.userState.markUnplayed(id.toKey()) } }
     }
 
-    fun onNotesOpenChange(open: Boolean) {
-        notesOpen.value = open
-    }
-
     private fun stateFor(
         episode: Episode,
         library: Library,
         rotation: Rotation,
         notes: List<NotesBlock>,
-        open: Boolean,
     ): EpisodeUiState {
         val category = library.showsById[episode.key.showId]
             ?.let(library::effectiveCategory)
@@ -105,7 +96,6 @@ class EpisodeViewModel internal constructor(
             notes = notes,
             notesPreview = notes.firstOrNull()?.spans?.joinToString("") { it.text }?.lineSequence()?.firstOrNull(),
             links = links(notes),
-            notesOpen = open && notes.isNotEmpty(),
         )
     }
 

@@ -54,6 +54,7 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.back
 import uk.co.kilfeder.damask.podcasts.ui.resources.episode_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_screen_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.settings
+import uk.co.kilfeder.damask.podcasts.ui.resources.show_notes
 import uk.co.kilfeder.damask.podcasts.ui.resources.shows_added
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_genres
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_home
@@ -68,6 +69,7 @@ import uk.co.kilfeder.damask.podcasts.ui.screens.Loading
 import uk.co.kilfeder.damask.podcasts.ui.screens.PlayedScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.SearchScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.SettingsScreen
+import uk.co.kilfeder.damask.podcasts.ui.screens.ShowNotesScreen
 import uk.co.kilfeder.damask.podcasts.ui.theme.DamaskTheme
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 
@@ -129,17 +131,6 @@ private fun Shell(
         }
     }
     BackHandler(enabled = top != null) { onBack() }
-    if (top is Destination.Episode) {
-        // Now Playing is full screen: no top bar or tabs (design hand-off › NowPlaying).
-        NowPlayingScreen(
-            graph = graph,
-            id = top.id,
-            onClose = { onBack() },
-            onOpenGenre = { onNavigate(Destination.GenreQueue(it)) },
-            modifier = modifier,
-        )
-        return
-    }
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -163,6 +154,14 @@ private fun Shell(
                     onOpenEpisode = { onNavigate(Destination.Episode(it)) },
                     modifier = content,
                 )
+                top is Destination.Episode -> NowPlayingScreen(
+                    graph = graph,
+                    id = top.id,
+                    onOpenGenre = { onNavigate(Destination.GenreQueue(it)) },
+                    onOpenNotes = { onNavigate(Destination.ShowNotes(top.id)) },
+                    modifier = content,
+                )
+                top is Destination.ShowNotes -> ShowNotesScreen(graph, top.id, content)
                 top == Destination.Settings ->
                     SettingsScreen(graph, onImport = { onNavigate(Destination.Import) }, content)
                 top == Destination.Import -> ImportScreen(graph, onFinish = onImportFinish, modifier = content)
@@ -247,6 +246,7 @@ private fun titleOf(state: AppUiState): StringResource = when (state.nav.top) {
     Destination.Import -> Res.string.import_screen_title
     is Destination.GenreQueue -> Res.string.tab_genres
     is Destination.Episode -> Res.string.episode_title
+    is Destination.ShowNotes -> Res.string.show_notes
     null -> if (state.nav.tab == Tab.HOME) Res.string.app_name else state.nav.tab.label
 }
 

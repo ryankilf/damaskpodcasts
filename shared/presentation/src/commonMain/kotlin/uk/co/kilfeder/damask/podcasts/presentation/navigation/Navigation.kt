@@ -11,6 +11,8 @@ sealed interface Destination {
 
     data class Episode(val id: EpisodeId) : Destination
 
+    data class ShowNotes(val id: EpisodeId) : Destination
+
     data object Settings : Destination
 
     data object Import : Destination

@@ -10,10 +10,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -21,7 +19,6 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.Forward30
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Replay10
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,8 +30,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.backhandler.BackHandler
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
@@ -61,7 +56,6 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.episode_gone_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.episode_no_notes
 import uk.co.kilfeder.damask.podcasts.ui.resources.mark_played
 import uk.co.kilfeder.damask.podcasts.ui.resources.mark_unplayed
-import uk.co.kilfeder.damask.podcasts.ui.resources.now_playing_close
 import uk.co.kilfeder.damask.podcasts.ui.resources.playback_speed
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_notes
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_notes_open
@@ -76,23 +70,45 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 private const val PLAYBACK_AVAILABLE = false
 
 /**
- * Now Playing (design hand-off › NowPlayingPane): reached from any episode row, full screen.
+ * One episode, laid out like the design's Now Playing (NowPlayingPane), as an ordinary screen with
+ * the top bar and tabs. Whether tapping an episode should also start playing it is still open.
  * Artwork with the ambient glow takes whatever height is left; the genre chip, title, show,
  * position bar and controls keep their spacing; the show notes peek sits at the bottom and opens
- * the notes view (NowPlayingNotes).
+ * the show notes screen.
  */
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun NowPlayingScreen(
     graph: AppGraph,
     id: EpisodeId,
-    onClose: () -> Unit,
     onOpenGenre: (String) -> Unit,
+    onOpenNotes: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: EpisodeViewModel = viewModel(key = "${id.showId}/${id.guid}") { graph.episodeViewModel(id) },
+    viewModel: EpisodeViewModel = viewModel(key = episodeKey(id)) { graph.episodeViewModel(id) },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    BackHandler(enabled = state.notesOpen) { viewModel.onNotesOpenChange(false) }
+    Box(modifier) {
+        EpisodeLoaded(state) { episode ->
+            Player(
+                state = state,
+                episode = episode,
+                onOpenGenre = onOpenGenre,
+                onPlayedChange = { played -> if (played) viewModel.onMarkPlayed() else viewModel.onMarkUnplayed() },
+                onOpenNotes = onOpenNotes,
+            )
+        }
+    }
+}
+
+/** One ViewModel per episode, shared by its player and show notes screens. */
+internal fun episodeKey(id: EpisodeId) = "episode/${id.showId}/${id.guid}"
+
+/** Loading, "episode not available", or [content] once the episode is known. */
+@Composable
+internal fun EpisodeLoaded(
+    state: EpisodeUiState,
+    modifier: Modifier = Modifier,
+    content: @Composable (EpisodeRowUi) -> Unit,
+) {
     val episode = state.episode
     when {
         state.loading -> Loading(modifier)
@@ -101,16 +117,7 @@ internal fun NowPlayingScreen(
             body = stringResource(Res.string.episode_gone_body),
             modifier = modifier,
         )
-        state.notesOpen -> ShowNotesView(state, episode, onClose = { viewModel.onNotesOpenChange(false) }, modifier)
-        else -> Player(
-            state = state,
-            episode = episode,
-            onClose = onClose,
-            onOpenGenre = onOpenGenre,
-            onPlayedChange = { played -> if (played) viewModel.onMarkPlayed() else viewModel.onMarkUnplayed() },
-            onOpenNotes = { viewModel.onNotesOpenChange(true) },
-            modifier = modifier,
-        )
+        else -> content(episode)
     }
 }
 
@@ -118,17 +125,13 @@ internal fun NowPlayingScreen(
 private fun Player(
     state: EpisodeUiState,
     episode: EpisodeRowUi,
-    onClose: () -> Unit,
     onOpenGenre: (String) -> Unit,
     onPlayedChange: (Boolean) -> Unit,
     onOpenNotes: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.fillMaxSize().statusBarsPadding()) {
+    Column(modifier.fillMaxSize()) {
         Column(Modifier.weight(1f).padding(horizontal = Spacing.Space6)) {
-            IconButton(onClick = onClose, modifier = Modifier.padding(top = Spacing.Space2)) {
-                Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = stringResource(Res.string.now_playing_close))
-            }
             Artwork(episode.artworkUrl, Modifier.weight(1f).fillMaxWidth())
             Details(state, episode, onOpenGenre, Modifier.padding(top = Spacing.Space6))
             state.position?.let { PositionBar(it, showThumb = true, modifier = Modifier.padding(top = Spacing.Space4)) }
@@ -257,7 +260,6 @@ private fun NotesPeek(preview: String?, onOpen: () -> Unit, modifier: Modifier =
                 RoundedCornerShape(topStart = Sizes.SheetCornerRadius, topEnd = Sizes.SheetCornerRadius),
             )
             .clickable(enabled = preview != null, onClickLabel = label, role = Role.Button, onClick = onOpen)
-            .navigationBarsPadding()
             .padding(horizontal = Spacing.Space6, vertical = Spacing.Space3),
     ) {
         SheetHandle(Modifier.align(Alignment.CenterHorizontally))
