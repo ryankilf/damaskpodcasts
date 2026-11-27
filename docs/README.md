@@ -30,7 +30,7 @@ The docs don't repeat either. They describe the implementation and record every 
 | Playback (Android Media3, desktop FFmpeg), Android Auto | Not started |
 | Downloads, background refresh scheduling | Not started |
 | Search backend (`shared/api`, `server/search`, `server/importer`, `deploy/`) | Specified ([spec › Search](spec.md#search)); not started |
-| OPML lookup, `podcast_guid` aliasing | Specified; not started |
+| `podcast_guid` aliasing | Specified; not started |
 | 18+ age gate, "Hide explicit" | Specified ([spec › Compliance](spec.md#compliance)); not started |
 | Sync, sign-in, billing | v1, not started |
 

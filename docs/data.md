@@ -58,7 +58,7 @@ Seeded rows use HLC 0, so any user rename, merge or delete wins over them.
 
 ## Planned: schema 3
 
-[Spec › Data model](spec.md#data-model) adds a nullable `show.podcast_guid`, filled from the feed's `podcast:guid` or from lookup. Shows with the same GUID alias like shows with the same `feed_url_norm`, and URL normalisation stays the fallback. That will be migration `2.sqm`, and `ShowAliases.detect` will group by either key.
+[Spec › Data model](spec.md#data-model) adds a nullable `show.podcast_guid`, filled from the feed's `podcast:guid`. Shows with the same GUID alias like shows with the same `feed_url_norm`, and URL normalisation stays the fallback. That will be migration `2.sqm`, and `ShowAliases.detect` will group by either key.
 
 ## Changing the schema
 

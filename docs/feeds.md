@@ -1,6 +1,6 @@
 # Feeds
 
-Feeds are fetched on the device; the server never touches them. Code is in `core/feed`, `core/importer` and `core/data/FeedStore`.
+Feeds are fetched on the device; the server never touches them. Our search gateway is for discovery only: import never sends feed URLs to it. Code is in `core/feed`, `core/importer` and `core/data/FeedStore`.
 
 ## Import (first run)
 
@@ -25,10 +25,6 @@ sequenceDiagram
 - `Opml.parse` reads every `<outline xmlUrl=…>` at any depth and drops duplicates by normalised URL. A missing title becomes `""`, never the URL.
 - Nothing is written before `confirm`. Feeds that failed to fetch can still be confirmed; the next refresh retries them.
 - **Prefill:** the feed's first `itunes:category` is normalised (case, `&` vs `and`, and pre-2019 names like *Games & Hobbies* become *Leisure*; see `AppleCategories`). It's then looked up in `apple_category_map`, where an exact subcategory row beats the category's `''` row. Uncategorised if nothing maps.
-
-### Planned: lookup first
-
-[Spec › Search](spec.md#search) changes import: one batched `POST /v1/lookup` to our search gateway, before any feed is fetched, pre-fills each show's category, artwork and `itunesType` and flags moved feeds. Feeds the index doesn't know (private feeds, for one) will still need fetching to prefill. Whether private feed URLs may be sent to lookup at all is an open question in the spec.
 
 ## Show IDs
 

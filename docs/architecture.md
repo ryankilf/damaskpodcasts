@@ -23,12 +23,12 @@ graph TD
 | `iosApp` | Swift entry point hosting Compose | |
 | `detekt-rules` | Project lint rules (see [guardrails](guardrails.md)) | |
 | `architecture-tests` | Konsist tests for the layering | |
-| `shared/api` *(planned)* | Search API DTOs and the feed URL normaliser, shared by app and server | Anything but kotlinx-serialization |
+| `shared/api` *(planned)* | Search API DTOs, shared by app and server | Anything but kotlinx-serialization |
 | `server/search` *(planned)* | Ktor search gateway (JVM) | Any `shared/` module except `shared/api` |
 | `server/importer` *(planned)* | Weekly Podcast Index dump to Meilisearch CLI (JVM) | Any `shared/` module except `shared/api` |
 | `deploy/` *(planned)* | docker-compose, Dockerfiles, Meilisearch settings, importer schedule | |
 
-The server side is specified in [spec › Search](spec.md#search) and the layout in [spec › Architecture](spec.md#architecture). When `shared/api` exists, `core.sync.FeedUrl` moves there so the app and the server share one normaliser.
+The server side is specified in [spec › Search](spec.md#search) and the layout in [spec › Architecture](spec.md#architecture).
 
 Packages follow the modules: `uk.co.kilfeder.damask.podcasts.core`, `.presentation`, `.ui`.
 

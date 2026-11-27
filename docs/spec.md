@@ -81,7 +81,7 @@ The home screen leads with what you've started, then the cross-genre rotation.
 | Genre queue | That category's in-progress episodes, then one episode per show, interleaved | In-progress first, then shows by LRP |
 | Now Playing | The current episode, held until it is played. Starting another episode leaves this one in In Progress at its saved position | — |
 | Played | Log of every play session, finished episodes included; supports re-listening and undoing an accidental mark-played | Newest first |
-| Import | OPML file, one batched lookup against our index, then a confirm-or-change category list, one row per show | Alphabetical |
+| Import | OPML file, then a confirm-or-change category list, one row per show | Alphabetical |
 | Search | Results from our index of the Podcast Index catalogue, with their artwork; "Hide explicit" applies. Subscribing sends the show through the same category confirmation step | Index relevance, then popularity |
 
 Design work lives in the [screen flow board](https://claude.ai/artifact/AEBbsBe7TLKUWNa2QKms3Q) and the [Podcast App design system](https://claude.ai/artifact/EZHMHvdS5nqQch8gN5a4SK).
@@ -148,7 +148,7 @@ CREATE TABLE show (
   id             TEXT PRIMARY KEY,       -- UUIDv5(first feed_url); fixed for life
   feed_url       TEXT NOT NULL,          -- current URL; mutable; a secret for private feeds
   feed_url_norm  TEXT NOT NULL,          -- normalised for duplicate detection (see Sync)
-  podcast_guid   TEXT,                   -- podcast:guid from the feed or from lookup; same GUID = same show
+  podcast_guid   TEXT,                   -- podcast:guid from the feed; same GUID = same show
   category_id    TEXT NOT NULL REFERENCES category(id),  -- exactly one
   episode_order  TEXT,                   -- NEWEST | OLDEST; NULL = auto from itunes:type
   keep_mode      TEXT,                   -- LATEST | ALL; NULL = auto from itunes:type
@@ -313,13 +313,13 @@ Devices that are only browsing never write playback state.
 
 The query string is **never** touched, because premium tokens live in it. When two subscribed shows share a `feed_url_norm`, the group's root is the show with the earliest HLC (ties broken by ID). Every other member gets a `show_alias` row pointing straight at that root, never at another alias. Every device computes the same root from the same rows, and aliases are re-flattened on each pull. The alias's state and settings are then read through `canonical()`, so nothing is rewritten.
 
-**Same GUID, same show.** `show.podcast_guid` is filled from the feed's `podcast:guid` or from lookup. Two subscribed shows with the same GUID are the same show and are aliased exactly as above. URL normalisation stays the fallback when either show has no GUID. The normaliser lives in `shared/api`, so the app and the search server use one implementation.
+**Same GUID, same show.** `show.podcast_guid` is filled from the feed's `podcast:guid`. Two subscribed shows with the same GUID are the same show and are aliased exactly as above. URL normalisation stays the fallback when either show has no GUID.
 
 **Auth.** Social sign-in only: Google on Android, Automotive OS and desktop, and Sign in with Apple on iOS (required alongside Google). There's no email/password and no magic links, so no SMTP is needed. Phones get the native account picker through supabase-kt Compose Auth; desktop uses supabase-kt's localhost callback. Every server table has `user_id UUID NOT NULL DEFAULT auth.uid()` with the row-level security policy `user_id = auth.uid()`, so the publishable key can ship in the app.
 
 ## Search
 
-Search and OPML lookup run on our own index, built weekly from Podcast Index's public catalogue dump. The app never talks to Podcast Index: their terms (v2.0, October 2026) forbid API credentials in client code and any public service that proxies their API, but allow downloading the weekly dump and running our own index and API from it.
+Search runs on our own index, built weekly from Podcast Index's public catalogue dump. It's for discovery only: imported and subscribed feeds are always fetched directly. The app never talks to Podcast Index: their terms (v2.0, October 2026) forbid API credentials in client code and any public service that proxies their API, but allow downloading the weekly dump and running our own index and API from it.
 
 **Shape.** One small VPS runs Meilisearch (community edition, MIT) on `127.0.0.1:7700` and a Ktor gateway beside it. The gateway is the only public endpoint, reached through a Cloudflare Tunnel, so the box opens no inbound ports.
 
@@ -327,7 +327,7 @@ Search and OPML lookup run on our own index, built weekly from Podcast Index's p
 
 1. Download the dump from podcastindex.org/datasets and read it with sqlite-jdbc.
 2. Keep a feed only if it isn't dead, isn't a duplicate of another feed, has episodes, and last answered with a 2xx. Drop junk: a popularity score of 0 together with fewer than 3 episodes, or nothing newer than 3 years.
-3. Map each feed to a small document: ID, title, author, owner name, artwork, feed URL with its normalised forms (`urlNorm`, `originalUrlNorm`), podcast GUID, language, explicit flag, `itunesType`, episode count, newest item date, popularity score, categories (`category1..10`, deduplicated) and `dedupeKey`. Every other column is dropped.
+3. Map each feed to a small document: ID, title, author, owner name, artwork, feed URL, podcast GUID, language, explicit flag, `itunesType`, episode count, newest item date, popularity score, categories (`category1..10`, deduplicated) and `dedupeKey`. Every other column is dropped.
 4. Build a fresh index `podcasts_<yyyyMMdd>`, apply the settings, upload in batches and wait for every task to succeed. Swap it with `podcasts`, then delete the old index. Any failure leaves `podcasts` untouched and the run exits non-zero.
 
 Meilisearch's indexing memory is capped, so an import can't starve the gateway.
@@ -339,16 +339,13 @@ Meilisearch's indexing memory is capped, so an import can't starve the gateway.
 | Endpoint | Does |
 | --- | --- |
 | `GET /v1/search` | `q` (1–100 characters after trimming), optional `lang` (matches the language prefix) and `hideExplicit`, `limit` up to 20, `offset` up to 40. Out-of-range input is a 400. Returns the hits and an estimated total |
-| `POST /v1/lookup` | 1–500 feed URLs, normalised and matched against each feed's current and original URL. Each result carries its match, or none, and `moved` when the feed's current URL differs from the one asked about |
 | `GET /health` | No auth. Reports the gateway up and Meilisearch reachable |
 
 A hit carries raw facts only: Podcast Index ID, podcast GUID, title, author, artwork, feed URL, language, categories, `itunesType`, explicit flag, episode count and newest item date. The client decides labels such as "Ended".
 
-**OPML import.** One batched lookup, before any feed is fetched, pre-fills each show's category, artwork and `itunesType`, and flags feeds that have moved. *Open question: lookup sends every OPML URL to our server, including private feed URLs, which conflicts with "the URL is a secret" in Premium feeds.*
-
 **Auth.** Every install has a Supabase session, anonymous until the user subscribes, so the gateway accepts any valid Supabase access token, anonymous ones included. Search isn't gated on entitlement. Tokens are verified locally against Supabase's published keys (ES256 by default): expiry, issuer and audience are checked, and the keys are cached, refreshed hourly or when an unknown key ID appears. The gateway never calls Supabase per request and holds no shared JWT secret. The private build has no account, so it sends a private token instead, compared in constant time and disabled when the server doesn't set one.
 
-**Limits.** Per user (the token's `sub`): search allows bursts of 20, refilling at 1 a second; lookup allows 5 a minute. Over the limit is a 429 with `Retry-After`. Logs record method, path, status, latency and a hash of `sub`, never query text or lookup URLs. Meilisearch errors are a 503, never a stack trace.
+**Limits.** Per user (the token's `sub`): search allows bursts of 20, refilling at 1 a second. Over the limit is a 429 with `Retry-After`. Logs record method, path, status, latency and a hash of `sub`, never query text. Meilisearch errors are a 503, never a stack trace.
 
 **Private-build passthrough.** Search sits behind a `SearchSource` interface. An optional source calls the Podcast Index API with the key and secret held on the server (environment only) and an honest `Damask/<version>` User-Agent. It's on only when `PI_PASSTHROUGH=true`, for the private build before the first import exists, and never for public users unless Podcast Index agree in writing.
 
@@ -360,14 +357,14 @@ All logic lives in a shared KMP module. Each platform app supplies only audio pl
 
 &#91;embedded content: architecture · shared module + 3 platform apps\]
 
-Each platform implements the Player API and reports position back to the shared module, which writes the play events. Once you've subscribed, episodes come straight from each show's RSS feed; our search index is used only for discovery and import lookup.
+Each platform implements the Player API and reports position back to the shared module, which writes the play events. Once you've subscribed, episodes come straight from each show's RSS feed; our search index is used only for discovery.
 
 **Repository layout.**
 
 | Path | Contains |
 | --- | --- |
 | `shared/core`, `shared/presentation`, `shared/ui` | The app's shared code: rules and data, ViewModels, Compose screens |
-| `shared/api` | The search API's `@Serializable` request and response types, and the feed URL normaliser. Pure Kotlin on every app target plus JVM; depends only on kotlinx-serialization |
+| `shared/api` | The search API's `@Serializable` request and response types. Pure Kotlin on every app target plus JVM; depends only on kotlinx-serialization |
 | `server/search` | The Ktor search gateway (JVM) |
 | `server/importer` | The weekly dump-to-Meilisearch CLI (JVM) |
 | `deploy/` | docker-compose, Dockerfiles, Meilisearch settings, the importer's schedule |
@@ -547,7 +544,7 @@ Every library is under a permissive licence or the LGPL; nothing is GPL. Search 
 
 **Patents.** MP3 patents have expired. FFmpeg's own AAC decoder on desktop isn't covered by a patent licence, whereas the OS decoders on Android, iOS, macOS and Windows are. In a paid product this is a little more exposed. Where the build supports it, prefer FFmpeg's wrappers around the OS's own licensed decoders: `aac_at` (AudioToolbox) on macOS and `aac_mf` (Media Foundation) on Windows. Check during the desktop spike whether bytedeco's builds include them. Linux uses FFmpeg's own decoder; that risk is accepted.
 
-**Podcast Index.** No build ships the key: the app only ever calls our gateway, and the index is rebuilt weekly from the public dump, as the terms (v2.0) allow. Every request we make to Podcast Index (the dump download, and the private-build passthrough) carries an honest `Damask/<version>` User-Agent. Everything the app keeps about a show comes from its own feed, apart from the podcast GUID, which lookup can supply. The iTunes Search API was rejected because Apple's terms permit its content only for promoting Apple's stores.
+**Podcast Index.** No build ships the key: the app only ever calls our gateway, and the index is rebuilt weekly from the public dump, as the terms (v2.0) allow. Every request we make to Podcast Index (the dump download, and the private-build passthrough) carries an honest `Damask/<version>` User-Agent. Search results are never stored: everything the app keeps about a show comes from its own feed. The iTunes Search API was rejected because Apple's terms permit its content only for promoting Apple's stores.
 
 ## Decisions
 
@@ -557,7 +554,7 @@ Questions that came up while the spec was being written, with how each was settl
 - **Definition of "finished".** Decided: the true end, or stopping with 2 minutes or less left (see Finishing and autoplay). Multi-part stories inside episodic shows aren't detected, because no feed tag marks them. A show can be switched to oldest-first by hand.
 - **Unknown duration.** The player's duration replaces the feed's \`itunes:duration\` as soon as the media is prepared. Unknown durations use a 10-minute threshold (see Derived values). Dynamic ad insertion is handled by keeping one copy per device and rewinding when the copies don't match (see Storage).
 - **Category list.** Decided: categories are user-created, and Apple's categories act as overridable defaults through the mapping table.
-- **Search backend.** Decided (Nov 2026): our own Meilisearch index, rebuilt weekly from the Podcast Index dump, behind a Ktor gateway on one VPS (see Search). Podcast Index's terms v2.0 forbid client-side credentials and public proxies of their API.
+- **Search backend.** Decided (Nov 2026): our own Meilisearch index, rebuilt weekly from the Podcast Index dump, behind a Ktor gateway on one VPS (see Search). Search is for discovery only; there is no bulk lookup for OPML import, so private feed URLs never reach our server. Podcast Index's terms v2.0 forbid client-side credentials and public proxies of their API.
 - **Age rating.** Decided (Nov 2026): 18+ only, everywhere, launching in the UK first (see Compliance).
 - **Sync transport.** Decided: Supabase, with social sign-in only (see Sync). Drive, Firebase and gpodder were considered and rejected.
 - **iOS UI.** Decided: Compose Multiplatform first. The thin UI rule (see Architecture) lets screens move to SwiftUI one at a time later. CarPlay, the audio session and Now Playing are native Swift either way.
