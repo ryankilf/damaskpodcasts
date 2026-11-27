@@ -1,4 +1,4 @@
-This is a Kotlin Multiplatform project targeting Android, iOS, Desktop (JVM).
+Damask: a podcast player that rotates genres. Kotlin Multiplatform, targeting Android, iOS and desktop (JVM).
 
 * [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
   you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
@@ -27,12 +27,11 @@ Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
 - Everything (tests, lint, architecture rules): `./gradlew check`
 - Per module, e.g. `./gradlew :shared:presentation:jvmTest`, `:shared:ui:testAndroidHostTest`, `:shared:core:iosSimulatorArm64Test`
 
-### Lint & architecture rules
+### How it works
 
-All of these run as part of `./gradlew check`.
+See [docs/](./docs/README.md): architecture, the rotation rules, the database, feeds, the lint and architecture guardrails, and every place the code interprets the spec. The product spec and design hand-off are in [spec-and-design/](./spec-and-design).
 
-| What | Where | Enforced by |
-|---|---|---|
+---|---|---|
 | Cyclomatic complexity ≤ 10, cognitive complexity ≤ 15 (plus nesting depth, method length) | [config/detekt/detekt.yml](./config/detekt/detekt.yml) | detekt (`./gradlew detekt`) |
 | `Image`/`Icon`/`AsyncImage` must pass `contentDescription =` as a named argument (`null` allowed, but only when written out) | `ContentDescriptionRequired` | [:detekt-rules](./detekt-rules) |
 | `clickable`/`toggleable`/`selectable`/... must pass a non-null `role =` | `ClickableRoleRequired` | [:detekt-rules](./detekt-rules) |
