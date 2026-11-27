@@ -23,7 +23,8 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.TriStateCheckbox
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -141,12 +142,16 @@ private fun ImportContent(
             onConfirm = onConfirm,
             modifier = modifier,
         )
-        is ImportUiState.Subscribing -> Progress(
-            label = stringResource(Res.string.import_subscribing, state.done, state.total),
-            done = state.done,
-            total = state.total,
-            modifier = modifier,
-        )
+        is ImportUiState.Subscribing -> Column(modifier.fillMaxSize()) {
+            ImportGrid(state.tiles, Modifier.weight(1f).fillMaxWidth().padding(Spacing.Space4), revealAsLoaded = false)
+            Progress(
+                label = stringResource(Res.string.import_subscribing, state.done, state.total),
+                done = state.done,
+                total = state.total,
+                modifier = Modifier.fillMaxWidth(),
+                fill = false,
+            )
+        }
         is ImportUiState.Done -> Message(
             title = stringResource(Res.string.import_done, state.count),
             modifier = modifier,
@@ -347,7 +352,7 @@ private fun CategorySheet(
     val matches = categories.matching(query)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        sheetState = rememberBottomSheetState(SheetValue.Hidden, setOf(SheetValue.Hidden, SheetValue.Expanded)),
         modifier = modifier,
     ) {
         Text(

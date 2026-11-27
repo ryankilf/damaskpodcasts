@@ -62,6 +62,7 @@
     <string name="import_tile_waiting">%1$s, waiting</string>
     <string name="import_tile_read">%1$s, read</string>
     <string name="import_tile_failed">%1$s, couldn’t be read</string>
+    <string name="import_tile_saved">%1$s, saved</string>
     <string name="import_tile_unnamed">Show %1$d of %2$d</string>
     <string name="import_all_shows">All shows</string>
     <string name="import_subscribing">Saving shows: %1$d of %2$d</string>

@@ -39,7 +39,15 @@ data class ImportRowUi(
     val selected: Boolean = true,
 )
 
-enum class TileStatus { WAITING, READ, FAILED }
+enum class TileStatus {
+    /** Not read (or, while saving, not saved) yet. */
+    WAITING,
+    READ,
+    FAILED,
+
+    /** Subscribed, while saving. */
+    SAVED,
+}
 
 /** One show in the import grid. [name] is null when neither the OPML nor the feed names it. */
 data class ImportTileUi(
@@ -66,8 +74,12 @@ sealed interface ImportUiState {
         val allSelected: Boolean get() = rows.isNotEmpty() && rows.all { it.selected }
     }
 
-    /** Saving shows and their episodes: [done] of [total]. */
-    data class Subscribing(val done: Int = 0, val total: Int = 0) : ImportUiState
+    /** Saving shows and their episodes: [done] of [total]; each ticked show's tile brightens as it's saved. */
+    data class Subscribing(
+        val done: Int = 0,
+        val total: Int = 0,
+        val tiles: List<ImportTileUi> = emptyList(),
+    ) : ImportUiState
 
     data class Done(val count: Int) : ImportUiState
 
@@ -115,11 +127,20 @@ class ImportViewModel internal constructor(private val graph: AppGraph) : ViewMo
     fun onConfirm() {
         val review = state.value as? ImportUiState.Review ?: return
         if (review.selectedCount == 0) return
-        state.value = ImportUiState.Subscribing(0, review.selectedCount)
+        val selected = review.rows.filter { it.selected }
+        val tiles = selected.mapIndexed { i, row ->
+            ImportTileUi(i + 1, name = row.title.ifBlank { null }, artworkUrl = row.artworkUrl, TileStatus.WAITING)
+        }
+        state.value = ImportUiState.Subscribing(0, selected.size, tiles)
         viewModelScope.launch {
-            val choices = review.rows.filter { it.selected }.map { candidates[it.index] to CategoryId(it.categoryId) }
+            val choices = selected.map { candidates[it.index] to CategoryId(it.categoryId) }
             graph.onDb {
-                graph.importer.confirm(choices) { done, total -> state.value = ImportUiState.Subscribing(done, total) }
+                graph.importer.confirm(choices) { done, total ->
+                    val saved = tiles.mapIndexed { i, tile ->
+                        if (i < done) tile.copy(status = TileStatus.SAVED) else tile
+                    }
+                    state.value = ImportUiState.Subscribing(done, total, saved)
+                }
             }
             state.value = ImportUiState.Done(choices.size)
         }
