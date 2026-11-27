@@ -1,6 +1,8 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -18,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -27,7 +30,6 @@ import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
-import coil3.request.crossfade
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.importer.ImportTileUi
 import uk.co.kilfeder.damask.podcasts.presentation.importer.TileStatus
@@ -40,6 +42,7 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.import_tile_waiting
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 
 private const val DIM_ALPHA = 0.38f
+private const val FADE_IN_MS = 400
 
 /**
  * One tile per show, artwork fading in as each feed is read; failed feeds become dimmed outlines.
@@ -56,7 +59,8 @@ private const val DIM_ALPHA = 0.38f
 @Composable
 internal fun ImportGrid(tiles: List<ImportTileUi>, modifier: Modifier = Modifier, revealAsLoaded: Boolean = true) {
     val shown = if (revealAsLoaded) rememberRevealOrder(tiles) else tiles
-    BoxWithConstraints(contentAlignment = Alignment.Center, modifier = modifier) {
+    // Top-aligned: the mosaic grows downwards and never shifts as tiles are added.
+    BoxWithConstraints(contentAlignment = Alignment.TopCenter, modifier = modifier) {
         // Sized for every show from the start, so the mosaic doesn't resize as it grows.
         val layout = gridLayout(tiles.size, maxWidth, maxHeight)
         Column {
@@ -116,8 +120,13 @@ private fun Tile(tile: ImportTileUi, total: Int, modifier: Modifier = Modifier) 
     }
     // Waiting tiles with artwork (while saving) show it dimmed, brightening once saved.
     val brightness by animateFloatAsState(if (tile.status == TileStatus.WAITING) DIM_ALPHA else 1f)
+    // Each tile fades in as it appears. Its image is already in memory by then, and Coil doesn't
+    // crossfade memory-cache hits, so the tile does it.
+    val appear = remember { Animatable(0f) }
+    LaunchedEffect(Unit) { appear.animateTo(1f, tween(FADE_IN_MS)) }
     Box(
         modifier = modifier
+            .graphicsLayer { alpha = appear.value }
             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             .semantics { contentDescription = label },
     ) {
@@ -130,10 +139,7 @@ private fun Tile(tile: ImportTileUi, total: Int, modifier: Modifier = Modifier) 
             )
         } else if (tile.artworkUrl != null) {
             AsyncImage(
-                model = ImageRequest.Builder(LocalPlatformContext.current)
-                    .data(tile.artworkUrl)
-                    .crossfade(true)
-                    .build(),
+                model = tile.artworkUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.matchParentSize().alpha(brightness),

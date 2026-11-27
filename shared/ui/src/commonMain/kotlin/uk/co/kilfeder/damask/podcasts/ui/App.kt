@@ -31,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
+import coil3.request.crossfade
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -70,6 +71,8 @@ fun App(
     setSingletonImageLoaderFactory { context ->
         ImageLoader.Builder(context)
             .components { add(KtorNetworkFetcherFactory(graph.imageHttpClient)) }
+            // Artwork fades in everywhere once it arrives (not for memory-cache hits, which are instant).
+            .crossfade(true)
             .build()
     }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
