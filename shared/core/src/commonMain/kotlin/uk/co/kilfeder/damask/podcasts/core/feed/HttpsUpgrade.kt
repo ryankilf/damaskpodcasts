@@ -38,14 +38,29 @@ private suspend fun <T> attempt(block: suspend () -> T): T? = try {
 private const val FIRST_ERROR_STATUS = 400
 
 /**
- * A short, readable reason for a failed request, for the UI and logs. Never includes the URL.
- * Exception types differ by platform, so they're matched by name.
+ * A short, plain-English reason for a failed request, shown to users and logged. Never includes
+ * the URL. Exception types differ by platform, so they're matched by name.
  */
 internal fun describeNetworkFailure(e: Throwable): String = when (e::class.simpleName) {
     // Android refusing plain HTTP ("CLEARTEXT communication not permitted").
-    "UnknownServiceException" -> "Not available over a secure connection"
-    "HttpRequestTimeoutException", "SocketTimeoutException", "ConnectTimeoutException" -> "Timed out"
-    "UnknownHostException", "ConnectException", "NoRouteToHostException" -> "Couldn’t connect"
+    "UnknownServiceException" -> "No secure connection available"
+    "HttpRequestTimeoutException", "SocketTimeoutException", "ConnectTimeoutException" -> "Took too long"
     "SSLHandshakeException", "SSLException", "SSLPeerUnverifiedException" -> "Secure connection failed"
-    else -> "Network error"
+    else -> "Couldn’t connect"
 }
+
+/** A plain-English reason for an HTTP error status (never the number itself). */
+internal fun describeStatus(status: Int): String = when (status) {
+    HTTP_NOT_FOUND, HTTP_GONE -> "This show has gone"
+    HTTP_TOO_MANY_REQUESTS -> "The show’s server is busy"
+    in HTTP_SERVER_ERRORS -> "The show’s server is having problems"
+    else -> "Couldn’t load it"
+}
+
+/** 401 / 403: a private feed whose subscription has lapsed, or one that needs a login. */
+const val NEEDS_LOGIN = "Needs a login or subscription"
+
+private const val HTTP_NOT_FOUND = 404
+private const val HTTP_GONE = 410
+private const val HTTP_TOO_MANY_REQUESTS = 429
+private val HTTP_SERVER_ERRORS = 500..599

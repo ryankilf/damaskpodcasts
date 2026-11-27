@@ -53,7 +53,8 @@ class FeedFetcherTest {
         web.status("https://example.com/private", HttpStatusCode.Forbidden)
         web.status("https://example.com/broken", HttpStatusCode.InternalServerError)
         assertEquals(FetchResult.Unavailable(403), web.fetcher.fetch("https://example.com/private"))
-        assertEquals(FetchResult.Failed("HTTP 500"), web.fetcher.fetch("https://example.com/broken"))
+        val broken = web.fetcher.fetch("https://example.com/broken")
+        assertEquals(FetchResult.Failed("The show’s server is having problems"), broken)
     }
 
     @Test
@@ -79,8 +80,9 @@ class FeedFetcherTest {
 
     @Test
     fun failuresAreDescribedReadably() {
-        assertEquals("Not available over a secure connection", describeNetworkFailure(UnknownServiceException()))
-        assertEquals("Network error", describeNetworkFailure(IllegalStateException()))
+        assertEquals("No secure connection available", describeNetworkFailure(UnknownServiceException()))
+        assertEquals("Couldn’t connect", describeNetworkFailure(IllegalStateException()))
+        assertEquals("This show has gone", describeStatus(404))
     }
 
     private class UnknownServiceException : Exception()

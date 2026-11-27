@@ -2,6 +2,9 @@ package uk.co.kilfeder.damask.podcasts.core.feed
 
 class FeedParseException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
+/** Shown to users when a show's address doesn't lead to a podcast. */
+private const val NOT_A_FEED = "This isn’t a podcast feed"
+
 /** RSS 2.0 + iTunes podcast tags. Lenient: real-world feeds are messy. */
 object FeedParser {
 
@@ -9,9 +12,9 @@ object FeedParser {
         val root = try {
             Xml.parse(xml)
         } catch (e: XmlParseException) {
-            throw FeedParseException("Not a readable feed", e)
+            throw FeedParseException(NOT_A_FEED, e)
         }
-        val channel = root.child("channel") ?: throw FeedParseException("Not an RSS feed")
+        val channel = root.child("channel") ?: throw FeedParseException(NOT_A_FEED)
         return FeedDocument(
             title = channel.childText("title").orEmpty(),
             imageUrl = channel.child("image", Namespace.ITUNES)?.attr("href")

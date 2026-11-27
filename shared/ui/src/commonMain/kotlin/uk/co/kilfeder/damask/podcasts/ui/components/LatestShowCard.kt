@@ -41,13 +41,14 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_latest
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 
-/** How long each cover stays still after its slide finishes. */
-private const val DWELL_MS = 3_000L
+/** From one cover starting to slide in to the next (the slide always gets to finish first). */
+private const val CYCLE_MS = 2_500L
 
 /**
  * The newest show's cover (no caption) on an elevated card with an ambient glow, a companion
- * to the import progress bar. A newer show slides in from the end edge and pushes the current one out towards the start, at most
- * once per slide-plus-[DWELL_MS]; covers in between are skipped. Each image is downloaded before
+ * to the import progress bar. A newer show slides in from the end edge and pushes the current
+ * one out towards the start, at most
+ * once per [CYCLE_MS]; covers in between are skipped. Each image is downloaded before
  * it slides in. The slide uses the OS's standard duration ([platformMediumAnimationMillis]).
  *
  * Decorative for screen readers apart from its label ("Latest: …"); it never announces itself,
@@ -89,7 +90,7 @@ private fun rememberPacedLatest(latest: LatestShowUi?, slideMs: Int): LatestShow
             val next = snapshotFlow { newest }.filterNotNull().filter { it != shown }.first()
             loader.execute(ImageRequest.Builder(context).data(next.artworkUrl).build())
             shown = next
-            delay(slideMs + DWELL_MS)
+            delay(CYCLE_MS.coerceAtLeast(slideMs.toLong()))
         }
     }
     return shown

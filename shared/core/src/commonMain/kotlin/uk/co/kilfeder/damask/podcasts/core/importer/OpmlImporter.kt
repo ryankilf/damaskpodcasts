@@ -14,6 +14,7 @@ import uk.co.kilfeder.damask.podcasts.core.feed.FeedFetcher
 import uk.co.kilfeder.damask.podcasts.core.feed.FeedParseException
 import uk.co.kilfeder.damask.podcasts.core.feed.FeedParser
 import uk.co.kilfeder.damask.podcasts.core.feed.FetchResult
+import uk.co.kilfeder.damask.podcasts.core.feed.NEEDS_LOGIN
 import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
 import uk.co.kilfeder.damask.podcasts.core.model.ShowId
 
@@ -110,7 +111,7 @@ class OpmlImporter(
                 null to e.message
             }
             FetchResult.NotModified -> null to "Not modified"
-            is FetchResult.Unavailable -> null to "Feed unavailable (HTTP ${result.status})"
+            is FetchResult.Unavailable -> null to NEEDS_LOGIN
             is FetchResult.Failed -> null to result.reason
         }
 

@@ -18,9 +18,9 @@
     <string name="home_up_next">Up Next</string>
     <string name="home_refresh">Check for new episodes</string>
     <string name="home_no_shows_title">No podcasts yet</string>
-    <string name="home_no_shows_body">Find shows to follow, or bring your podcasts across from Pocket Casts.</string>
+    <string name="home_no_shows_body">Find shows to follow, or bring across the shows you follow in your old podcast app.</string>
     <string name="home_search">Search for podcasts</string>
-    <string name="home_empty">Nothing to play yet. New episodes appear here after the next refresh.</string>
+    <string name="home_empty">Nothing to play yet. New episodes will show up here.</string>
     <string name="mark_played">Mark played</string>
     <string name="mark_unplayed">Mark unplayed</string>
 
@@ -50,32 +50,32 @@
     <string name="search_coming">Search is coming soon.</string>
 
     <!-- Import -->
-    <string name="import_title">Import your podcasts</string>
-    <string name="import_body">Export an OPML file from Pocket Casts (Profile › Settings › Export podcasts), then choose it here.</string>
-    <string name="import_choose">Choose OPML file</string>
-    <string name="import_reading">Reading feeds: %1$d of %2$d</string>
-    <string name="import_review_title">Confirm categories</string>
-    <string name="import_review_body">Each show goes in exactly one category. Change any that look wrong.</string>
+    <string name="import_title">Bring your shows with you</string>
+    <string name="import_body">Your old podcast app can save a list of every show you follow. Look in its settings for “Export” (it may also say “OPML”), save the list, then choose it here.</string>
+    <string name="import_choose">Choose the list</string>
+    <string name="import_reading">Finding your shows: %1$d of %2$d</string>
+    <string name="import_review_title">Check your shows</string>
+    <string name="import_review_body">We’ve put each show in a genre. Change any that look wrong, and untick any you don’t want.</string>
     <plurals name="import_confirm">
-        <item quantity="one">Subscribe to %1$d show</item>
-        <item quantity="other">Subscribe to %1$d shows</item>
+        <item quantity="one">Add %1$d show</item>
+        <item quantity="other">Add %1$d shows</item>
     </plurals>
     <string name="import_latest">Latest: %1$s</string>
     <string name="import_all_shows">All shows</string>
-    <string name="import_subscribing">Saving shows: %1$d of %2$d</string>
-    <string name="import_done">Subscribed to %1$d shows.</string>
-    <string name="import_problem">Couldn’t read this feed (%1$s). It will be retried later.</string>
-    <string name="import_failed">That file couldn’t be imported: %1$s</string>
-    <string name="import_start_again">Choose another file</string>
-    <string name="import_category">Category for %1$s: %2$s</string>
-    <string name="category_sheet_title">Category for %1$s</string>
-    <string name="category_search">Search categories</string>
-    <string name="category_no_match">No categories match “%1$s”</string>
-    <string name="import_from_settings">Import from OPML</string>
+    <string name="import_subscribing">Adding your shows: %1$d of %2$d</string>
+    <string name="import_done">Added %1$d shows.</string>
+    <string name="import_problem">Couldn’t reach this show right now: %1$s. If you add it, we’ll keep trying.</string>
+    <string name="import_failed">That doesn’t look like a list of podcasts. Try saving it from your old app again.</string>
+    <string name="import_start_again">Choose a different file</string>
+    <string name="import_category">Genre for %1$s: %2$s</string>
+    <string name="category_sheet_title">Genre for %1$s</string>
+    <string name="category_search">Search genres</string>
+    <string name="category_no_match">No genres match “%1$s”</string>
+    <string name="import_from_settings">Bring shows from another app</string>
 
     <!-- Settings -->
     <string name="settings_hide_explicit">Hide explicit</string>
-    <string name="settings_hide_explicit_body">Hide explicit shows in search and explicit episodes in your library.</string>
+    <string name="settings_hide_explicit_body">Hide shows and episodes marked as explicit.</string>
     <string name="settings_wallpaper">Use wallpaper colours</string>
     <string name="settings_wallpaper_body">Match Damask to your wallpaper.</string>
 </resources>

@@ -157,7 +157,7 @@ private fun ImportContent(
             modifier = modifier,
         )
         is ImportUiState.Failed -> Message(
-            title = stringResource(Res.string.import_failed, state.message),
+            title = stringResource(Res.string.import_failed),
             action = stringResource(Res.string.import_start_again),
             onAction = onStartAgain,
             modifier = modifier,

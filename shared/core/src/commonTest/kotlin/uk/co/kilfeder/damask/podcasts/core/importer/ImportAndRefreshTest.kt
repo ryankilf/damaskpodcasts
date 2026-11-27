@@ -64,7 +64,7 @@ class ImportAndRefreshTest {
         assertEquals(AppleCategories.categoryId("Technology"), byTitle.getValue("Zeta").suggestedCategory)
         val gone = byTitle.getValue("Gone")
         assertEquals(Category.UNCATEGORISED_ID, gone.suggestedCategory)
-        assertEquals("HTTP 410", gone.problem)
+        assertEquals("This show has gone", gone.problem)
         assertNull(db.showQueries.selectAll().executeAsList().firstOrNull(), "nothing is written before confirm")
     }
 
@@ -87,7 +87,7 @@ class ImportAndRefreshTest {
         )
         assertEquals(listOf("Zeta", "Alpha", "Hobby", "Gone"), started.map { it.title })
         assertEquals(started, (0..3).map { read.getValue(it).entry }, "each index reports its own feed")
-        assertEquals("HTTP 410", read.getValue(3).problem)
+        assertEquals("This show has gone", read.getValue(3).problem)
         val saving = mutableListOf<Pair<Int, Int>>()
         importer.confirm(candidates.map { it to it.suggestedCategory }) { done, total -> saving += done to total }
         assertEquals((1..4).map { it to 4 }, saving)

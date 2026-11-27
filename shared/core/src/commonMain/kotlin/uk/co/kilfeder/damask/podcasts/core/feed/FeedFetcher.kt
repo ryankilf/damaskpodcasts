@@ -80,7 +80,7 @@ class FeedFetcher(private val client: HttpClient) {
         )
         HttpStatusCode.NotModified -> FetchResult.NotModified
         HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden -> FetchResult.Unavailable(status.value)
-        else -> FetchResult.Failed("HTTP ${status.value}")
+        else -> FetchResult.Failed(describeStatus(status.value))
     }
 
     companion object {
