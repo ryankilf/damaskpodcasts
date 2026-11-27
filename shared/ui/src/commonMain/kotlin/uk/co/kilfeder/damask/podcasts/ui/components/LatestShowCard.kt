@@ -73,8 +73,10 @@ internal fun LatestShowCard(latest: LatestShowUi?, modifier: Modifier = Modifier
         AnimatedContent(
             targetState = shown,
             transitionSpec = {
+                // No size animation (`using null`), so the first cover slides in like the rest
+                // instead of growing out of an empty container.
                 slideInHorizontally(tween(slideMs)) { width -> width * fromEnd } togetherWith
-                    slideOutHorizontally(tween(slideMs)) { width -> -width * fromEnd }
+                    slideOutHorizontally(tween(slideMs)) { width -> -width * fromEnd } using null
             },
             label = "latest-show",
         ) { show ->
@@ -109,7 +111,7 @@ private fun Cover(show: LatestShowUi, side: Dp, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(Spacing.Space2),
         modifier = modifier.semantics { label?.let { contentDescription = it } },
     ) {
-        AmbientGlow(show.artworkUrl) {
+        AmbientGlow(show.artworkUrl, MaterialTheme.shapes.medium) {
             ElevatedCard(shape = MaterialTheme.shapes.medium, modifier = Modifier.size(side)) {
                 AsyncImage(
                     model = show.artworkUrl,
