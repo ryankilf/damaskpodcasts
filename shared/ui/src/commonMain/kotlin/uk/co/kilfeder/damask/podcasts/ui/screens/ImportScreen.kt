@@ -43,6 +43,7 @@ import uk.co.kilfeder.damask.podcasts.presentation.importer.ImportRowUi
 import uk.co.kilfeder.damask.podcasts.presentation.importer.ImportUiState
 import uk.co.kilfeder.damask.podcasts.presentation.importer.ImportViewModel
 import uk.co.kilfeder.damask.podcasts.ui.components.Artwork
+import uk.co.kilfeder.damask.podcasts.ui.components.ImportGrid
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_category
@@ -103,12 +104,16 @@ private fun ImportContent(
             onAction = onChooseFile,
             modifier = modifier,
         )
-        is ImportUiState.Reading -> Progress(
-            label = stringResource(Res.string.import_reading, state.done, state.total),
-            done = state.done,
-            total = state.total,
-            modifier = modifier,
-        )
+        is ImportUiState.Reading -> Column(modifier.fillMaxSize()) {
+            ImportGrid(state.tiles, Modifier.weight(1f).fillMaxWidth().padding(Spacing.Space4))
+            Progress(
+                label = stringResource(Res.string.import_reading, state.done, state.total),
+                done = state.done,
+                total = state.total,
+                modifier = Modifier.fillMaxWidth(),
+                fill = false,
+            )
+        }
         is ImportUiState.Review -> Review(state, onCategoryChange, onSelectionChange, onConfirm, modifier)
         is ImportUiState.Subscribing -> Progress(
             label = stringResource(Res.string.import_subscribing, state.done, state.total),
@@ -149,11 +154,11 @@ private fun Message(
 
 /** A determinate bar once the total is known (before then, an indeterminate one). */
 @Composable
-private fun Progress(label: String, done: Int, total: Int, modifier: Modifier = Modifier) {
+private fun Progress(label: String, done: Int, total: Int, modifier: Modifier = Modifier, fill: Boolean = true) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.Space4, Alignment.CenterVertically),
-        modifier = modifier.fillMaxSize().padding(Spacing.Space6),
+        modifier = (if (fill) modifier.fillMaxSize() else modifier).padding(Spacing.Space6),
     ) {
         if (total > 0) {
             LinearProgressIndicator(progress = { done.toFloat() / total }, modifier = Modifier.fillMaxWidth())

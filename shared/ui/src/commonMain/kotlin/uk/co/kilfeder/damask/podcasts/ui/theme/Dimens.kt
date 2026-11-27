@@ -56,6 +56,10 @@ object Sizes {
     /** The progress ring around a row's play control. */
     val ProgressRingStroke = 3.dp
 
+    /** Import grid tiles: as big as fit, between these. */
+    val ImportTileMax = 64.dp
+    val ImportTileMin = 32.dp
+
     /** Readable content width on wide windows. */
     val MaxContentWidth = 640.dp
 

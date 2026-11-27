@@ -29,8 +29,21 @@ data class ImportCandidate(
     val problem: String?,
 )
 
+/** Progress from [OpmlImporter.prepare]. */
+interface ImportListener {
+    /** The file was parsed: these feeds will be read, in this order. */
+    fun onStarted(entries: List<OpmlEntry>) = Unit
+
+    /** The feed at [index] in the parsed entries has been read (or failed: see [ImportCandidate.problem]). */
+    fun onFeedRead(index: Int, candidate: ImportCandidate) = Unit
+
+    companion object {
+        val NONE = object : ImportListener {}
+    }
+}
+
 /**
- * First run: OPML file -> confirm-or-change category list (one row per show, alphabetical) ->
+ * Import: OPML file -> confirm-or-change category list (one row per show, alphabetical) ->
  * subscribe. Nothing is written until [confirm]; the user must confirm or change every category.
  */
 class OpmlImporter(
@@ -39,25 +52,24 @@ class OpmlImporter(
     private val categories: CategoryPrefill,
 ) {
     /**
-     * Fetches every feed in [opml] and prefills its category. [onProgress] is called with
-     * (feeds read, total) once the file is parsed and after each feed, for a determinate progress bar.
+     * Fetches every feed in [opml] and prefills its category, reporting progress to [listener]:
+     * the parsed entries first, then each feed as it's read (in completion order, one at a time).
      */
     suspend fun prepare(
         opml: String,
         concurrency: Int = DEFAULT_CONCURRENCY,
-        onProgress: (done: Int, total: Int) -> Unit = { _, _ -> },
+        listener: ImportListener = ImportListener.NONE,
     ): List<ImportCandidate> {
         val entries = Opml.parse(opml)
         categories.seedAppleCategories()
         val permits = Semaphore(concurrency)
-        val progress = Mutex()
-        var done = 0
-        onProgress(0, entries.size)
+        val reporting = Mutex()
+        listener.onStarted(entries)
         val candidates = coroutineScope {
-            entries.map { entry ->
+            entries.mapIndexed { index, entry ->
                 async {
                     val candidate = permits.withPermit { candidate(entry) }
-                    progress.withLock { onProgress(++done, entries.size) }
+                    reporting.withLock { listener.onFeedRead(index, candidate) }
                     candidate
                 }
             }.awaitAll()

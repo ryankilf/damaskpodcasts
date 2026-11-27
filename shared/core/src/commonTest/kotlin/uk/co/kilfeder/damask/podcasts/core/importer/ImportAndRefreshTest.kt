@@ -71,9 +71,23 @@ class ImportAndRefreshTest {
     @Test
     fun progressCountsEveryFeedThenEveryShow() = runTest {
         serveAll()
-        val reading = mutableListOf<Pair<Int, Int>>()
-        val candidates = importer.prepare(opml) { done, total -> reading += done to total }
-        assertEquals((0..4).map { it to 4 }, reading.sortedBy { it.first })
+        var started = emptyList<OpmlEntry>()
+        val read = mutableMapOf<Int, ImportCandidate>()
+        val candidates = importer.prepare(
+            opml,
+            listener = object : ImportListener {
+                override fun onStarted(entries: List<OpmlEntry>) {
+                    started = entries
+                }
+
+                override fun onFeedRead(index: Int, candidate: ImportCandidate) {
+                    read[index] = candidate
+                }
+            },
+        )
+        assertEquals(listOf("Zeta", "Alpha", "Hobby", "Gone"), started.map { it.title })
+        assertEquals(started, (0..3).map { read.getValue(it).entry }, "each index reports its own feed")
+        assertEquals("HTTP 410", read.getValue(3).problem)
         val saving = mutableListOf<Pair<Int, Int>>()
         importer.confirm(candidates.map { it to it.suggestedCategory }) { done, total -> saving += done to total }
         assertEquals((1..4).map { it to 4 }, saving)

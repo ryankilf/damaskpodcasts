@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import uk.co.kilfeder.damask.podcasts.core.feed.FeedParseException
 import uk.co.kilfeder.damask.podcasts.core.importer.ImportCandidate
+import uk.co.kilfeder.damask.podcasts.core.importer.ImportListener
+import uk.co.kilfeder.damask.podcasts.core.importer.OpmlEntry
 import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 
@@ -25,12 +27,27 @@ data class ImportRowUi(
     val selected: Boolean = true,
 )
 
+enum class TileStatus { WAITING, READ, FAILED }
+
+/** One show in the import grid. [name] is null when neither the OPML nor the feed names it. */
+data class ImportTileUi(
+    /** 1-based position in the file, for unnamed shows ("Show 12 of 78"). */
+    val position: Int,
+    val name: String?,
+    val artworkUrl: String?,
+    val status: TileStatus,
+)
+
 /** Import: choose an OPML file, confirm or change every show's category, subscribe. */
 sealed interface ImportUiState {
     data object ChooseFile : ImportUiState
 
-    /** Fetching feeds: [done] of [total] read so far. */
-    data class Reading(val done: Int = 0, val total: Int = 0) : ImportUiState
+    /** Fetching feeds: [done] of [total] read so far; [tiles] fill in as each feed is read. */
+    data class Reading(
+        val done: Int = 0,
+        val total: Int = 0,
+        val tiles: List<ImportTileUi> = emptyList(),
+    ) : ImportUiState
 
     data class Review(val rows: List<ImportRowUi>, val categories: List<CategoryOptionUi>) : ImportUiState {
         val selectedCount: Int get() = rows.count { it.selected }
@@ -54,9 +71,7 @@ class ImportViewModel internal constructor(private val graph: AppGraph) : ViewMo
         state.value = ImportUiState.Reading()
         viewModelScope.launch {
             state.value = try {
-                candidates = graph.onDbSuspend {
-                    graph.importer.prepare(opml) { done, total -> state.value = ImportUiState.Reading(done, total) }
-                }
+                candidates = graph.onDbSuspend { graph.importer.prepare(opml, listener = TileTracker()) }
                 review(candidates.map { it.suggestedCategory.value })
             } catch (e: FeedParseException) {
                 ImportUiState.Failed(e.message ?: "That file isn't an OPML export")
@@ -94,6 +109,41 @@ class ImportViewModel internal constructor(private val graph: AppGraph) : ViewMo
     fun onStartAgain() {
         candidates = emptyList()
         state.value = ImportUiState.ChooseFile
+    }
+
+    /** Turns importer events into Reading states: one tile per show, in file order. */
+    private inner class TileTracker : ImportListener {
+        private var tiles = emptyList<ImportTileUi>()
+        private var done = 0
+
+        override fun onStarted(entries: List<OpmlEntry>) {
+            tiles = entries.mapIndexed { i, entry ->
+                ImportTileUi(
+                    position = i + 1,
+                    name = entry.title.ifBlank { null },
+                    artworkUrl = null,
+                    status = TileStatus.WAITING,
+                )
+            }
+            publish()
+        }
+
+        override fun onFeedRead(index: Int, candidate: ImportCandidate) {
+            val read = candidate.feed != null
+            tiles = tiles.toMutableList().also {
+                it[index] = it[index].copy(
+                    name = candidate.title.ifBlank { null },
+                    artworkUrl = candidate.imageUrl,
+                    status = if (read) TileStatus.READ else TileStatus.FAILED,
+                )
+            }
+            done++
+            publish()
+        }
+
+        private fun publish() {
+            state.value = ImportUiState.Reading(done, tiles.size, tiles)
+        }
     }
 
     private suspend fun review(categoryIds: List<String>): ImportUiState.Review {
