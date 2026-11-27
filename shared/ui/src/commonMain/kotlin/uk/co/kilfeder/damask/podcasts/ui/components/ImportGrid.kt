@@ -25,7 +25,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
@@ -44,14 +43,16 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 private const val DIM_ALPHA = 0.38f
 private const val FADE_IN_MS = 400
 
+/** How much taller than square a tile may grow to fill leftover height. */
+private const val MAX_STRETCH = 1.15f
+
 /**
  * One tile per show, artwork fading in as each feed is read; failed feeds become dimmed outlines.
  * While reading, tiles appear in the order their artwork finishes loading, filling from the
  * top-left with no holes.
  * While saving, each tile's artwork starts dimmed and brightens once the show is saved. A solid
- * mosaic: square tiles with no gaps (deliberately unlike the rest of the app). Tiles are as large
- * as fit between [Sizes.ImportTileMin] and [Sizes.ImportTileMax]; a library too big for the
- * minimum shows as many as fit.
+ * mosaic: tiles with no gaps or rounding (deliberately unlike the rest of the app), sized to fill
+ * the space once complete (see [gridLayout]).
  *
  * Each tile is labelled with the show and its state, so the grid can be explored with a screen
  * reader, but nothing announces itself: the counter below stays the live progress.
@@ -59,14 +60,14 @@ private const val FADE_IN_MS = 400
 @Composable
 internal fun ImportGrid(tiles: List<ImportTileUi>, modifier: Modifier = Modifier, revealAsLoaded: Boolean = true) {
     val shown = if (revealAsLoaded) rememberRevealOrder(tiles) else tiles
-    // Top-aligned: the mosaic grows downwards and never shifts as tiles are added.
-    BoxWithConstraints(contentAlignment = Alignment.TopCenter, modifier = modifier) {
+    // Anchored top-start: the mosaic grows from the top-left and never shifts as tiles are added.
+    BoxWithConstraints(contentAlignment = Alignment.TopStart, modifier = modifier) {
         // Sized for every show from the start, so the mosaic doesn't resize as it grows.
         val layout = gridLayout(tiles.size, maxWidth, maxHeight)
         Column {
             shown.take(layout.columns * layout.rows).chunked(layout.columns).forEach { row ->
                 Row {
-                    row.forEach { tile -> Tile(tile, tiles.size, Modifier.size(layout.tile)) }
+                    row.forEach { tile -> Tile(tile, tiles.size, Modifier.size(layout.tileWidth, layout.tileHeight)) }
                 }
             }
         }
@@ -96,17 +97,27 @@ private fun rememberRevealOrder(tiles: List<ImportTileUi>): List<ImportTileUi> {
     return order.mapNotNull { byPosition[it] }
 }
 
-private data class GridLayout(val tile: Dp, val columns: Int, val rows: Int)
+private data class GridLayout(val tileWidth: Dp, val tileHeight: Dp, val columns: Int, val rows: Int)
 
-/** The largest tile size that fits every tile, or the minimum size if none does. */
+/**
+ * Fills the space: tiles always span the full width, and grow up to [MAX_STRETCH] taller than
+ * square to take up leftover height (artwork is cropped, so a little stretch is invisible). The
+ * column count is the one giving the biggest tiles. Below [Sizes.ImportTileMin] the tiles stop
+ * shrinking and as many shows as fit are shown.
+ */
 private fun gridLayout(count: Int, width: Dp, height: Dp): GridLayout {
-    val candidates = (Sizes.ImportTileMax.value.toInt() downTo Sizes.ImportTileMin.value.toInt()).map { it.dp }
-    val layouts = candidates.map { size ->
-        val columns = (width / size).toInt().coerceAtLeast(1)
-        val rows = (height / size).toInt().coerceAtLeast(1)
-        GridLayout(size, columns, rows)
+    val n = count.coerceAtLeast(1)
+    val best = (1..n)
+        .map { columns -> columns to (n + columns - 1) / columns }
+        .maxBy { (columns, rows) -> minOf(width / columns, height / rows) }
+    var (columns, rows) = best
+    if (minOf(width / columns, height / rows) < Sizes.ImportTileMin) {
+        columns = (width / Sizes.ImportTileMin).toInt().coerceAtLeast(1)
+        rows = (height / Sizes.ImportTileMin).toInt().coerceAtLeast(1)
     }
-    return layouts.firstOrNull { it.columns * it.rows >= count } ?: layouts.last()
+    val tileWidth = width / columns
+    val tileHeight = minOf(height / rows, tileWidth * MAX_STRETCH)
+    return GridLayout(tileWidth, tileHeight, columns, rows)
 }
 
 @Composable
