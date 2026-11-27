@@ -24,6 +24,10 @@
     <string name="mark_played">Mark played</string>
     <string name="mark_unplayed">Mark unplayed</string>
     <string name="episode_title">Episode</string>
+    <string name="now_playing_empty_title">Nothing playing</string>
+    <string name="now_playing_empty_body">Tap an episode and it plays here.</string>
+    <string name="genre_pick_title">Pick a genre</string>
+    <string name="genre_pick_body">Its queue shows here, starting with the shows you’ve heard least lately.</string>
     <string name="show_notes">Show notes</string>
     <string name="show_notes_open">Open show notes</string>
     <string name="show_notes_links">Links</string>

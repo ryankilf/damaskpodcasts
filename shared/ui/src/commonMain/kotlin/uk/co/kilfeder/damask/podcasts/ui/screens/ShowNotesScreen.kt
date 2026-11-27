@@ -54,6 +54,7 @@ import uk.co.kilfeder.damask.podcasts.ui.components.Artwork
 import uk.co.kilfeder.damask.podcasts.ui.components.PlayButton
 import uk.co.kilfeder.damask.podcasts.ui.components.PositionBar
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
+import uk.co.kilfeder.damask.podcasts.ui.resources.episode_no_notes
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_notes
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_notes_links
 import uk.co.kilfeder.damask.podcasts.ui.theme.DamaskTextStyles
@@ -91,32 +92,48 @@ private fun ShowNotesContent(
     onPlayPause: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val uriHandler = LocalUriHandler.current
-    val links = remember(uriHandler) { SafeLinks(uriHandler) }
     Column(modifier.fillMaxSize()) {
         Header(state, episode, onPlayPause)
-        Column(
-            verticalArrangement = Arrangement.spacedBy(Spacing.Space4),
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .background(
-                    MaterialTheme.colorScheme.surfaceContainerLow,
-                    RoundedCornerShape(topStart = Sizes.SheetCornerRadius, topEnd = Sizes.SheetCornerRadius),
-                )
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = Spacing.Space6, vertical = Spacing.Space3),
-        ) {
-            SheetHandle(Modifier.align(Alignment.CenterHorizontally))
-            Text(
-                text = stringResource(Res.string.show_notes),
-                style = DamaskTextStyles.TitleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.semantics { heading() },
+        NotesSheet(state, Modifier.weight(1f))
+    }
+}
+
+/**
+ * The show notes on their sheet: heading, notes, then Links. Used by the show notes screen, and
+ * beside the player on wide episode screens.
+ */
+@Composable
+internal fun NotesSheet(state: EpisodeUiState, modifier: Modifier = Modifier) {
+    val uriHandler = LocalUriHandler.current
+    val links = remember(uriHandler) { SafeLinks(uriHandler) }
+    Column(
+        verticalArrangement = Arrangement.spacedBy(Spacing.Space4),
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                MaterialTheme.colorScheme.surfaceContainerLow,
+                RoundedCornerShape(topStart = Sizes.SheetCornerRadius, topEnd = Sizes.SheetCornerRadius),
             )
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = Spacing.Space6, vertical = Spacing.Space3),
+    ) {
+        SheetHandle(Modifier.align(Alignment.CenterHorizontally))
+        Text(
+            text = stringResource(Res.string.show_notes),
+            style = DamaskTextStyles.TitleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.semantics { heading() },
+        )
+        if (state.notes.isEmpty()) {
+            Text(
+                text = stringResource(Res.string.episode_no_notes),
+                style = DamaskTextStyles.Body,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
             Notes(state.notes, links)
-            if (state.links.isNotEmpty()) Links(state.links, links)
         }
+        if (state.links.isNotEmpty()) Links(state.links, links)
     }
 }
 

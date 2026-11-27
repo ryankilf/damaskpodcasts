@@ -6,6 +6,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
@@ -32,6 +34,8 @@ data class AppUiState(
     val useWallpaperColours: Boolean = false,
     /** Show once, then call [AppViewModel.onMessageShown]. */
     val message: AppMessage? = null,
+    /** The episode loaded in the player, if any (wide layouts show it in a pane). */
+    val playing: EpisodeId? = null,
 )
 
 /** Top-level state: navigation and appearance. Every launch opens on Home. */
@@ -39,8 +43,13 @@ class AppViewModel internal constructor(private val graph: AppGraph) : ViewModel
     private val nav = MutableStateFlow(NavState())
     private val message = MutableStateFlow<AppMessage?>(null)
 
-    val uiState: StateFlow<AppUiState> = combine(graph.settings.values, nav, message) { settings, nav, message ->
-        AppUiState(Stage.MAIN, nav, settings.useWallpaperColours, message)
+    val uiState: StateFlow<AppUiState> = combine(
+        graph.settings.values,
+        nav,
+        message,
+        graph.playback.state.map { it?.id }.distinctUntilChanged(),
+    ) { settings, nav, message, playing ->
+        AppUiState(Stage.MAIN, nav, settings.useWallpaperColours, message, playing)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), AppUiState())
 
     fun onSelectTab(tab: Tab) = nav.update { it.select(tab) }
@@ -57,11 +66,20 @@ class AppViewModel internal constructor(private val graph: AppGraph) : ViewModel
 
     fun onNavigate(destination: Destination) = nav.update { it.push(destination) }
 
-    /** Tapping an episode plays it and opens its screen (unless that's already showing). */
-    fun onPlayEpisode(id: EpisodeId, source: PlaySource) {
+    /**
+     * Tapping an episode plays it, and opens its screen when [open] (narrow layouts). Wide layouts
+     * show the playing episode in a pane beside the list instead.
+     */
+    fun onPlayEpisode(id: EpisodeId, source: PlaySource, open: Boolean) {
         graph.playback.play(id, source.toContext())
         val episode = Destination.Episode(id)
-        if (nav.value.top != episode) nav.update { it.push(episode) }
+        if (open && nav.value.top != episode) nav.update { it.push(episode) }
+    }
+
+    /** Opens a genre's queue; one already showing (beside the list, on wide layouts) is replaced. */
+    fun onOpenGenre(categoryId: String) = nav.update { state ->
+        val queue = Destination.GenreQueue(categoryId)
+        if (state.top is Destination.GenreQueue) state.pop()?.push(queue) ?: state.push(queue) else state.push(queue)
     }
 
     /** Returns false when there was nothing to go back to, so the platform can handle back. */

@@ -45,13 +45,12 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 @Composable
 internal fun MiniPlayer(
     graph: AppGraph,
-    hiddenFor: EpisodeId?,
     onOpen: (EpisodeId) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MiniPlayerViewModel = viewModel { graph.miniPlayerViewModel() },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    state.player?.takeIf { it.id != hiddenFor }?.let {
+    state.player?.let {
         MiniPlayerBar(it, onOpen = { onOpen(it.id) }, onPlayPause = viewModel::onPlayPause, modifier)
     }
 }

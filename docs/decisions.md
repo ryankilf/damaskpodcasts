@@ -93,3 +93,9 @@ Now specified in [spec › Search](spec.md#search) and [spec › Compliance](spe
 - **Audio over `http://` is upgraded to HTTPS with no fallback yet**; allowing cleartext for audio is an open question.
 - **Links appear twice on purpose:** inline in the text, and listed under Links as full-size rows with their host, as in the NowPlayingNotes artboard. Inline links are small touch targets; the list gives each one 48dp and tells apart links with the same text ("Instagram", "Instagram").
 - **The play button carries the damask diaper** (`damaskFill`), as the design system specifies for filled play and pause buttons only.
+
+## Window sizes
+
+- **Built by hand from the window width, not with `NavigationSuiteScaffold` / `ListDetailPaneScaffold`.** The spec allowed this if the Compose Multiplatform port was in doubt. Hand-built panes keep navigation in the shared `NavState`, with no second back stack inside a scaffold.
+- **The right-hand pane on Home and Played is the playing episode.** Tapping an episode plays it, so "the episode you tapped" and "the one playing" are the same (the user's call).
+- **Wide episode screens put the show notes beside the player** (the user's call), from 720dp.

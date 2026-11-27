@@ -102,6 +102,13 @@ object Sizes {
     /** The import's latest-show cover card, at most. */
     val ImportCoverMax = 280.dp
 
+    /** Window width bands (Material window size classes): rail from medium, two panes from expanded. */
+    val MediumWidth = 600.dp
+    val ExpandedWidth = 840.dp
+
+    /** An episode screen this wide shows its notes beside the player. */
+    val NotesBesideMinWidth = 720.dp
+
     /** Readable content width on wide windows. */
     val MaxContentWidth = 640.dp
 

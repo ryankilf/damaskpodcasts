@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -67,9 +69,10 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 
 /**
- * One episode, laid out like the design's Now Playing (NowPlayingPane), as an ordinary screen with
- * the top bar and tabs. Whether tapping an episode should also start playing it is still open.
- * Artwork with the ambient glow takes whatever height is left; the genre chip, title, show,
+ * One episode, laid out like the design's Now Playing (NowPlayingPane): an ordinary screen with
+ * the top bar and tabs, or the right-hand pane on wide layouts. When it's wide enough
+ * ([Sizes.NotesBesideMinWidth]) the show notes sit beside the player. Artwork with the ambient
+ * glow takes whatever height is left; the genre chip, title, show,
  * position bar and controls keep their spacing; the show notes peek sits at the bottom and opens
  * the show notes screen.
  */
@@ -83,22 +86,29 @@ internal fun NowPlayingScreen(
     viewModel: EpisodeViewModel = viewModel(key = episodeKey(id)) { graph.episodeViewModel(id) },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    Box(modifier) {
+    val controls = PlayerActions(
+        onPlayPause = viewModel::onPlayPause,
+        onSkipBack = viewModel::onSkipBack,
+        onSkipForward = viewModel::onSkipForward,
+        onCycleSpeed = viewModel::onCycleSpeed,
+        onSeek = viewModel::onSeek,
+        onPlayedChange = { played -> if (played) viewModel.onMarkPlayed() else viewModel.onMarkUnplayed() },
+    )
+    BoxWithConstraints(modifier) {
+        // With room for both, the show notes sit beside the player instead of behind the peek.
+        val notesBeside = maxWidth >= Sizes.NotesBesideMinWidth
         EpisodeLoaded(state) { episode ->
-            Player(
-                state = state,
-                episode = episode,
-                onOpenGenre = onOpenGenre,
-                controls = PlayerActions(
-                    onPlayPause = viewModel::onPlayPause,
-                    onSkipBack = viewModel::onSkipBack,
-                    onSkipForward = viewModel::onSkipForward,
-                    onCycleSpeed = viewModel::onCycleSpeed,
-                    onSeek = viewModel::onSeek,
-                    onPlayedChange = { played -> if (played) viewModel.onMarkPlayed() else viewModel.onMarkUnplayed() },
-                ),
-                onOpenNotes = onOpenNotes,
-            )
+            if (notesBeside) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.Space6),
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    Player(state, episode, onOpenGenre, controls, onOpenNotes = null, Modifier.weight(1f))
+                    NotesSheet(state, Modifier.weight(1f).padding(top = Spacing.Space4))
+                }
+            } else {
+                Player(state, episode, onOpenGenre, controls, onOpenNotes)
+            }
         }
     }
 }
@@ -131,7 +141,7 @@ private fun Player(
     episode: EpisodeRowUi,
     onOpenGenre: (String) -> Unit,
     controls: PlayerActions,
-    onOpenNotes: () -> Unit,
+    onOpenNotes: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxSize()) {
@@ -156,7 +166,11 @@ private fun Player(
                 )
             }
         }
-        NotesPeek(state.notesPreview, onOpenNotes, Modifier.padding(top = Spacing.Space6))
+        if (onOpenNotes == null) {
+            Spacer(Modifier.height(Spacing.Space6))
+        } else {
+            NotesPeek(state.notesPreview, onOpenNotes, Modifier.padding(top = Spacing.Space6))
+        }
     }
 }
 
