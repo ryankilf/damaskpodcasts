@@ -1,6 +1,5 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -8,7 +7,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.DpSize
@@ -17,6 +18,9 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 
 /** Each cover further back is this much smaller than the one in front of it. */
 private const val SHRINK_PER_STEP = 0.12f
+
+/** And this much more shaded, so it recedes (and a white cover behind still shows). */
+private const val SHADE_PER_STEP = 0.18f
 
 /**
  * Up to [maxCovers] show covers stacked front to back, each one behind peeking out towards the
@@ -29,6 +33,8 @@ internal fun CoverStack(urls: List<String>, maxCovers: Int, modifier: Modifier =
     val covers = urls.take(maxCovers).ifEmpty { listOf(null) }
     val endOrigin = if (LocalLayoutDirection.current == LayoutDirection.Ltr) 1f else 0f
     val peek = Sizes.CoverStackPeek
+    val scrim = MaterialTheme.colorScheme.scrim
+    val shape = MaterialTheme.shapes.small
     Box(
         contentAlignment = Alignment.CenterStart,
         modifier = modifier.size(DpSize(Sizes.RowArtwork + peek * (maxCovers - 1), Sizes.RowArtwork)),
@@ -46,7 +52,12 @@ internal fun CoverStack(urls: List<String>, maxCovers: Int, modifier: Modifier =
                         scaleY = scale
                         transformOrigin = TransformOrigin(endOrigin, 0.5f)
                     }
-                    .border(Sizes.CoverStackOutline, MaterialTheme.colorScheme.surface, MaterialTheme.shapes.small),
+                    .drawWithContent {
+                        drawContent()
+                        if (depth > 0) {
+                            drawOutline(shape.createOutline(size, layoutDirection, this), scrim, SHADE_PER_STEP * depth)
+                        }
+                    },
             )
         }
     }

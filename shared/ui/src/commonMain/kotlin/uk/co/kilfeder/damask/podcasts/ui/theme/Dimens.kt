@@ -53,8 +53,8 @@ object Sizes {
     /** How far each cover behind the front one peeks out (genre rows' stacked covers). */
     val CoverStackPeek = 8.dp
 
-    /** The surface-coloured edge that separates stacked covers. */
-    val CoverStackOutline = 2.dp
+    /** The edge drawn round artwork, so white or black covers don't melt into the page. */
+    val ArtworkHairline = 1.dp
 
     /** Minimum episode row height. */
     val RowMinHeight = 72.dp
