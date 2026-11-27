@@ -44,9 +44,27 @@ class Rotation(
      */
     fun genreQueue(categoryId: CategoryId): Sequence<Episode> {
         val inProgress = showsIn(categoryId)
-            .flatMap { show -> library.episodesOf(show.id).filter { isQueueInProgress(it, show) } }
+            .flatMap { show ->
+                library.episodesOf(show.id).filter { !it.isPlayed && rules.isInProgress(it, show, nowMs) }
+            }
             .sortedByDescending { it.position?.hlc }
         return inProgress.asSequence() + showRounds(categoryId)
+    }
+
+    /**
+     * The shows pictured on a genre's row: whose episodes come next in its queue, in queue order,
+     * then (when the queue runs dry first) its other shows by LRP. Reads the lazy queue only as
+     * far as it needs, so it costs about the same as the first page of Up Next.
+     */
+    fun coverShows(categoryId: CategoryId, count: Int): List<Show> {
+        val shows = showsIn(categoryId).sortedWith(byShowLrp)
+        val queued = genreQueue(categoryId)
+            .map { it.key.showId }
+            .distinct()
+            .take(minOf(count, shows.size))
+            .mapNotNull { library.showsById[it] }
+            .toList()
+        return (queued + shows.filter { it !in queued }).take(count)
     }
 
     /**
@@ -74,16 +92,13 @@ class Rotation(
         return rules.isInProgress(episode, show, nowMs)
     }
 
-    private fun isQueueInProgress(episode: Episode, show: Show): Boolean =
-        !episode.isPlayed && rules.isInProgress(episode, show, nowMs)
-
     /** The round-robin part of a genre queue: shows by LRP, one unplayed episode each per round. */
-    private fun showRounds(categoryId: CategoryId): Sequence<Episode> {
-        val shows = showsIn(categoryId).sortedWith(
-            compareBy<Show, Hlc?>(nullsFirst()) { history.lastListened(it.id) }.thenBy { it.id.value },
-        )
-        return roundRobin(shows.map { candidates(it) })
-    }
+    private fun showRounds(categoryId: CategoryId): Sequence<Episode> =
+        roundRobin(showsIn(categoryId).sortedWith(byShowLrp).map { candidates(it) })
+
+    /** Shows within a genre: LRP, never listened first, then by ID for a stable order. */
+    private val byShowLrp: Comparator<Show> =
+        compareBy<Show, Hlc?>(nullsFirst()) { history.lastListened(it.id) }.thenBy { it.id.value }
 
     /** A show's unplayed, not-in-progress episodes in its own order (newest- or oldest-first). */
     private fun candidates(show: Show): Sequence<Episode> = library.episodesOf(show.id)

@@ -85,6 +85,23 @@ class RotationTest {
     }
 
     @Test
+    fun coverShowsFollowTheQueueThenFillByLrp() {
+        val shows = listOf(show("a", "News"), show("b", "News"), show("c", "News"), show("d", "News"))
+        val episodes = listOf(
+            episode("a", "a1", publishedDaysAgo = 1).finished(daysAgo(1)),
+            episode("b", "b1", publishedDaysAgo = 1),
+            episode("b", "b-old", publishedDaysAgo = 9).finished(daysAgo(3)),
+            episode("c", "c-started", publishedDaysAgo = 3).at(5 * MINUTE_MS, hoursAgo(1)),
+            // d has nothing left to play, so it only appears as filler.
+            episode("d", "d1", publishedDaysAgo = 1).finished(daysAgo(7)),
+        )
+        val rotation = rotation(listOf(category("News")), shows, episodes)
+        // Queue: c-started (in progress), then b1. a (fully listened) and d fill, by LRP.
+        assertEquals(listOf("c", "b"), rotation.coverShows(CategoryId("News"), 2).map { it.id.value })
+        assertEquals(listOf("c", "b", "d", "a"), rotation.coverShows(CategoryId("News"), 4).map { it.id.value })
+    }
+
+    @Test
     fun serialShowsOfferOldestFirstAndOverridesWin() {
         val shows = listOf(
             show("serial", "Drama", ShowType.SERIAL),

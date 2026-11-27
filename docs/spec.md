@@ -107,7 +107,7 @@ Up Next is generated lazily, one page at a time. Generation stops when the page 
 
 A genre queue is also generated a page at a time. Generation stops when the page is full, or when a full round across the genre's shows adds nothing.
 
-**Genres list:** categories by `lastListened` ascending.
+**Genres list:** categories by `lastListened` ascending. Each row shows a stack of up to three covers: the shows whose episodes come next in that genre's queue, front first, then its other shows by LRP if the queue runs dry. The pictures change only as you listen, never at random.
 
 **Worked example.** History was last listened to 9 days ago, Politics 2 days ago, and Tech 4 hours ago. Up Next leads with a History episode, then Politics, then Tech. If you pass 30% on the History episode, History becomes the freshest category. Up Next then reorders to Politics, Tech, History.
 

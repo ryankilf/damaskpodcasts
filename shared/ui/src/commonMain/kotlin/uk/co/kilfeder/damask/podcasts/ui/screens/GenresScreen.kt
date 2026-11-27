@@ -3,6 +3,7 @@ package uk.co.kilfeder.damask.podcasts.ui.screens
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -12,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -19,9 +21,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
+import uk.co.kilfeder.damask.podcasts.presentation.genres.COVER_COUNT
 import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreRowUi
 import uk.co.kilfeder.damask.podcasts.presentation.genres.GenresUiState
 import uk.co.kilfeder.damask.podcasts.presentation.genres.GenresViewModel
+import uk.co.kilfeder.damask.podcasts.ui.components.CoverStack
 import uk.co.kilfeder.damask.podcasts.ui.components.ExactValueText
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.genres_empty_body
@@ -68,14 +72,23 @@ private fun GenresContent(state: GenresUiState, onOpenGenre: (String) -> Unit, m
 
 @Composable
 private fun GenreRow(genre: GenreRowUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(Spacing.Space1),
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(Spacing.Space3),
+        verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
             .clickable(role = Role.Button, onClick = onClick)
             .heightIn(min = Sizes.RowMinHeight)
             .padding(horizontal = Spacing.Space4, vertical = Spacing.Space2),
     ) {
+        CoverStack(genre.coverUrls, maxCovers = COVER_COUNT)
+        GenreText(genre)
+    }
+}
+
+@Composable
+private fun GenreText(genre: GenreRowUi, modifier: Modifier = Modifier) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.Space1), modifier = modifier) {
         Text(genre.name, style = DamaskTextStyles.Title, color = MaterialTheme.colorScheme.onSurface)
         val shows = pluralStringResource(Res.plurals.genres_shows, genre.showCount, genre.showCount)
         val last = genre.lastListened

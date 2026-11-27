@@ -50,6 +50,12 @@ object Sizes {
     /** Row artwork (EpisodeRow artboard). */
     val RowArtwork = 56.dp
 
+    /** How far each cover behind the front one peeks out (genre rows' stacked covers). */
+    val CoverStackPeek = 8.dp
+
+    /** The surface-coloured edge that separates stacked covers. */
+    val CoverStackOutline = 2.dp
+
     /** Minimum episode row height. */
     val RowMinHeight = 72.dp
 

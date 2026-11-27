@@ -69,3 +69,8 @@ Now specified in [spec › Search](spec.md#search) and [spec › Compliance](spe
 - **Feeds that fail during import** can still be confirmed; the next refresh retries them. `OpmlImporter`.
 - **The GUID falls back to the enclosure URL** when an item has no `<guid>`. `FeedParser`.
 - **The OPML title falls back to `""`, never the URL**, because private feed URLs are secrets. `Opml`.
+
+## Genre row artwork
+
+- **An offset stack of up to three covers, not a 2×2 mosaic.** Genres are list rows, where a mosaic tile would be about 28dp and podcast art becomes noise. The front cover stays recognisable and the covers behind it say "more than one". `ui/components/CoverStack.kt`.
+- **The covers are the shows next up in the genre's queue** (`Rotation.coverShows`), so the picture previews what you'll hear. It's cheap because it reads the lazy queue only until it has three shows. The user's fallback, if it hadn't been cheap, was a random pick seeded by the date, so it wouldn't move all the time.

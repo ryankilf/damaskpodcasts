@@ -17,7 +17,12 @@ data class GenreRowUi(
     val showCount: Int,
     /** null = never listened (these sort first). */
     val lastListened: Summarised?,
+    /** Up to [COVER_COUNT] covers, front first: the shows that come next in this genre's queue. */
+    val coverUrls: List<String>,
 )
+
+/** How many covers a genre row stacks. */
+const val COVER_COUNT = 3
 
 data class GenresUiState(
     val loading: Boolean = true,
@@ -38,6 +43,7 @@ class GenresViewModel internal constructor(graph: AppGraph) : ViewModel() {
                     name = category.name,
                     showCount = shows.size,
                     lastListened = rotation.history.lastListened(category.id)?.let { Formats.date(it.wallMs, now) },
+                    coverUrls = rotation.coverShows(category.id, COVER_COUNT).mapNotNull { it.imageUrl },
                 )
             },
         )
