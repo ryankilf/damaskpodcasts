@@ -4,9 +4,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -355,26 +357,30 @@ private fun CategorySheet(
         sheetState = rememberBottomSheetState(SheetValue.Hidden, setOf(SheetValue.Hidden, SheetValue.Expanded)),
         modifier = modifier,
     ) {
-        Text(
-            text = stringResource(Res.string.category_sheet_title, showTitle),
-            style = DamaskTextStyles.TitleLarge,
-            maxLines = 2,
-            modifier = Modifier.padding(horizontal = Spacing.Space4).semantics { heading() },
-        )
-        OutlinedTextField(
-            value = query,
-            onValueChange = { query = it },
-            singleLine = true,
-            label = { Text(stringResource(Res.string.category_search)) },
-            leadingIcon = { Icon(imageVector = Icons.Rounded.Search, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth().padding(Spacing.Space4),
-        )
-        LazyColumn(Modifier.selectableGroup()) {
-            if (matches.isEmpty()) {
-                item(key = "none") { EmptyMessage(stringResource(Res.string.category_no_match, query)) }
-            }
-            items(matches, key = { it.id }) { option ->
-                CategoryOption(option.name, option.id == selectedId, onClick = { onSelect(option.id) })
+        // Always full height: the list scrolls inside a fixed area, so filtering changes what's
+        // listed but never the sheet's size. imePadding keeps the list above the keyboard.
+        Column(Modifier.fillMaxHeight().imePadding()) {
+            Text(
+                text = stringResource(Res.string.category_sheet_title, showTitle),
+                style = DamaskTextStyles.TitleLarge,
+                maxLines = 2,
+                modifier = Modifier.padding(horizontal = Spacing.Space4).semantics { heading() },
+            )
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                singleLine = true,
+                label = { Text(stringResource(Res.string.category_search)) },
+                leadingIcon = { Icon(imageVector = Icons.Rounded.Search, contentDescription = null) },
+                modifier = Modifier.fillMaxWidth().padding(Spacing.Space4),
+            )
+            LazyColumn(Modifier.weight(1f).selectableGroup()) {
+                if (matches.isEmpty()) {
+                    item(key = "none") { EmptyMessage(stringResource(Res.string.category_no_match, query)) }
+                }
+                items(matches, key = { it.id }) { option ->
+                    CategoryOption(option.name, option.id == selectedId, onClick = { onSelect(option.id) })
+                }
             }
         }
     }
