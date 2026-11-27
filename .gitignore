@@ -17,3 +17,6 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
+
+# Local scratch files shared with the coding assistant (may contain private feed URLs)
+llm-scrapbook/
