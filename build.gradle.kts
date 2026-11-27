@@ -125,6 +125,12 @@ shippingModules.forEach { modulePath ->
             // SLF4J (via Ktor) declares MIT using opensource.org's newer URL, which Licensee
             // doesn't map to an SPDX ID yet.
             allowUrl("https://opensource.org/license/mit") { because("MIT (SLF4J)") }
+            // auth0's java-jwt and jwks-rsa (via ktor-server-auth-jwt, gateway only) point at their
+            // LICENSE files on GitHub; both read "The MIT License (MIT)" (checked 27 Nov 2026).
+            allowUrl("https://raw.githubusercontent.com/auth0/java-jwt/master/LICENSE") { because("MIT (java-jwt)") }
+            allowUrl("https://raw.githubusercontent.com/auth0/jwks-rsa-java/master/LICENSE") {
+                because("MIT (jwks-rsa)")
+            }
         }
 
         val verifyBanned = tasks.register("verifyNoBannedArtifacts") {
