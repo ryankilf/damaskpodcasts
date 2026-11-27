@@ -5,15 +5,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,8 +24,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.min
@@ -45,16 +39,14 @@ import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.importer.LatestShowUi
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_latest
-import uk.co.kilfeder.damask.podcasts.ui.theme.DamaskTextStyles
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
-import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 
 /** How long each cover stays still after its slide finishes. */
 private const val DWELL_MS = 3_000L
 
 /**
- * The newest show's cover on an elevated card, a companion to the import progress bar. A newer
- * show slides in from the end edge and pushes the current one out towards the start, at most
+ * The newest show's cover (no caption) on an elevated card with an ambient glow, a companion
+ * to the import progress bar. A newer show slides in from the end edge and pushes the current one out towards the start, at most
  * once per slide-plus-[DWELL_MS]; covers in between are skipped. Each image is downloaded before
  * it slides in. The slide uses the OS's standard duration ([platformMediumAnimationMillis]).
  *
@@ -69,7 +61,7 @@ internal fun LatestShowCard(latest: LatestShowUi?, modifier: Modifier = Modifier
     BoxWithConstraints(contentAlignment = Alignment.Center, modifier = modifier) {
         // Leave room for the ambient glow around the card.
         val glow = Sizes.AmbientGlowInset * 2
-        val side = min(min(maxWidth - glow, maxHeight * CARD_SHARE_OF_HEIGHT - glow), Sizes.ImportCoverMax)
+        val side = min(min(maxWidth - glow, maxHeight - glow), Sizes.ImportCoverMax)
         AnimatedContent(
             targetState = shown,
             transitionSpec = {
@@ -103,37 +95,22 @@ private fun rememberPacedLatest(latest: LatestShowUi?, slideMs: Int): LatestShow
     return shown
 }
 
+/** The cover alone, no caption: a caption's varying line count would move the cover between shows. */
 @Composable
 private fun Cover(show: LatestShowUi, side: Dp, modifier: Modifier = Modifier) {
     val label = show.name?.let { stringResource(Res.string.import_latest, it) }
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Spacing.Space2),
+    AmbientGlow(
+        artworkUrl = show.artworkUrl,
+        shape = MaterialTheme.shapes.medium,
         modifier = modifier.semantics { label?.let { contentDescription = it } },
     ) {
-        AmbientGlow(show.artworkUrl, MaterialTheme.shapes.medium) {
-            ElevatedCard(shape = MaterialTheme.shapes.medium, modifier = Modifier.size(side)) {
-                AsyncImage(
-                    model = show.artworkUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.aspectRatio(1f),
-                )
-            }
-        }
-        show.name?.let {
-            Text(
-                text = it,
-                style = DamaskTextStyles.Title,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.width(side),
+        ElevatedCard(shape = MaterialTheme.shapes.medium, modifier = Modifier.size(side)) {
+            AsyncImage(
+                model = show.artworkUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.aspectRatio(1f),
             )
         }
     }
 }
-
-/** Leave room under the card for the show's name. */
-private const val CARD_SHARE_OF_HEIGHT = 0.75f
