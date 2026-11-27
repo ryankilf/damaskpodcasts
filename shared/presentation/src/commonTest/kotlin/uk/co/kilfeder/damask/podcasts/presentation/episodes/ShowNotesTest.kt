@@ -43,4 +43,12 @@ class ShowNotesTest {
         assertTrue(ShowNotes.parse(null).isEmpty())
         assertTrue(ShowNotes.parse("  <p> </p> ").isEmpty())
     }
+
+    @Test
+    fun spacesAtTheEdgesOfALinkStayOutsideIt() {
+        val html = """<p>Instagram:<a href="https://instagram.com/x"> instagram.com/x </a>now</p>"""
+        val spans = ShowNotes.parse(html).single().spans
+        assertEquals("instagram.com/x", spans.single { it.link != null }.text)
+        assertEquals("Instagram: instagram.com/x now", spans.joinToString("") { it.text })
+    }
 }

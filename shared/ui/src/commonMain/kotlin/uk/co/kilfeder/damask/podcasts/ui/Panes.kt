@@ -60,12 +60,14 @@ private fun Tab.pairsWithPlayer() = this == Tab.HOME || this == Tab.PLAYED
 internal fun playingIsOnScreen(state: AppUiState, width: WidthClass): Boolean {
     val top = state.nav.top
     return (top is Destination.Episode && top.id == state.playing) ||
+        (top is Destination.ShowNotes && top.id == state.playing) ||
         (width == WidthClass.EXPANDED && top == null && state.nav.tab.pairsWithPlayer())
 }
 
 /**
  * The content under the top bar. Expanded layouts pair a list with a detail pane (spec › Tablets
- * and window sizes): Home and Played with the playing episode, Genres with the selected queue.
+ * and window sizes): Home and Played with the playing episode (or its show notes), Genres with
+ * the selected queue.
  * Everything else is one pane: lists and forms at a readable width, the episode screen as wide as
  * it likes (its notes move beside the player).
  */
@@ -85,6 +87,12 @@ internal fun ShellContent(
         wide && top == null && tab.pairsWithPlayer() -> TwoPanes(
             left = { TabContent(tab, graph, actions, it) },
             right = { PlayingPane(state.playing, graph, actions, it) },
+            modifier = modifier,
+        )
+        // The notes peek in that pane opens the notes in the same pane; back returns to the player.
+        wide && top is Destination.ShowNotes && tab.pairsWithPlayer() -> TwoPanes(
+            left = { TabContent(tab, graph, actions, it) },
+            right = { ShowNotesScreen(graph, top.id, it) },
             modifier = modifier,
         )
         wide && tab == Tab.GENRES && (top == null || top is Destination.GenreQueue) -> TwoPanes(

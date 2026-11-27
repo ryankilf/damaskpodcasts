@@ -97,7 +97,7 @@ object ShowNotes {
             val text = raw.replace(WHITESPACE, " ")
             if (text.isEmpty()) return
             val span = NotesSpan(text, link, bold > 0, italic > 0)
-            spans += if (link == null) linkify(span) else listOf(span)
+            spans += if (link == null) linkify(span) else trimLink(span)
         }
 
         fun finish(): List<NotesBlock> {
@@ -124,6 +124,19 @@ object ShowNotes {
         joined[0] = joined[0].copy(text = joined[0].text.trimStart())
         joined[joined.lastIndex] = joined.last().copy(text = joined.last().text.trimEnd())
         return joined
+    }
+
+    /** Spaces at the edges of a link's text stay outside the link, so they aren't underlined. */
+    private fun trimLink(span: NotesSpan): List<NotesSpan> {
+        val core = span.text.trim()
+        if (core.isEmpty()) return listOf(span.copy(link = null))
+        val lead = span.text.substringBefore(core)
+        val tail = span.text.substring(lead.length + core.length)
+        return listOfNotNull(
+            lead.takeIf { it.isNotEmpty() }?.let { span.copy(text = it, link = null) },
+            span.copy(text = core),
+            tail.takeIf { it.isNotEmpty() }?.let { span.copy(text = it, link = null) },
+        )
     }
 
     private fun openable(url: String?): String? =
