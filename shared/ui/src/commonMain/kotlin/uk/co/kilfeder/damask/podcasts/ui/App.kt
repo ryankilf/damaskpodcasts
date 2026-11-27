@@ -44,7 +44,7 @@ import uk.co.kilfeder.damask.podcasts.presentation.navigation.Tab
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.app_name
 import uk.co.kilfeder.damask.podcasts.ui.resources.back
-import uk.co.kilfeder.damask.podcasts.ui.resources.import_from_settings
+import uk.co.kilfeder.damask.podcasts.ui.resources.import_screen_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.settings
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_genres
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_home
@@ -201,7 +201,7 @@ private fun TabBar(selected: Tab, onSelectTab: (Tab) -> Unit, modifier: Modifier
 
 private fun titleOf(state: AppUiState): StringResource = when (state.nav.top) {
     Destination.Settings -> Res.string.settings
-    Destination.Import -> Res.string.import_from_settings
+    Destination.Import -> Res.string.import_screen_title
     is Destination.GenreQueue -> Res.string.tab_genres
     null -> if (state.nav.tab == Tab.HOME) Res.string.app_name else state.nav.tab.label
 }

@@ -71,6 +71,7 @@
     <string name="category_sheet_title">Genre for %1$s</string>
     <string name="category_search">Search genres</string>
     <string name="category_no_match">No genres match “%1$s”</string>
+    <string name="import_screen_title">Import your shows</string>
     <string name="import_from_settings">Bring shows from another app</string>
 
     <!-- Settings -->
