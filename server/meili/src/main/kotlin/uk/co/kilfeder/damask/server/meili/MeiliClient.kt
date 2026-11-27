@@ -105,7 +105,13 @@ class MeiliClient(internal val http: HttpClient) {
         private const val DEFAULT_TASK_TIMEOUT_MS = 60 * 60 * 1000L
         private const val POLL_MS = 250L
 
-        val json = Json { ignoreUnknownKeys = true; explicitNulls = false }
+        /**
+         * `encodeDefaults` must be on: a field left at its default (`explicit = false`,
+         * `popularityScore = 0`) would otherwise be missing from the uploaded document, and a
+         * filter like `explicit = false` never matches a missing field. Found by the first real
+         * import, where `hideExplicit=true` returned nothing.
+         */
+        val json = Json { ignoreUnknownKeys = true; explicitNulls = false; encodeDefaults = true }
 
         /** A CIO client for [baseUrl] authenticated with [apiKey]; [timeoutMs] bounds every request. */
         fun create(baseUrl: String, apiKey: String?, timeoutMs: Long): MeiliClient = MeiliClient(

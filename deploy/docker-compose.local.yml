@@ -6,7 +6,8 @@ services:
     environment:
       MEILI_ENV: development
 
-  # Loads deploy/fixtures/podcasts.sql instead of downloading the real dump, then exits.
+  # Loads deploy/fixtures/podcasts.sql instead of downloading the real dump, then exits. Skipped
+  # when the index already has documents, so a real import survives `docker compose up`.
   seed:
     build:
       context: ..
@@ -17,6 +18,7 @@ services:
       MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
       MEILI_SEARCH_KEY_UID: ${MEILI_SEARCH_KEY_UID}
       DUMP_FILE: /fixtures/podcasts.sql
+      ONLY_IF_EMPTY: "true"
     volumes:
       - ./fixtures:/fixtures:ro
     depends_on:

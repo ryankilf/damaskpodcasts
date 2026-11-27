@@ -12,7 +12,8 @@ import java.sql.ResultSet
  * Weekly import):
  *
  * - `dead = 0`;
- * - not a duplicate (`duplicateOf` NULL, or 0, which the dump also uses for "none");
+ * - not a duplicate. The real dump stores "none" as the text `''` (4.76 M of 4.77 M rows in the
+ *   21 Nov 2026 dump) and a duplicate as the other feed's integer ID; NULL and 0 are accepted too;
  * - at least one episode;
  * - last fetch answered 2xx;
  * - not junk: popularity 0 together with fewer than 3 episodes or nothing newer than 3 years.
@@ -98,7 +99,7 @@ class DumpReader(private val db: File, private val nowEpochSeconds: Long) {
                    category6, category7, category8, category9, category10
             FROM podcasts
             WHERE dead = 0
-              AND (duplicateOf IS NULL OR duplicateOf = 0)
+              AND (duplicateOf IS NULL OR duplicateOf = '' OR duplicateOf = 0)
               AND episodeCount > 0
               AND lastHttpStatus BETWEEN 200 AND 299
               AND NOT (COALESCE(popularityScore, 0) = 0

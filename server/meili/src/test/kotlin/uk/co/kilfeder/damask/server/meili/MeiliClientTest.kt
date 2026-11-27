@@ -16,6 +16,20 @@ class MeiliClientTest {
     }
 
     @Test
+    fun documentsCarryEveryFieldEvenAtItsDefault() {
+        // Filters need the field present: explicit=false and popularityScore=0 must be written out.
+        val doc = PodcastDocument(id = 1, title = "T", feedUrl = "https://e.com/f", dedupeKey = "id:1")
+        val encoded = MeiliClient.json.encodeToString(PodcastDocument.serializer(), doc)
+        val required = listOf(
+            "\"explicit\":false",
+            "\"popularityScore\":0",
+            "\"languagePrefix\":\"\"",
+            "\"categories\":[]",
+        )
+        required.forEach { assertTrue(it in encoded, "missing $it in $encoded") }
+    }
+
+    @Test
     fun indexLifecycleAgainstRealMeilisearch(): Unit = runBlocking {
         val meili = MeiliContainer.masterClient()
         val admin = MeiliAdmin(meili)

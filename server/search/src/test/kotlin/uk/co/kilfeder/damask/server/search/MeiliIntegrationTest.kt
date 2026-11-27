@@ -103,7 +103,17 @@ class MeiliIntegrationTest {
         val clean = search("q=history&hideExplicit=true").hits.map { it.podcastIndexId }.toSet()
         assertTrue(5L in all)
         assertTrue(5L !in clean)
-        assertTrue(search("q=histoire&hideExplicit=true").hits.none { it.explicit })
+        // Not just "no explicit hits": the clean shows must still be there (an empty result once
+        // passed this test while the filter matched nothing at all).
+        assertTrue(1L in clean || 2L in clean, "clean history shows survive the filter: $clean")
+        assertEquals(setOf(4L), search("q=histoire&hideExplicit=true").hits.map { it.podcastIndexId }.toSet())
+    }
+
+    @Test
+    fun languageAndExplicitFiltersCombine() {
+        val ids = search("q=history&lang=en&hideExplicit=true").hits.map { it.podcastIndexId }.toSet()
+        assertTrue(ids.isNotEmpty())
+        assertTrue(5L !in ids && 3L !in ids && 4L !in ids, ids.toString())
     }
 
     @Test

@@ -30,7 +30,7 @@ data class PodcastDocument(
     val episodeCount: Int = 0,
     /** Epoch seconds. */
     val newestItemPubdate: Long? = null,
-    /** 0-5 in the dump. */
+    /** 0-9 in the real dump (the brief said 0-5). */
     val popularityScore: Int = 0,
     /** category1..10, non-empty, de-duplicated, in order. */
     val categories: List<String> = emptyList(),

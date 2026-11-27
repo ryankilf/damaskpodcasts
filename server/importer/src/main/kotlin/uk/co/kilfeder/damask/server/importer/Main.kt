@@ -26,6 +26,8 @@ data class ImporterConfig(
     val workDir: File,
     val userAgent: String,
     val batchSize: Int,
+    /** Skip the import when `podcasts` already has documents (the local stack's fixture seed). */
+    val onlyIfEmpty: Boolean = false,
 ) {
     companion object {
         const val DEFAULT_DUMP_URL = "https://public.podcastindex.org/podcastindex_feeds.db.tgz"
@@ -40,6 +42,7 @@ data class ImporterConfig(
             workDir = File(env["WORK_DIR"] ?: System.getProperty("java.io.tmpdir")).resolve("damask-import"),
             userAgent = "Damask/${env["DAMASK_VERSION"] ?: "dev"} (search index importer)",
             batchSize = env["BATCH_SIZE"]?.toIntOrNull() ?: IndexBuilder.DEFAULT_BATCH_SIZE,
+            onlyIfEmpty = env["ONLY_IF_EMPTY"] == "true",
         )
     }
 }
@@ -63,21 +66,35 @@ fun main(args: Array<String>) {
     exitProcess(if (ok) 0 else 1)
 }
 
-suspend fun runImport(config: ImporterConfig, today: LocalDate = LocalDate.now(ZoneOffset.UTC)): ImportCounts {
+/** Returns null when skipped because of [ImporterConfig.onlyIfEmpty]. */
+suspend fun runImport(config: ImporterConfig, today: LocalDate = LocalDate.now(ZoneOffset.UTC)): ImportCounts? {
     val meili = MeiliClient.create(config.meiliUrl, config.masterKey, timeoutMs = MEILI_TIMEOUT_MS)
     ensureSearchKey(config, meili)
+    if (config.onlyIfEmpty && meili.indexExists(PodcastIndex.LIVE) && meili.documentCount(PodcastIndex.LIVE) > 0) {
+        log.info("podcasts already has documents; skipping (ONLY_IF_EMPTY)")
+        return null
+    }
     val source = DumpSource(config.workDir)
-    val dump = config.dumpFile?.let(::File) ?: downloadDump(source, config)
-    log.info("Reading dump {}", dump.name)
-    val db = source.open(dump)
-    val reader = DumpReader(db, nowEpochSeconds = today.atStartOfDay().toEpochSecond(ZoneOffset.UTC))
-    val newIndex = "${PodcastIndex.LIVE}_${today.format(DateTimeFormatter.BASIC_ISO_DATE)}"
-    val counts = IndexBuilder(meili, batchSize = config.batchSize).build(reader, newIndex)
-    log.info(
-        "Import done: {} rows, {} kept, {} indexed, {} s",
-        counts.totalRows, counts.kept, counts.indexed, counts.durationMs / MS_PER_SECOND,
-    )
-    return counts
+    val given = config.dumpFile?.let(::File)
+    val dump = given ?: downloadDump(source, config)
+    // Everything the import itself wrote (the download, the unpacked database) is deleted
+    // afterwards, success or not: about 6.7 GB a week otherwise. A DUMP_FILE you gave is kept.
+    val written = mutableListOf<File>().apply { if (given == null) add(dump) }
+    try {
+        val unpackStarted = System.currentTimeMillis()
+        val db = source.open(dump).also { if (it != dump) written += it }
+        log.info("Opened {} ({} MB) in {} s", db.name, db.length() / BYTES_PER_MB, elapsedSeconds(unpackStarted))
+        val reader = DumpReader(db, nowEpochSeconds = today.atStartOfDay().toEpochSecond(ZoneOffset.UTC))
+        val newIndex = "${PodcastIndex.LIVE}_${today.format(DateTimeFormatter.BASIC_ISO_DATE)}"
+        val counts = IndexBuilder(meili, batchSize = config.batchSize).build(reader, newIndex)
+        log.info(
+            "Import done: {} rows, {} kept, {} indexed, {} s",
+            counts.totalRows, counts.kept, counts.indexed, counts.durationMs / MS_PER_SECOND,
+        )
+        return counts
+    } finally {
+        written.forEach { it.delete() }
+    }
 }
 
 /**
@@ -101,8 +118,15 @@ private suspend fun downloadDump(source: DumpSource, config: ImporterConfig): Fi
     val client = HttpClient(CIO) {
         install(HttpTimeout) { requestTimeoutMillis = DOWNLOAD_TIMEOUT_MS }
     }
-    return client.use { source.download(it, config.dumpUrl, config.userAgent) }
+    val started = System.currentTimeMillis()
+    val file = client.use { source.download(it, config.dumpUrl, config.userAgent) }
+    log.info("Downloaded {} MB in {} s", file.length() / BYTES_PER_MB, elapsedSeconds(started))
+    return file
 }
+
+private fun elapsedSeconds(startedMs: Long): Long = (System.currentTimeMillis() - startedMs) / MS_PER_SECOND
+
+private const val BYTES_PER_MB = 1024 * 1024
 
 private const val MEILI_TIMEOUT_MS = 120_000L
 private const val DOWNLOAD_TIMEOUT_MS = 2 * 60 * 60 * 1000L

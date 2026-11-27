@@ -56,7 +56,7 @@ sequenceDiagram
 2. Download `https://public.podcastindex.org/podcastindex_feeds.db.tgz` (about 1.8 GB). Podcast Index refuses generic User-Agents, so it sends `Damask/<version> (search index importer)`. Then unpack it: a small built-in tar reader takes the `.db`, skipping macOS `._` metadata files. `DUMP_FILE` uses a local `.tgz`, `.db` or `.sql` (the fixture) instead.
 3. `DumpReader` streams the kept rows:
    - live (`dead = 0`);
-   - not a duplicate (`duplicateOf` NULL or 0);
+   - not a duplicate (`duplicateOf` is `''` in the real dump, or NULL or 0);
    - at least one episode;
    - last fetch answered 2xx;
    - not junk: popularity 0 together with fewer than 3 episodes, or nothing newer than 3 years.
