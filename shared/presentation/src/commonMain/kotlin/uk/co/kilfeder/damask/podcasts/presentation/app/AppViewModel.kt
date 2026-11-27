@@ -21,7 +21,7 @@ enum class Stage {
 data class AppUiState(
     val stage: Stage = Stage.LOADING,
     val nav: NavState = NavState(),
-    val useWallpaperColours: Boolean = true,
+    val useWallpaperColours: Boolean = false,
 )
 
 /** Top-level state: navigation and appearance. Every launch opens on Home. */

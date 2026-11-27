@@ -11,8 +11,8 @@ import uk.co.kilfeder.damask.podcasts.core.db.DamaskDatabase
 data class AppSettings(
     /** "Hide explicit": a plain preference, off by default. */
     val hideExplicit: Boolean = false,
-    /** Settings › Appearance › "Use wallpaper colours", on by default where supported. */
-    val useWallpaperColours: Boolean = true,
+    /** Settings › Appearance › "Use wallpaper colours". Off by default: the Damask theme is the default. */
+    val useWallpaperColours: Boolean = false,
 )
 
 internal class Settings(private val db: DamaskDatabase) {
@@ -21,7 +21,7 @@ internal class Settings(private val db: DamaskDatabase) {
             val map = rows.associate { it.key to it.value_ }
             AppSettings(
                 hideExplicit = map[HIDE_EXPLICIT] == TRUE,
-                useWallpaperColours = map[WALLPAPER_COLOURS] != FALSE,
+                useWallpaperColours = map[WALLPAPER_COLOURS] == TRUE,
             )
         }
 

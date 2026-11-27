@@ -52,11 +52,11 @@
     <string name="import_title">Import your podcasts</string>
     <string name="import_body">Export an OPML file from Pocket Casts (Profile › Settings › Export podcasts), then choose it here.</string>
     <string name="import_choose">Choose OPML file</string>
-    <string name="import_reading">Reading your feeds…</string>
+    <string name="import_reading">Reading feeds: %1$d of %2$d</string>
     <string name="import_review_title">Confirm categories</string>
     <string name="import_review_body">Each show goes in exactly one category. Change any that look wrong.</string>
     <string name="import_confirm">Subscribe to %1$d shows</string>
-    <string name="import_subscribing">Subscribing…</string>
+    <string name="import_subscribing">Saving shows: %1$d of %2$d</string>
     <string name="import_done">Subscribed to %1$d shows.</string>
     <string name="import_problem">Couldn’t read this feed (%1$s). It will be retried later.</string>
     <string name="import_failed">That file couldn’t be imported: %1$s</string>

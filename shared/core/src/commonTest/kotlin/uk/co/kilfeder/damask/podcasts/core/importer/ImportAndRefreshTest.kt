@@ -69,6 +69,17 @@ class ImportAndRefreshTest {
     }
 
     @Test
+    fun progressCountsEveryFeedThenEveryShow() = runTest {
+        serveAll()
+        val reading = mutableListOf<Pair<Int, Int>>()
+        val candidates = importer.prepare(opml) { done, total -> reading += done to total }
+        assertEquals((0..4).map { it to 4 }, reading.sortedBy { it.first })
+        val saving = mutableListOf<Pair<Int, Int>>()
+        importer.confirm(candidates.map { it to it.suggestedCategory }) { done, total -> saving += done to total }
+        assertEquals((1..4).map { it to 4 }, saving)
+    }
+
+    @Test
     fun confirmSubscribesAndAppliesRetention() = runTest {
         serveAll()
         val candidates = importer.prepare(opml)

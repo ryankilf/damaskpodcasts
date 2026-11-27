@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -97,9 +98,19 @@ private fun ImportContent(
             onAction = onChooseFile,
             modifier = modifier,
         )
-        ImportUiState.Reading -> Busy(stringResource(Res.string.import_reading), modifier)
+        is ImportUiState.Reading -> Progress(
+            label = stringResource(Res.string.import_reading, state.done, state.total),
+            done = state.done,
+            total = state.total,
+            modifier = modifier,
+        )
         is ImportUiState.Review -> Review(state, onCategoryChange, onConfirm, modifier)
-        ImportUiState.Subscribing -> Busy(stringResource(Res.string.import_subscribing), modifier)
+        is ImportUiState.Subscribing -> Progress(
+            label = stringResource(Res.string.import_subscribing, state.done, state.total),
+            done = state.done,
+            total = state.total,
+            modifier = modifier,
+        )
         is ImportUiState.Done -> Message(
             title = stringResource(Res.string.import_done, state.count),
             modifier = modifier,
@@ -131,14 +142,19 @@ private fun Message(
     }
 }
 
+/** A determinate bar once the total is known (before then, an indeterminate one). */
 @Composable
-private fun Busy(label: String, modifier: Modifier = Modifier) {
+private fun Progress(label: String, done: Int, total: Int, modifier: Modifier = Modifier) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.Space4, Alignment.CenterVertically),
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().padding(Spacing.Space6),
     ) {
-        Loading(Modifier.heightIn(max = Sizes.MinTouchTarget))
+        if (total > 0) {
+            LinearProgressIndicator(progress = { done.toFloat() / total }, modifier = Modifier.fillMaxWidth())
+        } else {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        }
         Text(label, style = DamaskTextStyles.Body)
     }
 }

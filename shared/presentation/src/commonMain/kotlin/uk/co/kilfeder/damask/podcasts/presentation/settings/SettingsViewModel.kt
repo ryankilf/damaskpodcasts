@@ -12,7 +12,7 @@ import uk.co.kilfeder.damask.podcasts.presentation.app.STOP_TIMEOUT_MS
 
 data class SettingsUiState(
     val hideExplicit: Boolean = false,
-    val useWallpaperColours: Boolean = true,
+    val useWallpaperColours: Boolean = false,
 )
 
 class SettingsViewModel internal constructor(private val graph: AppGraph) : ViewModel() {

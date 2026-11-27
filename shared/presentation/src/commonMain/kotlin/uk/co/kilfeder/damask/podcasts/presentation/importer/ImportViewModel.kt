@@ -27,11 +27,13 @@ data class ImportRowUi(
 sealed interface ImportUiState {
     data object ChooseFile : ImportUiState
 
-    data object Reading : ImportUiState
+    /** Fetching feeds: [done] of [total] read so far. */
+    data class Reading(val done: Int = 0, val total: Int = 0) : ImportUiState
 
     data class Review(val rows: List<ImportRowUi>, val categories: List<CategoryOptionUi>) : ImportUiState
 
-    data object Subscribing : ImportUiState
+    /** Saving shows and their episodes: [done] of [total]. */
+    data class Subscribing(val done: Int = 0, val total: Int = 0) : ImportUiState
 
     data class Done(val count: Int) : ImportUiState
 
@@ -45,10 +47,12 @@ class ImportViewModel internal constructor(private val graph: AppGraph) : ViewMo
     private var candidates: List<ImportCandidate> = emptyList()
 
     fun onFileChosen(opml: String) {
-        state.value = ImportUiState.Reading
+        state.value = ImportUiState.Reading()
         viewModelScope.launch {
             state.value = try {
-                candidates = graph.importer.prepare(opml)
+                candidates = graph.onDbSuspend {
+                    graph.importer.prepare(opml) { done, total -> state.value = ImportUiState.Reading(done, total) }
+                }
                 review(candidates.map { it.suggestedCategory.value })
             } catch (e: FeedParseException) {
                 ImportUiState.Failed(e.message ?: "That file isn't an OPML export")
@@ -65,10 +69,12 @@ class ImportViewModel internal constructor(private val graph: AppGraph) : ViewMo
 
     fun onConfirm() {
         val review = state.value as? ImportUiState.Review ?: return
-        state.value = ImportUiState.Subscribing
+        state.value = ImportUiState.Subscribing(0, review.rows.size)
         viewModelScope.launch {
             val choices = review.rows.map { candidates[it.index] to CategoryId(it.categoryId) }
-            graph.onDb { graph.importer.confirm(choices) }
+            graph.onDb {
+                graph.importer.confirm(choices) { done, total -> state.value = ImportUiState.Subscribing(done, total) }
+            }
             state.value = ImportUiState.Done(choices.size)
         }
     }

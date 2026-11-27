@@ -64,6 +64,12 @@ class AppGraph internal constructor(
     /** Runs [block] on the database thread. */
     internal suspend fun <T> onDb(block: () -> T): T = withContext(dbDispatcher) { block() }
 
+    /**
+     * Runs suspending work confined to the database thread. Network calls inside still overlap
+     * (they suspend), while every database access stays on the one thread.
+     */
+    internal suspend fun <T> onDbSuspend(block: suspend () -> T): T = withContext(dbDispatcher) { block() }
+
     /** The latest snapshot, reloaded whenever any table it reads changes. */
     internal val library: Flow<Library> = combine(
         db.libraryQueries.selectEpisodes().asFlow(),

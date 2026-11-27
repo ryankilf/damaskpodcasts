@@ -3,7 +3,9 @@ package uk.co.kilfeder.damask.podcasts.core.importer
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 import uk.co.kilfeder.damask.podcasts.core.data.CategoryPrefill
 import uk.co.kilfeder.damask.podcasts.core.data.FeedStore
@@ -36,19 +38,44 @@ class OpmlImporter(
     private val store: FeedStore,
     private val categories: CategoryPrefill,
 ) {
-    suspend fun prepare(opml: String, concurrency: Int = DEFAULT_CONCURRENCY): List<ImportCandidate> {
+    /**
+     * Fetches every feed in [opml] and prefills its category. [onProgress] is called with
+     * (feeds read, total) once the file is parsed and after each feed, for a determinate progress bar.
+     */
+    suspend fun prepare(
+        opml: String,
+        concurrency: Int = DEFAULT_CONCURRENCY,
+        onProgress: (done: Int, total: Int) -> Unit = { _, _ -> },
+    ): List<ImportCandidate> {
         val entries = Opml.parse(opml)
         categories.seedAppleCategories()
         val permits = Semaphore(concurrency)
+        val progress = Mutex()
+        var done = 0
+        onProgress(0, entries.size)
         val candidates = coroutineScope {
-            entries.map { entry -> async { permits.withPermit { candidate(entry) } } }.awaitAll()
+            entries.map { entry ->
+                async {
+                    val candidate = permits.withPermit { candidate(entry) }
+                    progress.withLock { onProgress(++done, entries.size) }
+                    candidate
+                }
+            }.awaitAll()
         }
         return candidates.sortedWith(compareBy<ImportCandidate> { it.title.lowercase() }.thenBy { it.entry.feedUrl })
     }
 
-    /** Subscribes each candidate to the category the user confirmed. */
-    fun confirm(choices: List<Pair<ImportCandidate, CategoryId>>): List<ShowId> =
-        choices.map { (candidate, category) -> store.subscribe(candidate.entry.feedUrl, category, candidate.feed) }
+    /**
+     * Subscribes each candidate to the category the user confirmed. [onProgress] is called with
+     * (shows saved, total) after each one.
+     */
+    fun confirm(
+        choices: List<Pair<ImportCandidate, CategoryId>>,
+        onProgress: (done: Int, total: Int) -> Unit = { _, _ -> },
+    ): List<ShowId> = choices.mapIndexed { index, (candidate, category) ->
+        store.subscribe(candidate.entry.feedUrl, category, candidate.feed)
+            .also { onProgress(index + 1, choices.size) }
+    }
 
     private suspend fun candidate(entry: OpmlEntry): ImportCandidate {
         val (feed, problem) = fetch(entry.feedUrl)
