@@ -54,8 +54,15 @@ class ServerBoundaryTest {
     @Test
     fun `routes reach search backends only through SearchSource`() {
         val gateway = scope(SEARCH).files.filterNot { it.sourceSetName.contains("test", ignoreCase = true) }
-        val usesMeili = gateway.filter { file -> file.hasImport { it.name.startsWith(MEILI_PKG) } }.map { it.name }
-        assertEquals(setOf("MeiliSource", "Main"), usesMeili.toSet(), "only MeiliSource and wiring use Meilisearch")
+        // Languages is a pure normaliser shared with the importer, not a way to reach Meilisearch.
+        val usesMeili = gateway
+            .filter { file -> file.hasImport { it.name.startsWith(MEILI_PKG) && it.name != "$MEILI_PKG.Languages" } }
+            .map { it.name }
+        assertEquals(
+            setOf("MeiliSource", "RegionMerge", "Main"),
+            usesMeili.toSet(),
+            "only MeiliSource (and its RegionMerge) and wiring use Meilisearch",
+        )
         val usesPodcastIndex = gateway.filter { "api.podcastindex.org" in it.text }.map { it.name }
         assertEquals(listOf("PodcastIndexSource"), usesPodcastIndex, "only PodcastIndexSource calls Podcast Index")
         val routes = gateway.filter { "routing {" in it.text }

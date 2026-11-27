@@ -82,7 +82,7 @@ The home screen leads with what you've started, then the cross-genre rotation.
 | Now Playing | The current episode, held until it is played. Starting another episode leaves this one in In Progress at its saved position | — |
 | Played | Log of every play session, finished episodes included; supports re-listening and undoing an accidental mark-played | Newest first |
 | Import | OPML file, then a confirm-or-change category list, one row per show | Alphabetical |
-| Search | Results from our index of the Podcast Index catalogue, with their artwork; "Hide explicit" applies. Subscribing sends the show through the same category confirmation step | Index relevance, then popularity |
+| Search | Results from our index of the Podcast Index catalogue, with their artwork; "Hide explicit" applies. Subscribing sends the show through the same category confirmation step | Index relevance, then popularity and recency |
 
 Design work lives in the [screen flow board](https://claude.ai/artifact/AEBbsBe7TLKUWNa2QKms3Q) and the [Podcast App design system](https://claude.ai/artifact/EZHMHvdS5nqQch8gN5a4SK).
 
@@ -327,21 +327,25 @@ Search runs on our own index, built weekly from Podcast Index's public catalogue
 
 1. Download the dump from podcastindex.org/datasets and read it with sqlite-jdbc.
 2. Keep a feed only if it isn't dead, isn't a duplicate of another feed, has episodes, and last answered with a 2xx. Drop junk: a popularity score of 0 together with fewer than 3 episodes, or nothing newer than 3 years.
-3. Map each feed to a small document: ID, title, author, owner name, artwork, feed URL, podcast GUID, language, explicit flag, `itunesType`, episode count, newest item date, popularity score, categories (`category1..10`, deduplicated) and `dedupeKey`. Every other column is dropped.
+3. Map each feed to a small document: ID, title, author, owner name, artwork, feed URL, podcast GUID, language, explicit flag, `itunesType`, episode count, newest item date, popularity score, categories (`category1..10`, deduplicated) and `dedupeKey`. Every other column is dropped. Three fields are derived: a normalised language tag (`en_US`, `EN`, `eng` become `en-us`, `en`), the categories mapped to Apple's 19 top-level keys, and a rank score.
 4. Build a fresh index `podcasts_<yyyyMMdd>`, apply the settings, upload in batches and wait for every task to succeed. Swap it with `podcasts`, then delete the old index. Any failure leaves `podcasts` untouched and the run exits non-zero.
 
 Meilisearch's indexing memory is capped, so an import can't starve the gateway.
 
-**Ranking.** Only title, author and owner name are searchable; descriptions are too keyword-stuffed. The ranking rules are words, typo, proximity, attribute, sort and exactness, then popularity score and newest item date, both descending. `dedupeKey` (the podcast GUID, else the content hash `chash`, else `id:<id>`) collapses one show listed under several feeds. A query returns at most 100 hits.
+**Ranking.** Only title, author and owner name are searchable; descriptions are too keyword-stuffed. The ranking rules are words, typo, proximity, rank score (descending), attribute, sort and exactness: among equally good text matches, popular and active shows come first. The rank score is computed at import as (popularity + 1) × (0.4 + 0.6 × 0.5^(days since the newest episode ÷ 365)). It decays smoothly, so a finished series keeps 40% of its weight. Two more signals multiply it: a show listed in Apple Podcasts (by the dump's Apple ID; Apple is never called) gets ×1.5, so re-uploads and spam rank below the real feed, and a long-running feed gains up to 10% at 5 years since its oldest episode. Both are boosts, not filters. Every constant can be changed from the environment and re-applied without a re-import. `dedupeKey` (the podcast GUID, else the content hash `chash`, else `id:<id>`) collapses one show listed under several feeds. A query returns at most 100 hits.
 
 **Endpoints.**
 
 | Endpoint | Does |
 | --- | --- |
-| `GET /v1/search` | `q` (1–100 characters after trimming), optional `lang` (matches the language prefix) and `hideExplicit`, `limit` up to 20, `offset` up to 40. Out-of-range input is a 400. Returns the hits and an estimated total |
+| `GET /v1/search` | `q` (1–100 characters after trimming); optional `lang`, `category` and `hideExplicit`; `limit` up to 20, `offset` up to 40. Out-of-range input is a 400. Returns the hits and an estimated total |
 | `GET /health` | No auth, for an external uptime monitor. `{"status","db","cert"}`: `db` is Meilisearch reachable with the `podcasts` index; `cert` is the public certificate's state (`ok` above 14 days left, `warning` at 14 or fewer, `expired`, or `unknown` without a public hostname), checked hourly. `status` is `down` without the index (HTTP 503), `warning` if the certificate needs attention, else `ok` |
 
-A hit carries raw facts only: Podcast Index ID, podcast GUID, title, author, artwork, feed URL, language, categories, `itunesType`, explicit flag, episode count and newest item date. The client decides labels such as "Ended".
+**Language.** The app sends the device locale as `lang`: a language, optionally with a region (`en`, `en-GB`, `es-419`). Results are limited to that language, plus shows that don't declare one. A show in the user's exact region gets a small boost (×1.25 on its rank score), so British shows come up for `en-GB` without beating a much better American match. A setting for extra languages may come later.
+
+**Categories.** `category` is optional and repeatable, each one of Apple's 19 top-level keys (`arts` … `tvandfilm`, listed in `shared/api`). Several are ORed. It filters, and doesn't change the order. Shows without categories are left out only when a category is given.
+
+A hit carries raw facts only: Podcast Index ID, podcast GUID, title, author, artwork, feed URL, language, categories and their top-level keys, `itunesType`, explicit flag, episode count and newest item date. The client decides labels such as "Ended".
 
 **Auth.** Every install has a Supabase session, anonymous until the user subscribes, so the gateway accepts any valid Supabase access token, anonymous ones included. Search isn't gated on entitlement. Tokens are verified locally against Supabase's published keys (ES256 by default): expiry, issuer and audience are checked, and the keys are cached, refreshed hourly or when an unknown key ID appears. The gateway never calls Supabase per request and holds no shared JWT secret. The private build has no account, so it sends a private token instead, compared in constant time and disabled when the server doesn't set one.
 

@@ -43,6 +43,13 @@ data class MeiliSearchResult(
     val estimatedTotalHits: Int = 0,
 )
 
+/** One ranking rule's contribution to a hit: relevance rules have a [score], custom rules a [value]. */
+data class RuleScore(val score: Double?, val value: Double?)
+
+data class ScoredHit(val document: PodcastDocument, val details: Map<String, RuleScore>)
+
+data class ScoredSearchResult(val hits: List<ScoredHit>, val estimatedTotalHits: Int)
+
 /** The search request the gateway sends. */
 data class MeiliQuery(
     val text: String,
@@ -76,7 +83,50 @@ class MeiliClient(internal val http: HttpClient) {
         return response.expectSuccess("search").body()
     }
 
+    /**
+     * A search that also returns each hit's per-rule ranking details, so the gateway can merge two
+     * result lists in Meilisearch's own rule order (federated search can't: its merge uses
+     * `_rankingScore`, which ignores custom rules like `rankScore:desc`).
+     */
+    suspend fun searchScored(index: String, query: MeiliQuery): ScoredSearchResult {
+        val response = http.post("/indexes/$index/search") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                buildJsonObject {
+                    put("q", query.text)
+                    put("limit", query.limit)
+                    put("offset", query.offset)
+                    put("showRankingScoreDetails", true)
+                    if (query.filters.isNotEmpty()) {
+                        put("filter", JsonArray(query.filters.map(::JsonPrimitive)))
+                    }
+                },
+            )
+        }
+        val raw: RawScoredResult = response.expectSuccess("search").body()
+        return ScoredSearchResult(
+            hits = raw.hits.map { hit ->
+                val details = (hit["_rankingScoreDetails"] as? JsonObject).orEmpty().mapValues { (_, v) ->
+                    val rule = v as? JsonObject
+                    RuleScore(
+                        score = (rule?.get("score") as? JsonPrimitive)?.content?.toDoubleOrNull(),
+                        value = (rule?.get("value") as? JsonPrimitive)?.content?.toDoubleOrNull(),
+                    )
+                }
+                ScoredHit(json.decodeFromJsonElement(PodcastDocument.serializer(), hit), details)
+            },
+            estimatedTotalHits = raw.estimatedTotalHits,
+        )
+    }
+
+    @Serializable
+    private data class RawScoredResult(val hits: List<JsonObject> = emptyList(), val estimatedTotalHits: Int = 0)
+
     suspend fun indexExists(index: String): Boolean = http.get("/indexes/$index").status.isSuccess()
+
+    /** One stored document, as Meilisearch holds it (needs a key with documents.get). */
+    suspend fun document(index: String, id: Long): JsonObject =
+        http.get("/indexes/$index/documents/$id").expectSuccess("get document").body()
 
     suspend fun documentCount(index: String): Long {
         val stats: JsonObject = http.get("/indexes/$index/stats").expectSuccess("stats").body()

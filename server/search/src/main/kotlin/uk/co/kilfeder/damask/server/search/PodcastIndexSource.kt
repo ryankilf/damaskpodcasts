@@ -12,6 +12,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.Serializable
 import uk.co.kilfeder.damask.podcasts.api.SearchResponse
 import uk.co.kilfeder.damask.podcasts.api.ShowHit
+import uk.co.kilfeder.damask.server.meili.Languages
 import java.security.MessageDigest
 
 /**
@@ -34,7 +35,12 @@ class PodcastIndexSource(
             throw SourceUnavailableException("Podcast Index answered HTTP ${response.status.value}")
         }
         val feeds = response.body<PiSearchResult>().feeds
-            .filter { request.langPrefix == null || it.language.lowercase().startsWith(request.langPrefix) }
+            // Same rule as MeiliSource: the language, or none listed. (Region and category aren't
+            // applied: this source is a private-build stopgap.)
+            .filter { feed ->
+                val prefix = Languages.prefix(Languages.tag(feed.language))
+                request.langPrefix == null || prefix.isEmpty() || prefix == request.langPrefix
+            }
             .filter { !request.hideExplicit || !it.explicit }
         return SearchResponse(
             hits = feeds.drop(request.offset).take(request.limit).map { it.toHit() },

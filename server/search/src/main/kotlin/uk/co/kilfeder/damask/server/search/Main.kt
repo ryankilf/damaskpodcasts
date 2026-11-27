@@ -27,7 +27,7 @@ fun buildDeps(config: GatewayConfig): GatewayDeps {
             userAgent = "Damask/${config.version}",
         )
     } else {
-        MeiliSource(MeiliClient.create(config.meiliUrl, config.meiliSearchKey, MEILI_TIMEOUT_MS))
+        MeiliSource(MeiliClient.create(config.meiliUrl, config.meiliSearchKey, MEILI_TIMEOUT_MS), config.regionBoost)
     }
     if (config.supabaseUrl == null) log.warn("SUPABASE_URL not set: only the private token is accepted")
     return GatewayDeps(

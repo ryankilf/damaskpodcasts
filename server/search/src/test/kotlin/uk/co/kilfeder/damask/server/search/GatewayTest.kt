@@ -25,10 +25,12 @@ class ValidationTest {
     private val source = FakeSource()
 
     @Test
-    fun everyBadParameterIsA400() = gatewayTest(deps(source)) { client ->
+    // More than 20 cases, so a bigger bucket than production's: this tests validation, not limits.
+    fun everyBadParameterIsA400() = gatewayTest(deps(source, burst = 100)) { client ->
         val bad = listOf(
             "", "q=", "q=%20%20", "q=" + "a".repeat(101),
-            "q=x&lang=e", "q=x&lang=english", "q=x&lang=e1", "q=x&lang=en-GB",
+            "q=x&lang=e", "q=x&lang=english", "q=x&lang=e1", "q=x&lang=en_GB", "q=x&lang=en-GBR",
+            "q=x&lang=en-1", "q=x&category=podcasts", "q=x&category=News", "q=x&category=news&category=bogus",
             "q=x&hideExplicit=yes", "q=x&hideExplicit=1",
             "q=x&limit=0", "q=x&limit=21", "q=x&limit=ten",
             "q=x&offset=-1", "q=x&offset=41", "q=x&offset=x",
@@ -48,6 +50,23 @@ class ValidationTest {
         client.get("/v1/search?$everything") { bearerAuth(PRIVATE_TOKEN) }
         assertEquals(SearchRequest("hardcore history", null, false, 20, 0), source.requests[0])
         assertEquals(SearchRequest("x", "fr", true, 20, 40), source.requests[1])
+    }
+
+    @Test
+    fun languageRegionsAndCategoriesAreNormalised() = gatewayTest(deps(source)) { client ->
+        client.get("/v1/search?q=x&lang=en-GB&category=news&category=history&category=news") {
+            bearerAuth(PRIVATE_TOKEN)
+        }
+        client.get("/v1/search?q=x&lang=ES-419") { bearerAuth(PRIVATE_TOKEN) }
+        client.get("/v1/search?q=x&lang=eng") { bearerAuth(PRIVATE_TOKEN) }
+        val (gb, latam, eng) = source.requests
+        assertEquals("en", gb.langPrefix)
+        assertEquals("en-gb", gb.langTag)
+        assertEquals(listOf("news", "history"), gb.categories, "de-duplicated, in order")
+        assertEquals("es", latam.langPrefix)
+        assertEquals("es-419", latam.langTag)
+        assertEquals("en", eng.langPrefix, "three-letter code normalised")
+        assertEquals(null, eng.langTag, "no region: a single query")
     }
 }
 

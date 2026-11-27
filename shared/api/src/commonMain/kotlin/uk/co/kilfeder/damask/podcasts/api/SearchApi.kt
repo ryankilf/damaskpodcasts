@@ -21,10 +21,36 @@ object SearchApi {
     const val PARAM_LIMIT = "limit"
     const val PARAM_OFFSET = "offset"
 
+    /**
+     * Repeatable: `&category=news&category=history`. ORed together, ANDed with `lang` and
+     * `hideExplicit`. Each value must be one of [SearchCategories.KEYS]; anything else is a 400.
+     */
+    const val PARAM_CATEGORY = "category"
+
+    /**
+     * `lang`: a language (`en`), or a language and region (`en-GB`, `es-419`). Case-insensitive.
+     * 2-3 letters, then optionally `-` and either 2 letters or 3 digits. With a region, shows from
+     * that region rank a little higher; other shows in the language still appear.
+     */
+    const val LANG_PATTERN = "^[A-Za-z]{2,3}(-([A-Za-z]{2}|[0-9]{3}))?$"
+
     const val QUERY_MAX_LENGTH = 100
     const val DEFAULT_LIMIT = 20
     const val MAX_LIMIT = 20
     const val MAX_OFFSET = 40
+}
+
+/**
+ * Apple's 19 top-level podcast categories, as search filter keys: the single source of truth for
+ * the `category` parameter and the app's category chips. A key is the app's category ID without
+ * its `apple:` prefix: the name lowercased, `&` as `and`, letters and digits only.
+ */
+object SearchCategories {
+    val KEYS: List<String> = listOf(
+        "arts", "business", "comedy", "education", "fiction", "government", "healthandfitness",
+        "history", "kidsandfamily", "leisure", "music", "news", "religionandspirituality", "science",
+        "societyandculture", "sports", "technology", "truecrime", "tvandfilm",
+    )
 }
 
 /** The JSON settings both sides use. */
@@ -66,6 +92,11 @@ data class ShowHit(
     val episodeCount: Int = 0,
     /** Epoch seconds; null when unknown. */
     val newestItemPubdate: Long? = null,
+    /**
+     * [categories] mapped to Apple's top-level keys ([SearchCategories.KEYS]), main first. The app's
+     * category ID is `"apple:" + key`. Added in /v1 (additive); empty when nothing maps.
+     */
+    val topCategories: List<String> = emptyList(),
 )
 
 /** Body of every non-2xx response. Never contains a stack trace. */

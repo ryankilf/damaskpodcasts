@@ -23,17 +23,29 @@ data class PodcastDocument(
     val podcastGuid: String? = null,
     /** As the feed declares it, for display. */
     val language: String = "",
-    /** Lowercased primary language subtag (`en-GB` -> `en`), for the `lang` filter. */
+    /** Normalised language (`en_GB` and `EN` -> `en`, `eng` -> `en`), for the `lang` filter. */
     val languagePrefix: String = "",
+    /** Normalised `language[-region]` (`en_GB` -> `en-gb`), for the region boost. "" if none. */
+    val languageTag: String = "",
     val explicit: Boolean = false,
     val itunesType: String = "",
     val episodeCount: Int = 0,
     /** Epoch seconds. */
     val newestItemPubdate: Long? = null,
+    /** Epoch seconds of the oldest episode still in the feed: how long the feed has run. */
+    val oldestItemPubdate: Long? = null,
     /** 0-9 in the real dump (the brief said 0-5). */
     val popularityScore: Int = 0,
+    /** The dump has an Apple Podcasts ID (`itunesId`) for this feed. Never looked up with Apple. */
+    val appleListed: Boolean = false,
     /** category1..10, non-empty, de-duplicated, in order. */
     val categories: List<String> = emptyList(),
+    /** [categories] mapped to Apple's top-level keys (`news`, `tvandfilm`, ...), for the `category` filter. */
+    val topCategories: List<String> = emptyList(),
+    /** Popularity weighted by recency, Apple listing and feed age (importer RankScore). Ranked on. */
+    val rankScore: Double = 0.0,
+    /** When [rankScore] was computed (epoch seconds), so it can be recomputed without a re-import. */
+    val scoredAt: Long = 0,
     /** podcastGuid, else chash, else "id:<id>": collapses one show listed under several feeds. */
     val dedupeKey: String,
 )
@@ -46,10 +58,17 @@ object PodcastIndex {
     const val MAX_TOTAL_HITS = 100
 
     val SEARCHABLE = listOf("title", "author", "ownerName")
-    val FILTERABLE = listOf("languagePrefix", "explicit", "categories")
+    val FILTERABLE = listOf("languagePrefix", "languageTag", "explicit", "categories", "topCategories")
+
+    /**
+     * `rankScore` (popularity weighted by recency) comes right after `words`, `typo` and
+     * `proximity`, ahead of `attribute` and `exactness`, so a popular, active show beats a tiny
+     * feed with the exact same title. It stays after `proximity`: ahead of it, loosely related
+     * popular shows ("The History of Punk Rock" for "hardcore history") pushed into the top
+     * results. Measured on the 21 Nov 2026 dump; see docs/decisions.md › Server.
+     */
     val RANKING_RULES = listOf(
-        "words", "typo", "proximity", "attribute", "sort", "exactness",
-        "popularityScore:desc", "newestItemPubdate:desc",
+        "words", "typo", "proximity", "rankScore:desc", "attribute", "sort", "exactness",
     )
     const val DISTINCT = "dedupeKey"
 
@@ -62,7 +81,6 @@ object PodcastIndex {
         putJsonObject("pagination") { put("maxTotalHits", MAX_TOTAL_HITS) }
     }
 
-    /** `en-GB` -> `en`; anything not starting with letters -> "". */
-    fun languagePrefix(language: String): String =
-        language.trim().lowercase().takeWhile { it in 'a'..'z' }
+    /** `en-GB` -> `en`, `eng` -> `en`; "" when no language is given. See [Languages]. */
+    fun languagePrefix(language: String): String = Languages.prefix(Languages.tag(language))
 }

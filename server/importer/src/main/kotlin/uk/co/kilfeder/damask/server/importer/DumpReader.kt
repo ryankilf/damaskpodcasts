@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.server.importer
 
+import uk.co.kilfeder.damask.server.meili.Languages
 import uk.co.kilfeder.damask.server.meili.PodcastDocument
 import uk.co.kilfeder.damask.server.meili.PodcastIndex
 import java.io.File
@@ -18,7 +19,11 @@ import java.sql.ResultSet
  * - last fetch answered 2xx;
  * - not junk: popularity 0 together with fewer than 3 episodes or nothing newer than 3 years.
  */
-class DumpReader(private val db: File, private val nowEpochSeconds: Long) {
+class DumpReader(
+    private val db: File,
+    private val nowEpochSeconds: Long,
+    private val rank: RankScore = RankScore(),
+) {
 
     fun totalRows(): Long = connect().use { c ->
         c.createStatement().use { it.executeQuery("SELECT COUNT(*) FROM podcasts").also { r -> r.next() }.getLong(1) }
@@ -62,6 +67,14 @@ class DumpReader(private val db: File, private val nowEpochSeconds: Long) {
         val guid = getString("podcastGuid").orEmpty().trim()
         val chash = getString("chash").orEmpty().trim()
         val language = getString("language").orEmpty().trim()
+        val newest = getLong("newestItemPubdate").takeUnless { wasNull() }
+        val popularity = getInt("popularityScore")
+        val oldest = getLong("oldestItemPubdate").takeIf { !wasNull() && it > 0 }
+        // The dump stores "no Apple ID" as the text '' (like duplicateOf), so read it as text.
+        val appleListed = (getString("itunesId")?.trim()?.toLongOrNull() ?: 0L) > 0
+        val categories = (1..CATEGORY_COLUMNS)
+            .mapNotNull { getString("category$it")?.trim()?.ifEmpty { null } }
+            .distinct()
         return PodcastDocument(
             id = id,
             title = getString("title").orEmpty().trim(),
@@ -72,14 +85,18 @@ class DumpReader(private val db: File, private val nowEpochSeconds: Long) {
             podcastGuid = guid.ifEmpty { null },
             language = language,
             languagePrefix = PodcastIndex.languagePrefix(language),
+            languageTag = Languages.tag(language),
             explicit = getInt("explicit") != 0,
             itunesType = getString("itunesType").orEmpty().trim(),
             episodeCount = getInt("episodeCount"),
-            newestItemPubdate = getLong("newestItemPubdate").takeUnless { wasNull() },
-            popularityScore = getInt("popularityScore"),
-            categories = (1..CATEGORY_COLUMNS)
-                .mapNotNull { getString("category$it")?.trim()?.ifEmpty { null } }
-                .distinct(),
+            newestItemPubdate = newest,
+            oldestItemPubdate = oldest,
+            popularityScore = popularity,
+            appleListed = appleListed,
+            categories = categories,
+            topCategories = TopCategories.of(categories),
+            rankScore = rank.score(popularity, newest, nowEpochSeconds, appleListed, oldest),
+            scoredAt = nowEpochSeconds,
             dedupeKey = when {
                 guid.isNotEmpty() -> guid
                 chash.isNotEmpty() -> chash
@@ -94,7 +111,7 @@ class DumpReader(private val db: File, private val nowEpochSeconds: Long) {
         const val THREE_YEARS_SECONDS = 3L * 365 * 24 * 60 * 60
         val KEPT_SQL = """
             SELECT id, url, title, itunesAuthor, itunesOwnerName, imageUrl, podcastGuid, chash, language,
-                   explicit, itunesType, episodeCount, newestItemPubdate, popularityScore,
+                   explicit, itunesType, episodeCount, newestItemPubdate, oldestItemPubdate, popularityScore, itunesId,
                    category1, category2, category3, category4, category5,
                    category6, category7, category8, category9, category10
             FROM podcasts

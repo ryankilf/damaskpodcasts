@@ -13,6 +13,8 @@ data class GatewayConfig(
     val version: String,
     /** The hostname Caddy serves, for the certificate check; unset in local compose. */
     val publicHostname: String?,
+    /** Multiplies the requested region's `rankScore` (`lang=en-GB`); 1.0 = no boost. */
+    val regionBoost: Double = MeiliSource.DEFAULT_REGION_BOOST,
 ) {
     companion object {
         private const val DEFAULT_PORT = 8080
@@ -30,6 +32,7 @@ data class GatewayConfig(
                 piSecret = opt("PI_SECRET"),
                 version = opt("DAMASK_VERSION") ?: "dev",
                 publicHostname = opt("PUBLIC_HOSTNAME"),
+                regionBoost = opt("REGION_BOOST")?.toDouble() ?: MeiliSource.DEFAULT_REGION_BOOST,
             )
         }
     }

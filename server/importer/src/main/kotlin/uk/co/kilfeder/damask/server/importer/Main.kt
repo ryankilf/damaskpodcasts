@@ -28,6 +28,8 @@ data class ImporterConfig(
     val batchSize: Int,
     /** Skip the import when `podcasts` already has documents (the local stack's fixture seed). */
     val onlyIfEmpty: Boolean = false,
+    /** The rankScore constants (RANK_HALF_LIFE_DAYS, RANK_FRESHNESS_FLOOR, RANK_POPULARITY_PRIOR). */
+    val rank: RankScore = RankScore(),
 ) {
     companion object {
         const val DEFAULT_DUMP_URL = "https://public.podcastindex.org/podcastindex_feeds.db.tgz"
@@ -43,6 +45,7 @@ data class ImporterConfig(
             userAgent = "Damask/${env["DAMASK_VERSION"] ?: "dev"} (search index importer)",
             batchSize = env["BATCH_SIZE"]?.toIntOrNull() ?: IndexBuilder.DEFAULT_BATCH_SIZE,
             onlyIfEmpty = env["ONLY_IF_EMPTY"] == "true",
+            rank = RankScore.fromEnv(env),
         )
     }
 }
@@ -59,6 +62,7 @@ fun main(args: Array<String>) {
             when (command) {
                 "import" -> runImport(config)
                 "ensure-search-key" -> ensureSearchKey(config)
+                "rescore" -> rescore(config)
                 else -> throw IllegalArgumentException("Unknown command: $command")
             }
         }
@@ -84,7 +88,8 @@ suspend fun runImport(config: ImporterConfig, today: LocalDate = LocalDate.now(Z
         val unpackStarted = System.currentTimeMillis()
         val db = source.open(dump).also { if (it != dump) written += it }
         log.info("Opened {} ({} MB) in {} s", db.name, db.length() / BYTES_PER_MB, elapsedSeconds(unpackStarted))
-        val reader = DumpReader(db, nowEpochSeconds = today.atStartOfDay().toEpochSecond(ZoneOffset.UTC))
+        val now = today.atStartOfDay().toEpochSecond(ZoneOffset.UTC)
+        val reader = DumpReader(db, nowEpochSeconds = now, rank = config.rank)
         val newIndex = "${PodcastIndex.LIVE}_${today.format(DateTimeFormatter.BASIC_ISO_DATE)}"
         val counts = IndexBuilder(meili, batchSize = config.batchSize).build(reader, newIndex)
         log.info(
@@ -95,6 +100,18 @@ suspend fun runImport(config: ImporterConfig, today: LocalDate = LocalDate.now(Z
     } finally {
         written.forEach { it.delete() }
     }
+}
+
+/**
+ * `importer rescore`: recomputes `rankScore` on the live index with the current RANK_* constants,
+ * in place, without a re-import (each document keeps the inputs: popularity, newest date and the
+ * import time). Uses Meilisearch's edit-documents-by-function; see [Rescorer].
+ */
+suspend fun rescore(config: ImporterConfig) {
+    val meili = MeiliClient.create(config.meiliUrl, config.masterKey, timeoutMs = MEILI_TIMEOUT_MS)
+    val started = System.currentTimeMillis()
+    Rescorer(meili).rescore(PodcastIndex.LIVE, config.rank)
+    log.info("Rescored {} with {} in {} s", PodcastIndex.LIVE, config.rank, elapsedSeconds(started))
 }
 
 /**

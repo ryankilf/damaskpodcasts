@@ -30,6 +30,64 @@ curl -H 'Authorization: Bearer local-dev-private-token' 'http://localhost:8080/v
 
 `local.env` holds throwaway dev-only values. Never use them on a server.
 
+### Try it with the real dump
+
+The same local stack, but with the full Podcast Index catalogue. Needs about 4 GB of RAM for Docker and 25 GB of free disk: Meilisearch peaked at 2.7 GB of memory, the index takes 17 GB, and the import's work files (6.7 GB, deleted when it finishes) need room at the same time. Measured on an Apple-silicon Mac with OrbStack, November 2026:
+
+```sh
+cd deploy
+./build.sh
+docker compose --env-file local.env -f docker-compose.yml -f docker-compose.local.yml up -d
+docker compose --env-file local.env -f docker-compose.yml -f docker-compose.local.yml --profile import run --rm importer
+```
+
+| Step | Took |
+|---|---|
+| `up -d` (Meilisearch, the fixture seed, the gateway) | under a minute |
+| Download (1.76 GB) | 22 s |
+| Unpack (4.9 GB `.db`) | 26 s |
+| Read, filter and index 2,803,290 of 4,768,189 rows | about 5.5 min |
+| The whole import | 7 min 18 s |
+
+The import replaces the fixture index; running `up` again won't put the fixture back, because the seed skips a non-empty index (`ONLY_IF_EMPTY`). Then:
+
+```sh
+T='Authorization: Bearer local-dev-private-token'
+curl http://localhost:8080/health
+curl -H "$T" 'http://localhost:8080/v1/search?q=hardcore%20history&lang=en'
+curl -H "$T" 'http://localhost:8080/v1/search?q=the%20rest%20is%20history&lang=en-GB'
+curl -H "$T" 'http://localhost:8080/v1/search?q=unfiltered&lang=en&category=news&category=comedy'
+curl -H "$T" 'http://localhost:8080/v1/search?q=serial&lang=en&hideExplicit=true&limit=5&offset=5'
+```
+
+To try other ranking constants (see [docs/server.md › Ranking](../docs/server.md#ranking)), re-import with them, about 7 minutes:
+
+```sh
+docker compose --env-file local.env -f docker-compose.yml -f docker-compose.local.yml --profile import \
+  run --rm -e RANK_HALF_LIFE_DAYS=180 importer
+```
+
+`importer rescore` applies them in place without downloading, but took 17 minutes on the full index.
+
+The first search after an import or rescore can take longer than the gateway's 2 s timeout while Meilisearch's caches are cold, and answers 503; a retry is fast.
+
+To stop it: `docker compose --env-file local.env -f docker-compose.yml -f docker-compose.local.yml down`. Add `-v` to delete the index as well (17 GB).
+
+### Ranking knobs
+
+Set these in `.env` (the importer's are applied at each weekly import, or at once with `importer rescore`). What each one does, and which way to turn it, is in [docs/server.md › Ranking](../docs/server.md#ranking).
+
+| Variable | Default | Read by |
+|---|---|---|
+| `RANK_HALF_LIFE_DAYS` | 365 | importer |
+| `RANK_FRESHNESS_FLOOR` | 0.4 | importer |
+| `RANK_POPULARITY_PRIOR` | 1 | importer |
+| `RANK_APPLE_LISTED_BOOST` | 1.5 | importer |
+| `RANK_FEED_AGE_BOOST` | 0.1 | importer |
+| `RANK_FEED_AGE_FULL_YEARS` | 5 | importer |
+| `RANK_STEP` | 0 | importer |
+| `REGION_BOOST` | 1.25 | gateway (restart it after a change) |
+
 ## Server setup
 
 1. **DNS.** In Cloudflare, an `A` (and `AAAA`) record for the search hostname pointing at the VPS, **DNS only (grey cloud)**. TLS terminates on the VPS, not at Cloudflare.

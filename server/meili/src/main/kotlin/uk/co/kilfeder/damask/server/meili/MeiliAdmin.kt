@@ -52,6 +52,21 @@ class MeiliAdmin(private val client: MeiliClient) {
         setBody(buildJsonArray { add(buildJsonObject { put("indexes", pair) }) })
     }.expectSuccess("swap indexes").body()
 
+    /** Turns on the experimental edit-documents-by-function feature (synchronous, idempotent). */
+    suspend fun enableEditDocumentsByFunction() {
+        http.patch("/experimental-features") {
+            contentType(ContentType.Application.Json)
+            setBody(buildJsonObject { put("editDocumentsByFunction", true) })
+        }.expectSuccess("experimental features")
+    }
+
+    /** Runs a Rhai [function] over every document (`doc`), with [context] available as `context`. */
+    suspend fun editDocumentsByFunction(index: String, function: String, context: JsonObject): MeiliTask =
+        http.post("/indexes/$index/documents/edit") {
+            contentType(ContentType.Application.Json)
+            setBody(buildJsonObject { put("function", function); put("context", context) })
+        }.expectSuccess("edit documents").body()
+
     /**
      * Creates (or finds) a non-expiring API key with a fixed [uid], restricted to [actions] on
      * [indexes]. Meilisearch derives the key's value as HMAC-SHA256(master key, uid).

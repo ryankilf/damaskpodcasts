@@ -4,6 +4,8 @@
 -- Timestamps are epoch seconds; "recent" means 2026, "old" means 2019.
 -- duplicateOf: the real dump stores "not a duplicate" as '' (text), so most rows here do too;
 -- row 2 uses NULL and row 12 uses 0, so every spelling of "none" stays covered.
+-- itunesId: the dump stores "no Apple ID" as '' too (row 2) and some rows as 0. Row 1 has one,
+-- so it gets the Apple-listed boost.
 CREATE TABLE podcasts (
     id INTEGER PRIMARY KEY,
     url TEXT NOT NULL UNIQUE,
@@ -50,9 +52,9 @@ CREATE TABLE podcasts (
 );
 
 -- 1 KEPT: popular, English, with a podcast GUID and categories (one repeated).
-INSERT INTO podcasts VALUES (1, 'https://feeds.example.com/hardcore-history', 'Dan Carlin''s Hardcore History', 0, '', 200, 0, '', 0, 'https://old.example.com/hh', 'Dan Carlin', 'Dan Carlin Owner', 0, 'https://img.example.com/hh.jpg', 'episodic', '', 1795000000, 'en-US', 1100000000, 70, 5, 0, 0, 0, 'chash-hh', '', '', 'guid-hardcore-history', 'Long description is not indexed', 'History', 'Society', 'History', '', '', '', '', '', '', '', 0, 0, '');
+INSERT INTO podcasts VALUES (1, 'https://feeds.example.com/hardcore-history', 'Dan Carlin''s Hardcore History', 0, '', 200, 0, '', 173001861, 'https://old.example.com/hh', 'Dan Carlin', 'Dan Carlin Owner', 0, 'https://img.example.com/hh.jpg', 'episodic', '', 1795000000, 'en-US', 1100000000, 70, 5, 0, 0, 0, 'chash-hh', '', '', 'guid-hardcore-history', 'Long description is not indexed', 'History', 'Society', 'History', '', '', '', '', '', '', '', 0, 0, '');
 -- 2 KEPT, then COLLAPSED at query time: same podcast GUID as 1 under another feed URL. duplicateOf NULL.
-INSERT INTO podcasts VALUES (2, 'https://mirror.example.com/hh', 'Hardcore History (mirror)', 0, '', 200, 0, '', 0, 'https://mirror.example.com/hh', 'Dan Carlin', '', 0, '', 'episodic', '', 1794000000, 'en', 0, 70, 1, 0, 0, 0, 'chash-mirror', '', '', 'guid-hardcore-history', '', 'History', '', '', '', '', '', '', '', '', '', 0, 0, NULL);
+INSERT INTO podcasts VALUES (2, 'https://mirror.example.com/hh', 'Hardcore History (mirror)', 0, '', 200, 0, '', '', 'https://mirror.example.com/hh', 'Dan Carlin', '', 0, '', 'episodic', '', 1794000000, 'en', 0, 70, 1, 0, 0, 0, 'chash-mirror', '', '', 'guid-hardcore-history', '', 'History', '', '', '', '', '', '', '', '', '', 0, 0, NULL);
 -- 3 DROPPED: dead.
 INSERT INTO podcasts VALUES (3, 'https://dead.example.com/feed', 'Dead History Show', 0, '', 200, 1, '', 0, 'https://dead.example.com/feed', 'Nobody', '', 0, '', 'episodic', '', 1795000000, 'en', 0, 10, 3, 0, 0, 0, 'chash-dead', '', '', '', '', 'History', '', '', '', '', '', '', '', '', '', 0, 0, '');
 -- 4 DROPPED: a duplicate of feed 1.

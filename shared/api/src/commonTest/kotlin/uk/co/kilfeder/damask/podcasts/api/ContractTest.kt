@@ -4,6 +4,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * Golden-JSON contract tests for `/v1`. If one of these fails, the change is breaking: add a new
@@ -26,6 +28,7 @@ class ContractTest {
         explicit = false,
         episodeCount = 250,
         newestItemPubdate = 1_795_780_800,
+        topCategories = listOf("technology", "news"),
     )
 
     private val hitGolden = """
@@ -41,7 +44,8 @@ class ContractTest {
           "itunesType": "episodic",
           "explicit": false,
           "episodeCount": 250,
-          "newestItemPubdate": 1795780800
+          "newestItemPubdate": 1795780800,
+          "topCategories": ["technology", "news"]
         }
     """
 
@@ -75,6 +79,14 @@ class ContractTest {
     }
 
     @Test
+    fun hitsFromBeforeTopCategoriesStillDecode() {
+        // The first /v1 shape had no topCategories; it must decode, defaulting to empty.
+        val first = hitGolden.replace(",\n          \"topCategories\": [\"technology\", \"news\"]", "")
+        kotlin.test.assertFalse("topCategories" in first)
+        assertEquals(hit.copy(topCategories = emptyList()), ApiJson.decodeFromString(ShowHit.serializer(), first))
+    }
+
+    @Test
     fun minimalHitDecodesWithDefaults() {
         // Only the fields without defaults: anything else may be absent and must not break decoding.
         val minimal = """{ "podcastIndexId": 1, "title": "T", "feedUrl": "https://e.com/f" }"""
@@ -89,6 +101,28 @@ class ContractTest {
             json("""{ "error": "rate_limited", "message": "Too many requests" }"""),
             json(ApiJson.encodeToString(ApiError.serializer(), error)),
         )
+    }
+
+    @Test
+    fun categoryKeysAreStable() {
+        // The app stores these as "apple:<key>" category IDs: never rename or remove one.
+        assertEquals(
+            listOf(
+                "arts", "business", "comedy", "education", "fiction", "government", "healthandfitness",
+                "history", "kidsandfamily", "leisure", "music", "news", "religionandspirituality", "science",
+                "societyandculture", "sports", "technology", "truecrime", "tvandfilm",
+            ),
+            SearchCategories.KEYS,
+        )
+    }
+
+    @Test
+    fun langPatternAcceptsLanguageOrLanguageAndRegion() {
+        val pattern = Regex(SearchApi.LANG_PATTERN)
+        val valid = listOf("en", "EN", "eng", "en-GB", "en-gb", "es-419", "pt-BR")
+        val invalid = listOf("e", "english", "en_GB", "en-", "en-GBR", "en-1", "en-GB-x")
+        valid.forEach { assertTrue(pattern.matches(it), it) }
+        invalid.forEach { assertFalse(pattern.matches(it), it) }
     }
 
     @Test
@@ -117,13 +151,14 @@ class ContractTest {
         assertEquals("/v1/search", SearchApi.SEARCH_PATH)
         assertEquals("/health", SearchApi.HEALTH_PATH)
         assertEquals(
-            listOf("q", "lang", "hideExplicit", "limit", "offset"),
+            listOf("q", "lang", "hideExplicit", "limit", "offset", "category"),
             listOf(
                 SearchApi.PARAM_QUERY,
                 SearchApi.PARAM_LANG,
                 SearchApi.PARAM_HIDE_EXPLICIT,
                 SearchApi.PARAM_LIMIT,
                 SearchApi.PARAM_OFFSET,
+                SearchApi.PARAM_CATEGORY,
             ),
         )
         assertEquals(
