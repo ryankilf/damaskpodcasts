@@ -68,7 +68,9 @@ fun App(
     viewModel: AppViewModel = viewModel { graph.appViewModel() },
 ) {
     setSingletonImageLoaderFactory { context ->
-        ImageLoader.Builder(context).components { add(KtorNetworkFetcherFactory()) }.build()
+        ImageLoader.Builder(context)
+            .components { add(KtorNetworkFetcherFactory(graph.imageHttpClient)) }
+            .build()
     }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     DamaskTheme(useWallpaperColours = state.useWallpaperColours) {

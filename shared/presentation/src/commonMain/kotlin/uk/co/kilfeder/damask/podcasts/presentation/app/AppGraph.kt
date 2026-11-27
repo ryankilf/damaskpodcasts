@@ -1,6 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.presentation.app
 
 import app.cash.sqldelight.coroutines.asFlow
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -60,6 +61,9 @@ class AppGraph internal constructor(
     private val repository = LibraryRepository(db)
     internal val importer = OpmlImporter(fetcher, feeds, CategoryPrefill(db))
     internal val refresher = FeedRefresher(fetcher, feeds)
+
+    /** Artwork client: the platform engine with the same http -> https upgrade as feeds. */
+    val imageHttpClient: HttpClient by lazy { FeedFetcher.createImageClient() }
 
     /** Runs [block] on the database thread. */
     internal suspend fun <T> onDb(block: () -> T): T = withContext(dbDispatcher) { block() }

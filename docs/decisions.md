@@ -49,6 +49,9 @@ Now specified in [spec › Search](spec.md#search) and [spec › Compliance](spe
 
 ## Feeds and import
 
+- **`http://` requests go over HTTPS first** (feeds and artwork), like an interceptor: stored URLs are never rewritten, so sync and show IDs are unaffected, and the upgrade alone never counts as the feed moving. If HTTPS can't connect or returns an error, the original `http://` request is retried. Android blocks plain HTTP by default and we haven't opted in, so there that retry fails with "Not available over a secure connection". Whether to allow plain HTTP (older shows' audio often needs it) is decided when playback arrives. `feed/HttpsUpgrade.kt`.
+- **Network failures are described readably** ("Couldn't connect", "Timed out", …) rather than by exception name, and never include the URL.
+
 - **Pocket Casts exports private feed URLs** (answers the spec's open question). A real export included an `access.acast.com` premium feed, so premium shows shouldn't need re-adding after import. Confirmed on one export with one premium host.
 - **Show IDs hash the normalised feed URL**, not the URL as typed. The http and https spellings of one feed get the same ID and never need an alias; private feeds with different tokens stay distinct, because the query string is kept. `ShowIds`.
 - **xmlutil instead of RSS-Parser** (which the spec's licence table lists). It gives direct control over nested `itunes:category`, namespace quirks and HTML entities. Also Apache-2.0. `feed/Xml.kt`.

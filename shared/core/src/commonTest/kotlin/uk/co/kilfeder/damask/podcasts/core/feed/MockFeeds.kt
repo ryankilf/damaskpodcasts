@@ -11,7 +11,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 
 /** A scripted web of feeds for tests. Unknown URLs return 404. Records every request. */
-class MockFeeds {
+class MockFeeds(upgrade: Boolean = false) {
     val requests = mutableListOf<HttpRequestData>()
     private val routes = mutableMapOf<String, MockRequestHandleScope.(HttpRequestData) -> HttpResponseData>()
 
@@ -42,7 +42,7 @@ class MockFeeds {
     ) {
         followRedirects = false
         expectSuccess = false
-    }
+    }.let { if (upgrade) it.upgradeHttpToHttps() else it }
 
     val fetcher = FeedFetcher(client)
 }

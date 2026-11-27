@@ -57,6 +57,35 @@ class FeedFetcherTest {
     }
 
     @Test
+    fun httpFeedsAreFetchedOverHttpsWithoutCountingAsAMove() = runTest {
+        val secure = MockFeeds(upgrade = true)
+        secure.feed("https://example.com/feed", "<rss/>")
+        val result = assertIs<FetchResult.Fetched>(secure.fetcher.fetch("http://example.com/feed"))
+        assertNull(result.movedPermanentlyTo)
+        assertEquals(listOf("https://example.com/feed"), secure.requests.map { it.url.toString() })
+    }
+
+    @Test
+    fun httpFallsBackWhenHttpsFails() = runTest {
+        val secure = MockFeeds(upgrade = true)
+        secure.status("https://legacy.example.com/feed", HttpStatusCode.NotFound)
+        secure.feed("http://legacy.example.com/feed", "<rss/>")
+        assertIs<FetchResult.Fetched>(secure.fetcher.fetch("http://legacy.example.com/feed"))
+        assertEquals(
+            listOf("https://legacy.example.com/feed", "http://legacy.example.com/feed"),
+            secure.requests.map { it.url.toString() },
+        )
+    }
+
+    @Test
+    fun failuresAreDescribedReadably() {
+        assertEquals("Not available over a secure connection", describeNetworkFailure(UnknownServiceException()))
+        assertEquals("Network error", describeNetworkFailure(IllegalStateException()))
+    }
+
+    private class UnknownServiceException : Exception()
+
+    @Test
     fun redirectLoopsGiveUp() = runTest {
         web.redirect("https://a.example.com/", "https://b.example.com/", HttpStatusCode.Found)
         web.redirect("https://b.example.com/", "https://a.example.com/", HttpStatusCode.Found)

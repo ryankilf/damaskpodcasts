@@ -11,6 +11,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLBuilder
 import io.ktor.http.takeFrom
 import kotlinx.coroutines.CancellationException
+import uk.co.kilfeder.damask.podcasts.core.sync.FeedUrl
 
 sealed interface FetchResult {
     data class Fetched(
@@ -42,7 +43,7 @@ class FeedFetcher(private val client: HttpClient) {
     } catch (e: CancellationException) {
         throw e
     } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-        FetchResult.Failed(e::class.simpleName ?: "Network error")
+        FetchResult.Failed(describeNetworkFailure(e))
     }
 
     private suspend fun follow(url: String, etag: String?, lastModified: String?): FetchResult {
@@ -52,7 +53,9 @@ class FeedFetcher(private val client: HttpClient) {
             val response = request(current, etag, lastModified)
             val location = response.headers[HttpHeaders.Location]
             if (response.status.value !in REDIRECTS || location == null) {
-                return response.toResult(movedTo = current.takeIf { it != url && allPermanent })
+                // An http -> https upgrade alone isn't a move: the stored URL stays as subscribed.
+                val moved = allPermanent && FeedUrl.normalise(current) != FeedUrl.normalise(url)
+                return response.toResult(movedTo = current.takeIf { moved })
             }
             allPermanent = allPermanent && response.status.value in PERMANENT_REDIRECTS
             current = URLBuilder(current).takeFrom(location).buildString()
@@ -99,6 +102,9 @@ class FeedFetcher(private val client: HttpClient) {
                 requestTimeoutMillis = TIMEOUT_MS
                 connectTimeoutMillis = TIMEOUT_MS
             }
-        }
+        }.upgradeHttpToHttps()
+
+        /** For artwork: the platform engine with the same http -> https upgrade. */
+        fun createImageClient(): HttpClient = HttpClient().upgradeHttpToHttps()
     }
 }
