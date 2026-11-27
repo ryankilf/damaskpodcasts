@@ -19,6 +19,7 @@ application {
 
 dependencies {
     implementation(projects.shared.api)
+    implementation(projects.server.meili)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.contentNegotiation)
@@ -29,10 +30,13 @@ dependencies {
 
     testImplementation(libs.kotlin.testJunit)
     testImplementation(libs.kotlinx.coroutinesTest)
-    testImplementation(libs.testcontainers)
+    testImplementation(testFixtures(projects.server.meili))
     testImplementation(libs.slf4j.simple)
 }
 
 tasks.test {
     systemProperty("damask.meili.image", "getmeili/meilisearch:v1.58.0")
+    val fixture = rootProject.file("deploy/fixtures/podcasts.sql")
+    inputs.file(fixture).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("fixture")
+    systemProperty("damask.fixture.sql", fixture.absolutePath)
 }
