@@ -57,6 +57,7 @@ class DatabaseTest {
             enclosure_url = "https://cdn.example.com/$guid.mp3",
             image_url = null,
             duration_ms = HOUR_MS,
+            notes_html = "<p>Notes for $guid</p>",
         )
     }
 
@@ -98,6 +99,15 @@ class DatabaseTest {
         val row = db.listenStatsQueries.selectByDevice("d").executeAsOne()
         assertEquals(90_000, row.wall_ms)
         assertEquals(150_000, row.content_ms)
+    }
+
+    @Test
+    fun showNotesAreReadOneEpisodeAtATime() {
+        show("s", "uncategorised")
+        feedEpisode("s", "e")
+        val notes = EpisodeNotes(db)
+        assertEquals("<p>Notes for e</p>", notes.of(key("s", "e")))
+        assertNull(notes.of(key("s", "missing")))
     }
 
     // --- User state ----------------------------------------------------------------------------

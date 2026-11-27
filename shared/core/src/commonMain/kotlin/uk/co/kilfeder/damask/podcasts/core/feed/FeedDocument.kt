@@ -11,6 +11,11 @@ data class FeedEpisode(
     val enclosureUrl: String,
     val imageUrl: String?,
     val durationMs: Long?,
+    /**
+     * Show notes as the feed wrote them (HTML or plain text): `content:encoded`, else
+     * `description`, else `itunes:summary`. Capped at [FeedParser.MAX_NOTES_CHARS].
+     */
+    val notesHtml: String? = null,
 )
 
 /** A parsed RSS podcast feed: just what the app stores (spec › Data model, local-only tables). */

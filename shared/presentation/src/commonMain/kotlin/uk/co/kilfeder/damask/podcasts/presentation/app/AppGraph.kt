@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
 import uk.co.kilfeder.damask.podcasts.core.data.CategoryPrefill
 import uk.co.kilfeder.damask.podcasts.core.data.DeviceClock
 import uk.co.kilfeder.damask.podcasts.core.data.DriverFactory
+import uk.co.kilfeder.damask.podcasts.core.data.EpisodeNotes
 import uk.co.kilfeder.damask.podcasts.core.data.FeedStore
 import uk.co.kilfeder.damask.podcasts.core.data.LibraryRepository
 import uk.co.kilfeder.damask.podcasts.core.data.UserStateStore
@@ -27,6 +28,8 @@ import uk.co.kilfeder.damask.podcasts.core.importer.OpmlImporter
 import uk.co.kilfeder.damask.podcasts.core.rotation.Library
 import uk.co.kilfeder.damask.podcasts.core.rotation.Rotation
 import uk.co.kilfeder.damask.podcasts.core.rules.ListeningRules
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreQueueViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.genres.GenresViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.home.HomeViewModel
@@ -58,6 +61,7 @@ class AppGraph internal constructor(
     internal val userState = UserStateStore(db, clock)
     internal val feeds = FeedStore(db, clock, rules)
     internal val settings = Settings(db)
+    internal val notes = EpisodeNotes(db)
     private val repository = LibraryRepository(db)
     internal val importer = OpmlImporter(fetcher, feeds, CategoryPrefill(db))
     internal val refresher = FeedRefresher(fetcher, feeds)
@@ -105,6 +109,8 @@ class AppGraph internal constructor(
     fun genreQueueViewModel(categoryId: String) = GenreQueueViewModel(this, categoryId)
 
     fun playedViewModel() = PlayedViewModel(this)
+
+    fun episodeViewModel(id: EpisodeId) = EpisodeViewModel(this, id)
 
     fun importViewModel() = ImportViewModel(this)
 

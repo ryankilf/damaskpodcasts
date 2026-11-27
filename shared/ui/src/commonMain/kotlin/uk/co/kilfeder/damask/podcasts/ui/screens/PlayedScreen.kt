@@ -21,17 +21,19 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.played_empty_title
 @Composable
 internal fun PlayedScreen(
     graph: AppGraph,
+    onOpenEpisode: (EpisodeId) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PlayedViewModel = viewModel { graph.playedViewModel() },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    PlayedContent(state, viewModel::onMarkUnplayed, modifier)
+    PlayedContent(state, viewModel::onMarkUnplayed, onOpenEpisode, modifier)
 }
 
 @Composable
 private fun PlayedContent(
     state: PlayedUiState,
     onRestoreEpisode: (EpisodeId) -> Unit,
+    onOpenEpisode: (EpisodeId) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (state.loading) {
@@ -51,9 +53,14 @@ private fun PlayedContent(
         items(state.rows, key = { "${it.episode.id.showId}-${it.episode.id.guid}" }) { row ->
             // Only played episodes can be marked unplayed; in-progress ones are just listed.
             if (row.isPlayed) {
-                EpisodeRow(row.episode, swipeLabel = markUnplayed, onSwipe = { onRestoreEpisode(row.episode.id) })
+                EpisodeRow(
+                    row = row.episode,
+                    onClick = { onOpenEpisode(row.episode.id) },
+                    swipeLabel = markUnplayed,
+                    onSwipe = { onRestoreEpisode(row.episode.id) },
+                )
             } else {
-                EpisodeRow(row.episode)
+                EpisodeRow(row.episode, onClick = { onOpenEpisode(row.episode.id) })
             }
         }
     }

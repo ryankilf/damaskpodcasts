@@ -25,6 +25,7 @@ CREATE TABLE episode (
   image_url      TEXT,                   -- item itunes:image; null = use show's
   duration_ms    INTEGER,                -- feed value; episode_meta holds the player's
   download_path  TEXT,                   -- per device, never synced
+  notes_html     TEXT,                   -- show notes as the feed wrote them; read only by the episode page
   PRIMARY KEY (show_id, guid)
 );
 
@@ -43,14 +44,19 @@ VALUES (:show_id, :position, :apple_category, :apple_subcategory);
 
 -- Feed refresh: keeps the local download path, refreshes everything else.
 upsertEpisode:
-INSERT INTO episode (show_id, guid, title, published_at, enclosure_url, image_url, duration_ms, download_path)
-VALUES (:show_id, :guid, :title, :published_at, :enclosure_url, :image_url, :duration_ms, NULL)
+INSERT INTO episode (show_id, guid, title, published_at, enclosure_url, image_url, duration_ms, download_path, notes_html)
+VALUES (:show_id, :guid, :title, :published_at, :enclosure_url, :image_url, :duration_ms, NULL, :notes_html)
 ON CONFLICT (show_id, guid) DO UPDATE SET
   title = excluded.title,
   published_at = excluded.published_at,
   enclosure_url = excluded.enclosure_url,
   image_url = excluded.image_url,
-  duration_ms = excluded.duration_ms;
+  duration_ms = excluded.duration_ms,
+  notes_html = excluded.notes_html;
+
+-- The episode page: its show notes (kept out of the library snapshot, which never needs them).
+selectNotes:
+SELECT notes_html FROM episode WHERE show_id = :show_id AND guid = :guid;
 
 setDownloadPath:
 UPDATE episode SET download_path = :download_path WHERE show_id = :show_id AND guid = :guid;

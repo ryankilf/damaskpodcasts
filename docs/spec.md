@@ -79,6 +79,7 @@ The home screen leads with what you've started, then the cross-genre rotation.
 | Home: Up Next | One episode per category, repeated to fill; excludes in-progress episodes | Categories by LRP |
 | Genres | List of categories, each opening its queue | LRP first |
 | Genre queue | That category's in-progress episodes, then one episode per show, interleaved | In-progress first, then shows by LRP |
+| Episode | Opened from any episode row: artwork, show, title, date, length, progress, Mark played or unplayed, and the show notes with working links. Playback controls join it with Now Playing | — |
 | Now Playing | The current episode, held until it is played. Starting another episode leaves this one in In Progress at its saved position | — |
 | Played | Log of every play session, finished episodes included; supports re-listening and undoing an accidental mark-played | Newest first |
 | Import | OPML file, then a confirm-or-change category list, one row per show | Alphabetical |

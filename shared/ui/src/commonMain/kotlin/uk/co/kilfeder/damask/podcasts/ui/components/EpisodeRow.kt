@@ -1,6 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,18 +39,20 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
  * One episode (design hand-off › EpisodeRow): artwork, two-line title, "show · time" with the
  * exact value on long press, and a progress ring once started.
  *
- * With [swipeLabel] set, swiping the row away (or the matching accessibility action) calls
- * [onSwipe]: Mark played in queues, Mark unplayed in Played.
+ * Tapping the row opens the episode page ([onClick]). With [swipeLabel] set, swiping the row
+ * away (or the matching accessibility action) calls [onSwipe]: Mark played in queues, Mark
+ * unplayed in Played.
  */
 @Composable
 internal fun EpisodeRow(
     row: EpisodeRowUi,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     swipeLabel: String? = null,
     onSwipe: () -> Unit = {},
 ) {
     if (swipeLabel == null) {
-        RowContent(row, modifier)
+        RowContent(row, onClick, modifier)
         return
     }
     val state = rememberSwipeToDismissBoxState()
@@ -61,16 +65,17 @@ internal fun EpisodeRow(
             customActions = listOf(CustomAccessibilityAction(swipeLabel) { onSwipe(); true })
         },
     ) {
-        RowContent(row, Modifier.background(MaterialTheme.colorScheme.surface))
+        RowContent(row, onClick, Modifier.background(MaterialTheme.colorScheme.surface))
     }
 }
 
 @Composable
-private fun RowContent(row: EpisodeRowUi, modifier: Modifier = Modifier) {
+private fun RowContent(row: EpisodeRowUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.Space3),
         modifier = modifier
+            .clickable(role = Role.Button, onClick = onClick)
             .heightIn(min = Sizes.RowMinHeight)
             .padding(horizontal = Spacing.Space4, vertical = Spacing.Space2),
     ) {

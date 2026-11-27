@@ -21,11 +21,12 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.mark_played
 internal fun GenreQueueScreen(
     graph: AppGraph,
     categoryId: String,
+    onOpenEpisode: (EpisodeId) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GenreQueueViewModel = viewModel(key = "genre-$categoryId") { graph.genreQueueViewModel(categoryId) },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    GenreQueueContent(state, viewModel::onMarkPlayed, viewModel::onLoadMore, modifier)
+    GenreQueueContent(state, viewModel::onMarkPlayed, viewModel::onLoadMore, onOpenEpisode, modifier)
 }
 
 @Composable
@@ -33,6 +34,7 @@ private fun GenreQueueContent(
     state: GenreQueueUiState,
     onDismissEpisode: (EpisodeId) -> Unit,
     onLoadMore: () -> Unit,
+    onOpenEpisode: (EpisodeId) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (state.loading) {
@@ -45,7 +47,12 @@ private fun GenreQueueContent(
             item(key = "empty") { EmptyMessage(stringResource(Res.string.genre_queue_empty)) }
         }
         items(state.episodes, key = { "${it.id.showId}-${it.id.guid}" }) { row ->
-            EpisodeRow(row, swipeLabel = markPlayed, onSwipe = { onDismissEpisode(row.id) })
+            EpisodeRow(
+                row = row,
+                onClick = { onOpenEpisode(row.id) },
+                swipeLabel = markPlayed,
+                onSwipe = { onDismissEpisode(row.id) },
+            )
         }
         loadMore(state.canLoadMore, onLoadMore)
     }

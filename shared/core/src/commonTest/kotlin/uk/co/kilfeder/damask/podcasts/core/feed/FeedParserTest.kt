@@ -87,6 +87,26 @@ class FeedParserTest {
     }
 
     @Test
+    fun readsShowNotesPreferringContentEncoded() {
+        val item = { inner: String ->
+            """<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
+                xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>T</title>
+                <item><guid>g</guid><enclosure url="https://e.com/a.mp3"/>$inner</item>
+                </channel></rss>"""
+        }
+        val notes = { inner: String -> FeedParser.parse(item(inner)).episodes.single().notesHtml }
+        assertEquals(
+            "<p>Rich</p>",
+            notes("<description>Plain</description><content:encoded><![CDATA[<p>Rich</p>]]></content:encoded>"),
+        )
+        assertEquals("<b>Escaped</b> & more", notes("<description>&lt;b&gt;Escaped&lt;/b&gt; &amp; more</description>"))
+        assertEquals("Summary", notes("<itunes:summary>Summary</itunes:summary>"))
+        assertNull(notes(""))
+        val huge = "x".repeat(FeedParser.MAX_NOTES_CHARS + 10)
+        assertEquals(FeedParser.MAX_NOTES_CHARS, notes("<description>$huge</description>")?.length)
+    }
+
+    @Test
     fun fallsBackToRssImage() {
         val noItunesImage = SampleFeeds.MESSY.replace("""<itunes:image href="https://example.com/art.jpg"/>""", "")
         assertEquals("https://example.com/rss-art.jpg", FeedParser.parse(noItunesImage).imageUrl)

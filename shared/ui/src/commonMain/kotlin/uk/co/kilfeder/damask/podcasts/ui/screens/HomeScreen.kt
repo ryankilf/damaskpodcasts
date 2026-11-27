@@ -35,6 +35,7 @@ internal fun HomeScreen(
     graph: AppGraph,
     onSearch: () -> Unit,
     onImport: () -> Unit,
+    onOpenEpisode: (EpisodeId) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel { graph.homeViewModel() },
 ) {
@@ -46,6 +47,7 @@ internal fun HomeScreen(
         onLoadMore = viewModel::onLoadMore,
         onSearch = onSearch,
         onImport = onImport,
+        onOpenEpisode = onOpenEpisode,
         modifier = modifier,
     )
 }
@@ -59,6 +61,7 @@ private fun HomeContent(
     onLoadMore: () -> Unit,
     onSearch: () -> Unit,
     onImport: () -> Unit,
+    onOpenEpisode: (EpisodeId) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (state.loading) {
@@ -84,7 +87,7 @@ private fun HomeContent(
             if (state.inProgress.isNotEmpty()) {
                 sectionHeader("in-progress", stringResourceKey = Res.string.home_in_progress)
                 items(state.inProgress, key = { "p-${it.id.showId}-${it.id.guid}" }) { row ->
-                    EpisodeRow(row)
+                    EpisodeRow(row, onClick = { onOpenEpisode(row.id) })
                 }
             }
             sectionHeader("up-next", stringResourceKey = Res.string.home_up_next)
@@ -92,7 +95,12 @@ private fun HomeContent(
                 item(key = "empty") { EmptyMessage(stringResource(Res.string.home_empty)) }
             }
             items(state.upNext, key = { "u-${it.id.showId}-${it.id.guid}" }) { row ->
-                EpisodeRow(row, swipeLabel = markPlayed, onSwipe = { onDismissEpisode(row.id) })
+                EpisodeRow(
+                    row = row,
+                    onClick = { onOpenEpisode(row.id) },
+                    swipeLabel = markPlayed,
+                    onSwipe = { onDismissEpisode(row.id) },
+                )
             }
             loadMore(state.canLoadMore, onLoadMore)
         }

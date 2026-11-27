@@ -79,6 +79,7 @@ class FeedStore(
                 enclosure_url = episode.enclosureUrl,
                 image_url = episode.imageUrl,
                 duration_ms = episode.durationMs,
+                notes_html = episode.notesHtml,
             )
         }
         prune(id, ShowType.fromItunesType(doc.itunesType))

@@ -66,6 +66,9 @@ object Sizes {
     val AmbientGlowInset = 40.dp
     val AmbientGlowBlur = 40.dp
 
+    /** Artwork at the top of the episode page. */
+    val EpisodeArtwork = 200.dp
+
     /** The import's latest-show cover card, at most. */
     val ImportCoverMax = 280.dp
 

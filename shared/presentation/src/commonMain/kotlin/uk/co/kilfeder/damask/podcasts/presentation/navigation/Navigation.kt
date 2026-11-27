@@ -1,11 +1,15 @@
 package uk.co.kilfeder.damask.podcasts.presentation.navigation
 
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
+
 /** The four top-level tabs (design hand-off › flow map). */
 enum class Tab { HOME, GENRES, PLAYED, SEARCH }
 
 /** Screens pushed on top of a tab. */
 sealed interface Destination {
     data class GenreQueue(val categoryId: String) : Destination
+
+    data class Episode(val id: EpisodeId) : Destination
 
     data object Settings : Destination
 

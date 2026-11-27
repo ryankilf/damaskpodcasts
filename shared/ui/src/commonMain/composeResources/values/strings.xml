@@ -23,6 +23,10 @@
     <string name="home_empty">Nothing to play yet. New episodes will show up here.</string>
     <string name="mark_played">Mark played</string>
     <string name="mark_unplayed">Mark unplayed</string>
+    <string name="episode_title">Episode</string>
+    <string name="episode_no_notes">This episode doesn’t have any show notes.</string>
+    <string name="episode_gone_title">Episode not available</string>
+    <string name="episode_gone_body">It’s no longer in the show’s feed, and you hadn’t played it.</string>
 
     <!-- Episode rows -->
     <string name="row_meta">%1$s · %2$s</string>

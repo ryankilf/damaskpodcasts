@@ -51,6 +51,7 @@ import uk.co.kilfeder.damask.podcasts.presentation.navigation.Tab
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.app_name
 import uk.co.kilfeder.damask.podcasts.ui.resources.back
+import uk.co.kilfeder.damask.podcasts.ui.resources.episode_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_screen_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.settings
 import uk.co.kilfeder.damask.podcasts.ui.resources.shows_added
@@ -58,6 +59,7 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.tab_genres
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_home
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_played
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_search
+import uk.co.kilfeder.damask.podcasts.ui.screens.EpisodeScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.GenreQueueScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.GenresScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.HomeScreen
@@ -144,7 +146,13 @@ private fun Shell(
         Box(contentAlignment = Alignment.TopCenter, modifier = Modifier.padding(padding).fillMaxSize()) {
             val content = Modifier.widthIn(max = Sizes.MaxContentWidth).fillMaxSize()
             when {
-                top is Destination.GenreQueue -> GenreQueueScreen(graph, top.categoryId, content)
+                top is Destination.GenreQueue -> GenreQueueScreen(
+                    graph = graph,
+                    categoryId = top.categoryId,
+                    onOpenEpisode = { onNavigate(Destination.Episode(it)) },
+                    modifier = content,
+                )
+                top is Destination.Episode -> EpisodeScreen(graph, top.id, content)
                 top == Destination.Settings ->
                     SettingsScreen(graph, onImport = { onNavigate(Destination.Import) }, content)
                 top == Destination.Import -> ImportScreen(graph, onFinish = onImportFinish, modifier = content)
@@ -200,10 +208,11 @@ private fun TabContent(
             graph = graph,
             onSearch = { onSelectTab(Tab.SEARCH) },
             onImport = { onNavigate(Destination.Import) },
+            onOpenEpisode = { onNavigate(Destination.Episode(it)) },
             modifier = modifier,
         )
         Tab.GENRES -> GenresScreen(graph, onOpenGenre = { onNavigate(Destination.GenreQueue(it)) }, modifier)
-        Tab.PLAYED -> PlayedScreen(graph, modifier)
+        Tab.PLAYED -> PlayedScreen(graph, onOpenEpisode = { onNavigate(Destination.Episode(it)) }, modifier)
         Tab.SEARCH -> SearchScreen(modifier)
     }
 }
@@ -227,6 +236,7 @@ private fun titleOf(state: AppUiState): StringResource = when (state.nav.top) {
     Destination.Settings -> Res.string.settings
     Destination.Import -> Res.string.import_screen_title
     is Destination.GenreQueue -> Res.string.tab_genres
+    is Destination.Episode -> Res.string.episode_title
     null -> if (state.nav.tab == Tab.HOME) Res.string.app_name else state.nav.tab.label
 }
 
