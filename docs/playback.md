@@ -12,8 +12,9 @@ How an episode gets from a tap to your ears, and how listening is recorded. The 
 | `ListeningSession` | `presentation/playback` | The episode being played: saves its position and adds listening time on the write triggers. |
 | `PlaybackPlan` | `presentation/playback` | Works out what to load: the audio's address (a download wins over the feed URL), the start position, the context, the category. |
 | `Media3Engine` + `PlaybackService` | `androidApp/playback` | Android: ExoPlayer in a `MediaSessionService`, driven through a `MediaController`. |
+| `FfmpegEngine` + `FfmpegDecoder` + `PcmSink` | `desktopApp/playback` | Desktop: FFmpeg through JavaCV, PCM out through `javax.sound`. |
 
-Desktop and iOS have no engine yet (`NoAudioEngine`), so their controls show disabled. Desktop's is the FFmpeg/JavaCV spike in the spec.
+iOS has no engine yet (`NoAudioEngine`), so its controls show disabled.
 
 ## What happens
 
@@ -37,3 +38,12 @@ Desktop and iOS have no engine yet (`NoAudioEngine`), so their controls show dis
 - **Streaming cache.** Audio streams through one `SimpleCache` in `cacheDir/audio`, at most the smaller of the OS's cache quota and 5% of free space, least recently used evicted first. Listening again or seeking back doesn't download again.
 - **Plain `http://` enclosures are asked for over HTTPS.** Android blocks cleartext traffic and most hosts serve both. An episode only offered over HTTP fails with a plain-English message; allowing cleartext for audio is an open question.
 - Errors reach the UI in plain English (`androidApp` string resources).
+
+## Desktop
+
+- **FFmpeg through JavaCV** (spec › Desktop playback). `FfmpegDecoder` opens the episode (URL or file), decodes to 44.1 kHz stereo 16-bit PCM, and runs it through FFmpeg's `atempo` filter when the speed isn't 1×, so speech keeps its pitch. It plays every format FFmpeg reads (MP3, AAC, Opus, Ogg, FLAC).
+- **One playback thread** owns the decoder and the sound line. The UI's calls are queued to it; opening a stream happens there, so the UI never waits on the network. Writing to the sound line blocks while its buffer is full, which paces decoding to real time. The position reported is the decoded position less what's still in the output buffer (scaled by speed).
+- **Networking** is FFmpeg's own for now: HTTPS, redirects and reconnects work, and plain `http://` works too (desktop has no cleartext block). The spec's loopback proxy over OkHttp (download-to-disk while streaming, premium credentials, signed-URL retry) is still to come.
+- **Natives:** JavaCV is used without its transitive dependencies (it would pull in OpenCV, Tesseract, JavaFX and more). Only JavaCPP and FFmpeg's LGPL build are shipped, for the OS building the app (`nativePlatform` in `desktopApp/build.gradle.kts`). There's no Windows arm64 build of FFmpeg from bytedeco; Windows on Arm would run the x64 app under emulation.
+- **Tests:** `FfmpegEngineTest` decodes two 30-second test tones (MP3, Opus) to check lengths, that 2× halves the audio, seeking, and the engine's events. `RealStreamSmokeTest` is opt-in (`-Pdamask.audio=<URL>`) and streams a real episode at 1.5× from 10 minutes in.
+- **Still to do:** OS media keys and Now Playing (Nucleus Media Control), the loopback proxy, packaging with the natives, and FFmpeg's LGPL obligations in the shipped app (licence text, a link to the exact source).

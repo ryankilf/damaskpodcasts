@@ -27,7 +27,7 @@ The docs don't repeat either. They describe the implementation and record every 
 |---|---|
 | Core rules (rotation, listening, autoplay, retention) | Done, tested |
 | Database (schema 4, data layer) | Done, tested |
-| Playback | Shared controller done and tested; Android (Media3, background service, mini-player, controls) working on the emulator; desktop (FFmpeg spike) next; iOS not started; downloads, Android Auto and "stop after this episode" to come |
+| Playback | Shared controller done and tested; Android (Media3, background service, mini-player, controls) working on the emulator; desktop plays through FFmpeg (media keys, loopback proxy and packaging to come); iOS not started; downloads, Android Auto and "stop after this episode" to come |
 | OPML import, feed fetch / parse / refresh | Done, tested; a real 78-feed Pocket Casts export imports cleanly (2 feeds are dead upstream) |
 | Presentation and screens | Import, Home, Genres, genre queue, Played, Settings done and tested; Search is a placeholder until the gateway merges; Now Playing waits on playback; tablet/desktop two-pane layouts not started |
 | Playback (Android Media3, desktop FFmpeg), Android Auto | Not started |

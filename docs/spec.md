@@ -569,7 +569,7 @@ Questions that came up while the spec was being written, with how each was settl
 
 The open work before desktop playback is considered de-risked:
 
-- [ ] FFmpeg through JavaCV: stream an MP3 and an Opus file through `atempo` at 2× with pitch preserved, output through `javax.sound`, with accurate seeking and pause/resume.
+- [x] FFmpeg through JavaCV: stream an MP3 and an Opus file through `atempo` at 2× with pitch preserved, output through `javax.sound`, with accurate seeking and pause/resume. (Done; see [Playback](playback.md) › Desktop. The `aac_at`/`aac_mf` OS decoder question is still open.)
 - [ ] Loopback proxy: OkHttp, redirects (including HTTP to HTTPS), `Range` passthrough, basic auth, token-guarded paths, streaming to disk.
 - [ ] Nucleus Media Control: media keys and Now Playing working on macOS, Windows and Linux. Check maintenance and licence.
 - [ ] Packaging: jpackage with a jlink-trimmed runtime and AppCDS, with the per-platform JavaCV natives and Nucleus bundled. macOS signing and notarisation of the native libraries.
