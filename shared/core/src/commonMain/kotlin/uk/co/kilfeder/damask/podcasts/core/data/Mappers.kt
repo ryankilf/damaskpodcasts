@@ -41,12 +41,16 @@ internal fun episodeRow(
     played: Long?,
     playedBy: String?,
     playedHlc: Long?,
+    title: String,
+    imageUrl: String?,
 ): Episode = Episode(
     key = EpisodeKey(ShowId(showId), guid),
     publishedAt = publishedAt,
     feedDurationMs = feedDurationMs,
     playerDurationMs = playerDurationMs,
     isDownloaded = downloaded,
+    title = title,
+    imageUrl = imageUrl,
     position = positionMs?.let { ms ->
         PositionState(
             positionMs = ms,

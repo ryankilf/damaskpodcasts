@@ -1,0 +1,117 @@
+package uk.co.kilfeder.damask.podcasts.ui.components
+
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.min
+import coil3.SingletonImageLoader
+import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import org.jetbrains.compose.resources.stringResource
+import uk.co.kilfeder.damask.podcasts.presentation.importer.LatestShowUi
+import uk.co.kilfeder.damask.podcasts.ui.resources.Res
+import uk.co.kilfeder.damask.podcasts.ui.resources.import_latest
+import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
+
+/** From one cover starting to slide in to the next (the slide always gets to finish first). */
+private const val CYCLE_MS = 2_500L
+
+/**
+ * The newest show's cover (no caption) on an elevated card with an ambient glow, a companion
+ * to the import progress bar. A newer show slides in from the end edge and pushes the current
+ * one out towards the start, at most
+ * once per [CYCLE_MS]; covers in between are skipped. Each image is downloaded before
+ * it slides in. The slide uses the OS's standard duration ([platformMediumAnimationMillis]).
+ *
+ * Decorative for screen readers apart from its label ("Latest: …"); it never announces itself,
+ * so the counter stays the live progress.
+ */
+@Composable
+internal fun LatestShowCard(latest: LatestShowUi?, modifier: Modifier = Modifier) {
+    val slideMs = platformMediumAnimationMillis()
+    val shown = rememberPacedLatest(latest, slideMs)
+    val fromEnd = if (LocalLayoutDirection.current == LayoutDirection.Ltr) 1 else -1
+    BoxWithConstraints(contentAlignment = Alignment.Center, modifier = modifier) {
+        // Leave room for the ambient glow around the card.
+        val glow = Sizes.AmbientGlowInset * 2
+        val side = min(min(maxWidth - glow, maxHeight - glow), Sizes.ImportCoverMax)
+        AnimatedContent(
+            targetState = shown,
+            transitionSpec = {
+                // No size animation (`using null`), so the first cover slides in like the rest
+                // instead of growing out of an empty container.
+                slideInHorizontally(tween(slideMs)) { width -> width * fromEnd } togetherWith
+                    slideOutHorizontally(tween(slideMs)) { width -> -width * fromEnd } using null
+            },
+            label = "latest-show",
+        ) { show ->
+            if (show != null) Cover(show, side)
+        }
+    }
+}
+
+/** At most one change per slide + dwell; always moves on to the newest show available. */
+@Composable
+private fun rememberPacedLatest(latest: LatestShowUi?, slideMs: Int): LatestShowUi? {
+    val context = LocalPlatformContext.current
+    val loader = SingletonImageLoader.get(context)
+    val newest by rememberUpdatedState(latest)
+    var shown by remember { mutableStateOf<LatestShowUi?>(null) }
+    LaunchedEffect(slideMs) {
+        while (true) {
+            val next = snapshotFlow { newest }.filterNotNull().filter { it != shown }.first()
+            loader.execute(ImageRequest.Builder(context).data(next.artworkUrl).build())
+            shown = next
+            delay(CYCLE_MS.coerceAtLeast(slideMs.toLong()))
+        }
+    }
+    return shown
+}
+
+/** The cover alone, no caption: a caption's varying line count would move the cover between shows. */
+@Composable
+private fun Cover(show: LatestShowUi, side: Dp, modifier: Modifier = Modifier) {
+    val label = show.name?.let { stringResource(Res.string.import_latest, it) }
+    AmbientGlow(
+        artworkUrl = show.artworkUrl,
+        shape = MaterialTheme.shapes.medium,
+        modifier = modifier.semantics { label?.let { contentDescription = it } },
+    ) {
+        ElevatedCard(shape = MaterialTheme.shapes.medium, modifier = Modifier.size(side)) {
+            AsyncImage(
+                model = show.artworkUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.aspectRatio(1f),
+            )
+        }
+    }
+}

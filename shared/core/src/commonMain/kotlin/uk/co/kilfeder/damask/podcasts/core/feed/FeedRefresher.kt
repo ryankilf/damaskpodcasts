@@ -37,7 +37,7 @@ class FeedRefresher(
             FetchResult.NotModified -> RefreshOutcome.NOT_MODIFIED.also { store.recordNotModified(id) }
             is FetchResult.Unavailable -> RefreshOutcome.UNAVAILABLE.also {
                 // A lapsed private feed: keep everything, prompt to replace the URL.
-                store.recordProblem(id, FeedStatus.UNAVAILABLE, "HTTP ${result.status}")
+                store.recordProblem(id, FeedStatus.UNAVAILABLE, NEEDS_LOGIN)
             }
             is FetchResult.Failed -> RefreshOutcome.FAILED.also {
                 store.recordProblem(id, FeedStatus.FAILED, result.reason)

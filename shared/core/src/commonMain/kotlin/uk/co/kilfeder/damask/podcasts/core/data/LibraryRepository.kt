@@ -22,10 +22,14 @@ class LibraryRepository(private val db: DamaskDatabase) {
     fun load(): Library {
         val aliasRows = db.showAliasQueries.selectAll().executeAsList()
         val aliases = ShowAliases.flatten(aliasRows.associate { ShowId(it.alias_id) to ShowId(it.canonical_id) })
-        val itunesTypes = db.feedQueries.selectShowFeeds().executeAsList().associate { it.show_id to it.itunes_type }
+        val feeds = db.feedQueries.selectShowFeeds().executeAsList().associateBy { it.show_id }
         val shows = db.showQueries.selectAll().executeAsList()
             .filter { ShowId(it.id) !in aliases }
-            .map { it.toModel(ShowType.fromItunesType(itunesTypes[it.id])) }
+            .map { row ->
+                val feed = feeds[row.id]
+                row.toModel(ShowType.fromItunesType(feed?.itunes_type))
+                    .copy(title = feed?.title.orEmpty(), imageUrl = feed?.image_url)
+            }
         val episodes = db.libraryQueries.selectEpisodes(::episodeRow).executeAsList()
             .map { it.canonical(aliases) }
             .groupBy { it.key }
@@ -42,6 +46,8 @@ class LibraryRepository(private val db: DamaskDatabase) {
         feedDurationMs = a.feedDurationMs ?: b.feedDurationMs,
         playerDurationMs = a.playerDurationMs ?: b.playerDurationMs,
         isDownloaded = a.isDownloaded || b.isDownloaded,
+        title = a.title.ifEmpty { b.title },
+        imageUrl = a.imageUrl ?: b.imageUrl,
         position = listOfNotNull(a.position, b.position).maxByOrNull { it.hlc },
         played = listOfNotNull(a.played, b.played).maxByOrNull { it.hlc },
     )

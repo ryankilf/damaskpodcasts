@@ -17,8 +17,11 @@ SELECT
   p.hlc AS position_hlc,
   pl.played,
   pl.played_by,
-  pl.hlc AS played_hlc
+  pl.hlc AS played_hlc,
+  e.title,
+  COALESCE(e.image_url, sf.image_url) AS image_url
 FROM episode e
+LEFT JOIN show_feed sf ON sf.show_id = e.show_id
 LEFT JOIN episode_meta m ON m.show_id = e.show_id AND m.guid = e.guid
 LEFT JOIN episode_position p ON p.show_id = e.show_id AND p.guid = e.guid
 LEFT JOIN episode_played pl ON pl.show_id = e.show_id AND pl.guid = e.guid
@@ -36,8 +39,11 @@ SELECT
   p.hlc,
   pl.played,
   pl.played_by,
-  pl.hlc
+  pl.hlc,
+  m.title,
+  sf.image_url
 FROM episode_meta m
+LEFT JOIN show_feed sf ON sf.show_id = m.show_id
 LEFT JOIN episode_position p ON p.show_id = m.show_id AND p.guid = m.guid
 LEFT JOIN episode_played pl ON pl.show_id = m.show_id AND pl.guid = m.guid
 WHERE NOT EXISTS (SELECT 1 FROM episode e WHERE e.show_id = m.show_id AND e.guid = m.guid);
@@ -57,8 +63,11 @@ SELECT
   p.hlc AS position_hlc,
   pl.played,
   pl.played_by,
-  pl.hlc AS played_hlc
+  pl.hlc AS played_hlc,
+  e.title,
+  COALESCE(e.image_url, sf.image_url) AS image_url
 FROM episode e
+LEFT JOIN show_feed sf ON sf.show_id = e.show_id
 LEFT JOIN episode_meta m ON m.show_id = e.show_id AND m.guid = e.guid
 LEFT JOIN episode_position p ON p.show_id = e.show_id AND p.guid = e.guid
 LEFT JOIN episode_played pl ON pl.show_id = e.show_id AND pl.guid = e.guid

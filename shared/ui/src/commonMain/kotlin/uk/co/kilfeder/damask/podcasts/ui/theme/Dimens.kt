@@ -17,6 +17,9 @@ object Spacing {
     /** space-2: inside chips; between artwork and text. */
     val Space2 = 8.dp
 
+    /** Between artwork and text in episode rows (EpisodeRow artboard; not yet in tokens.json). */
+    val Space3 = 12.dp
+
     /** space-4: screen edge inset and row padding. */
     val Space4 = 16.dp
 
@@ -43,6 +46,25 @@ object Sizes {
 
     /** Progress bars: half of space-2. */
     val ProgressBarHeight = 4.dp
+
+    /** Row artwork (EpisodeRow artboard). */
+    val RowArtwork = 56.dp
+
+    /** Minimum episode row height. */
+    val RowMinHeight = 72.dp
+
+    /** The progress ring around a row's play control. */
+    val ProgressRingStroke = 3.dp
+
+    /** Ambient light around artwork (NowPlayingPane artboard): how far it spreads, and its blur. */
+    val AmbientGlowInset = 40.dp
+    val AmbientGlowBlur = 40.dp
+
+    /** The import's latest-show cover card, at most. */
+    val ImportCoverMax = 280.dp
+
+    /** Readable content width on wide windows. */
+    val MaxContentWidth = 640.dp
 
     /** The Now Playing play/pause button. */
     val NowPlayingPlayButton = 80.dp

@@ -29,6 +29,9 @@ data class Show(
     val keepCount: Int = DEFAULT_KEEP_COUNT,
     /** false = unsubscribed (tombstone). */
     val subscribed: Boolean = true,
+    /** Display only, from the feed cache; empty until the feed has been fetched. */
+    val title: String = "",
+    val imageUrl: String? = null,
 ) {
     /** Serial shows play oldest-first; everything else newest-first. */
     val episodeOrder: EpisodeOrder

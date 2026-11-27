@@ -46,6 +46,33 @@ The search backend (`shared/api`, `server/*`, `deploy/`; see [server.md](server.
 
 - **Ranking can prefer a mirror feed for the deduplicated slot.** Meilisearch's `attribute` rule (where the matched word sits in the title) comes before popularity. So for "hardcore", "Hardcore History (mirror)" beats "Dan Carlin's Hardcore History", and `distinctAttribute` keeps only the better-ranked of the two. Putting `popularityScore:desc` before `attribute` would change it, but the ranking rules were Decided in the brief, so this needs a decision.
 
+## Branding
+
+- **The app icon is logo D2, "Woven play on damask"** (27 Nov), generated for every platform by `branding/icon/generate.py` (see [branding.md](branding.md)). The PNGs are drawn directly with Pillow, supersampled, rather than rendered from SVG, because the only local SVG renderer handled the design's clip paths poorly. Android's monochrome layer keeps the diaper at 16% so themed icons stay tone-on-tone, as in the design's "Themed" variant.
+- **The desktop app's package name is "Damask"** (was the reverse-domain ID), so menus, the Dock and installers show the app's name.
+
+## Screens
+
+- **Empty categories are hidden on Genres.** All 19 Apple categories are seeded at import, and most users fill only some of them. `GenresViewModel`.
+- **Presentation formats English strings** ("3 days ago", "32 min left"), so Compose and a future SwiftUI app show identical text. Translation would move these to shared resources. `format/Formats`.
+- **"6 Nov 2026" is a Friday.** The design hand-off's exact-value example says "Thu 6 Nov 2026, 21:14"; the code formats the real weekday.
+- **Icons are Material Icons Rounded** (`material-icons-extended`, the last published version, 1.7.3), the closest Compose equivalent of the design's Material Symbols Rounded.
+- **Apostrophes in UI strings are typographic (’).** Compose Multiplatform resources don't unescape Android-style `\'`, which showed as a literal backslash.
+- **When an import finishes, the app goes to Home** (closing Import and Settings), where Up Next now has the new shows, and a snackbar says "Added 78 shows". There is no "done" screen; the import resets for next time. The navigation and the one-off message live in `AppViewModel`.
+- **The Damask theme is the default everywhere.** "Use wallpaper colours" is off until the user turns it on (27 Nov, user request; spec › Decisions updated).
+- **Choosing a category opens a bottom sheet** with a search box and the full list (current category marked), instead of a dropdown. The sheet is always full height, so filtering never resizes it (Material sheets otherwise shrink to their content). Search ignores case and treats "&" and "and" as the same; the matching lives in presentation (`matching`) so a SwiftUI sheet behaves identically.
+- **Plain-English copy throughout**: no jargon ("OPML" appears once, in brackets, as the label some apps use for their export) and no app names; on screen, categories are called genres; network and feed errors read like "This show has gone" or "Took too long", never HTTP codes.
+- **Every show on the import review is ticked by default**, broken feeds included; unticked shows aren't subscribed, and the button counts only ticked ones. Tapping anywhere on a row toggles it (the category button keeps its own tap), and an "All shows" checkbox ticks everything, or unticks everything when all are ticked; it shows a dash when mixed.
+- **Artwork fades in everywhere** (Coil crossfade on the shared image loader). Memory-cache hits appear instantly, as Coil doesn't crossfade them.
+- **Ambient light around artwork** (`AmbientGlow`, from the NowPlayingPane artboard) draws the artwork again behind itself, at its own footprint and shape, blurred 40dp at 90% opacity, so it glows out evenly into a 40dp margin, following the cover's shape and colours on every platform without a palette library. (The artboard's radial-gradient CSS looked too round in practice.) Used on the import cover card now; meant for Now Playing too.
+- **Import shows the latest show's cover**, a companion to the progress bar (while reading feeds, and while saving): an elevated card with the cover only (no caption, whose varying line count moved the cover between shows; the name is in the screen-reader label). A newer show slides in from the end edge and pushes the current one towards the start, at most once every 2.5 seconds, start to start (the slide always gets to finish first); covers in between are skipped, and each image is downloaded before it slides in. The slide uses the OS's standard duration where there is one (Android `config_mediumAnimTime`, with the user's animation scale applied), else Compose's 300ms. The card is labelled "Latest: …" but never announces itself; the counter stays the live progress. This replaced an earlier filling grid of every show.
+- **Import shows determinate progress**: "Reading feeds: 34 of 78", then "Saving shows: 12 of 78". Reading runs confined to the database thread (network calls still overlap), like feed refresh.
+- **The app always opens on Home.** With no subscriptions, Home, Genres and Played show empty states, and Home's empty state has "Search for podcasts" (opens the Search tab) and "Import from OPML" (opens Import; also in Settings). There is no first-run import screen (27 Nov, at the user's request).
+- **No over-18 self-declaration screen** (removed 27 Nov at the user's request; spec › Compliance updated). The 18+ store rating and the v1 minor-signal block remain.
+- **Up Next and genre queues load 30 rows at a time**, with "Show more".
+- **Swipe actions:** swiping an Up Next or genre-queue row marks it played; on Played, swiping a played episode marks it unplayed. Both are also accessibility actions, because a swipe alone isn't usable with a screen reader.
+- **A 12dp gap** between row artwork and text comes from the EpisodeRow artboard but isn't in `tokens.json`; it's `Spacing.Space3`.
+
 ## Rotation and listening
 
 - **Re-listening a played episode** puts it in Home › In Progress but not in genre queues, following the spec's "stays played and out of the queues". `Rotation.genreQueue`.
@@ -64,6 +91,9 @@ The search backend (`shared/api`, `server/*`, `deploy/`; see [server.md](server.
 - **The outbox isn't written yet**, because the private build has no sync. Enqueue in the same transaction as each write when sync lands. `UserStateStore`, `FeedStore`.
 
 ## Feeds and import
+
+- **`http://` requests go over HTTPS first** (feeds and artwork), like an interceptor: stored URLs are never rewritten, so sync and show IDs are unaffected, and the upgrade alone never counts as the feed moving. If HTTPS can't connect or returns an error, the original `http://` request is retried. Android blocks plain HTTP by default and we haven't opted in, so there that retry fails with "Not available over a secure connection". Whether to allow plain HTTP (older shows' audio often needs it) is decided when playback arrives. `feed/HttpsUpgrade.kt`.
+- **Network failures are described readably** ("Couldn't connect", "Timed out", …) rather than by exception name, and never include the URL.
 
 - **Pocket Casts exports private feed URLs** (answers the spec's open question). A real export included an `access.acast.com` premium feed, so premium shows shouldn't need re-adding after import. Confirmed on one export with one premium host.
 - **Show IDs hash the normalised feed URL**, not the URL as typed. The http and https spellings of one feed get the same ID and never need an alias; private feeds with different tokens stay distinct, because the query string is kept. `ShowIds`.

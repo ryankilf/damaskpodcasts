@@ -10,12 +10,12 @@ import androidx.compose.runtime.Composable
  * can be swapped at runtime (enforced by the NoHardcodedColors detekt rule).
  *
  * @param useWallpaperColours Settings › Appearance › "Use wallpaper colours". Ignored where the
- * platform has no dynamic colour; the Damask brand scheme is used instead.
+ * platform has no dynamic colour. Off by default: the Damask brand scheme is the default.
  */
 @Composable
 fun DamaskTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    useWallpaperColours: Boolean = true,
+    useWallpaperColours: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val dynamic = if (useWallpaperColours) dynamicColorScheme(darkTheme) else null

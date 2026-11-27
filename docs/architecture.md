@@ -45,6 +45,16 @@ Rules that keep it that way:
 - `ui` does no date or number formatting: values arrive preformatted in `UiState` (Konsist).
 - User-visible strings come from resources (detekt).
 
+## Presentation and UI
+
+- **`AppGraph`** (`presentation/app`) is the object graph: one per process, created by each platform's entry point (`AppGraph.create(context)` on Android in `DamaskApplication`, `AppGraph.create()` on desktop and iOS). It owns the database, stores, importer and refresher, and has a factory for every ViewModel; the UI never constructs one itself.
+- **One database thread.** Every read and write runs on `dbDispatcher` (`Dispatchers.IO.limitedParallelism(1)`), because the stores and the HLC clock aren't thread-safe.
+- **Reactive snapshot.** `AppGraph.library` re-loads the `Library` whenever SQLDelight reports a change to a table it reads, and `rotation` derives a `Rotation` from it. ViewModels combine these into their `UiState`, so screens update after any write with no manual refresh.
+- **Navigation** is shared state (`NavState`: the selected tab plus screens pushed on top), owned by `AppViewModel`; every launch opens on Home. Compose renders it in `App.kt`; system back pops it.
+- **Formatting** happens in presentation (`format/Formats`): every summarised value is a `Summarised(summary, exact)`, and the UI shows the exact value on long press, hover or focus, and as the accessible label (`ExactValueText`).
+- **Screens** each obtain their ViewModel once (`viewModel { graph.xViewModel() }`) and pass plain state and callbacks to stateless content, as compose-rules require.
+- **The one Android exception:** presentation's `androidMain` bootstrap may import `android.content.Context` (to open the database). Konsist allows that file and nothing else.
+
 ## iOS
 
 For v1 the iOS app hosts Compose. `shared/ui` builds the `Shared` framework and exports `presentation`. Xcode calls `./gradlew :shared:ui:embedAndSignAppleFrameworkForXcode`. When the SwiftUI layer arrives, it gets its own framework that exports `presentation` and never `ui`.

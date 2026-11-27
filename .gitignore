@@ -25,3 +25,5 @@ llm-scrapbook/
 # local.env are committed on purpose.)
 deploy/.env
 deploy/.env.ci
+# Agent git worktrees
+.claude/worktrees/

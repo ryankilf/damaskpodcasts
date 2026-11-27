@@ -64,8 +64,33 @@ class ImportAndRefreshTest {
         assertEquals(AppleCategories.categoryId("Technology"), byTitle.getValue("Zeta").suggestedCategory)
         val gone = byTitle.getValue("Gone")
         assertEquals(Category.UNCATEGORISED_ID, gone.suggestedCategory)
-        assertEquals("HTTP 410", gone.problem)
+        assertEquals("This show has gone", gone.problem)
         assertNull(db.showQueries.selectAll().executeAsList().firstOrNull(), "nothing is written before confirm")
+    }
+
+    @Test
+    fun progressCountsEveryFeedThenEveryShow() = runTest {
+        serveAll()
+        var started = emptyList<OpmlEntry>()
+        val read = mutableMapOf<Int, ImportCandidate>()
+        val candidates = importer.prepare(
+            opml,
+            listener = object : ImportListener {
+                override fun onStarted(entries: List<OpmlEntry>) {
+                    started = entries
+                }
+
+                override fun onFeedRead(index: Int, candidate: ImportCandidate) {
+                    read[index] = candidate
+                }
+            },
+        )
+        assertEquals(listOf("Zeta", "Alpha", "Hobby", "Gone"), started.map { it.title })
+        assertEquals(started, (0..3).map { read.getValue(it).entry }, "each index reports its own feed")
+        assertEquals("This show has gone", read.getValue(3).problem)
+        val saving = mutableListOf<Pair<Int, Int>>()
+        importer.confirm(candidates.map { it to it.suggestedCategory }) { done, total -> saving += done to total }
+        assertEquals((1..4).map { it to 4 }, saving)
     }
 
     @Test

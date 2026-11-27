@@ -17,7 +17,7 @@ Nothing is released publicly until sync exists. The private build is local-only 
 | Release | In scope |
 | --- | --- |
 | Private build (Android, desktop) | OPML import from Pocket Casts; genre assignment; Up Next, Genres, genre queues; In Progress, Now Playing, Played; stream and download; resume position; search through our search gateway (private token); local storage with SQLDelight; Android Auto (Media3 browse tree) |
-| v1: first public release | Everything in the private build, plus Supabase sync and Google sign-in; search for every install, anonymous sessions included; daily background sync; 18+ age gate with store age signals; store billing; UK launch first |
+| v1: first public release | Everything in the private build, plus Supabase sync and Google sign-in; search for every install, anonymous sessions included; daily background sync; 18+ store rating with store age signals; store billing; UK launch first |
 | v2 | Android Automotive OS (standalone, using sync); iOS player with Sign in with Apple and CarPlay (requires Apple's CarPlay audio entitlement) |
 | Later | Chapters; skip-silence |
 
@@ -457,8 +457,8 @@ The catalogue has nothing reliable for age-limiting search results, so the app i
 
 - Store listings are rated 18+.
 - On mobile, query the Play Age Signals API (Android) or Apple's Declared Age Range API (iOS) at sign-in and on each launch. A minor signal shows a blocking "Damask is for over-18s" screen.
-- An unknown signal means a self-declaration at first launch.
-- Desktop and other non-store builds have no store signal: a self-declaration plus the terms of service. A minor signal on any of the account's devices blocks the account everywhere.
+- There is no in-app self-declaration: an unknown signal doesn't block anything.
+- Desktop and other non-store builds have no store signal and rely on the terms of service. A minor signal on any of the account's devices blocks the account everywhere.
 - Launch in the UK only at first.
 - Store the age **band** only (`18+`, `13–17`, `under-13`, `unknown`), never a birthdate, with one row per device on the server:
 
@@ -555,10 +555,10 @@ Questions that came up while the spec was being written, with how each was settl
 - **Unknown duration.** The player's duration replaces the feed's \`itunes:duration\` as soon as the media is prepared. Unknown durations use a 10-minute threshold (see Derived values). Dynamic ad insertion is handled by keeping one copy per device and rewinding when the copies don't match (see Storage).
 - **Category list.** Decided: categories are user-created, and Apple's categories act as overridable defaults through the mapping table.
 - **Search backend.** Decided (Nov 2026): our own Meilisearch index, rebuilt weekly from the Podcast Index dump, behind a Ktor gateway on one VPS (see Search). Search is for discovery only; there is no bulk lookup for OPML import, so private feed URLs never reach our server. Podcast Index's terms v2.0 forbid client-side credentials and public proxies of their API.
-- **Age rating.** Decided (Nov 2026): 18+ only, everywhere, launching in the UK first (see Compliance).
+- **Age rating.** Decided (Nov 2026): 18+ only, everywhere, launching in the UK first (see Compliance). No in-app self-declaration screen (removed 27 Nov).
 - **Sync transport.** Decided: Supabase, with social sign-in only (see Sync). Drive, Firebase and gpodder were considered and rejected.
 - **iOS UI.** Decided: Compose Multiplatform first. The thin UI rule (see Architecture) lets screens move to SwiftUI one at a time later. CarPlay, the audio session and Now Playing are native Swift either way.
-- **Colour and Material You.** Decided: Material You is supported as a user option, Settings › Appearance › "Use wallpaper colours", on by default on Android 12+ and hidden where the platform lacks it. Everywhere else, and for users who turn it off, the app uses a Default brand scheme `(teal #0f766e primary, indigo tertiary; no red, orange or amber in the brand, since those read as danger)` with light and dark variants. UI code reads Material 3 colour roles only (`MaterialTheme.colorScheme`), never hex values, so the scheme can be swapped at runtime. The roles and both schemes are in the [design system](https://claude.ai/artifact/EZHMHvdS5nqQch8gN5a4SK).
+- **Colour and Material You.** Decided: Material You is supported as a user option, Settings › Appearance › "Use wallpaper colours", off by default (the Damask brand scheme is the default; changed 27 Nov) and hidden where the platform lacks it. Everywhere else, and for users who turn it off, the app uses a Default brand scheme `(teal #0f766e primary, indigo tertiary; no red, orange or amber in the brand, since those read as danger)` with light and dark variants. UI code reads Material 3 colour roles only (`MaterialTheme.colorScheme`), never hex values, so the scheme can be swapped at runtime. The roles and both schemes are in the [design system](https://claude.ai/artifact/EZHMHvdS5nqQch8gN5a4SK).
 - **Summarised values.** Decided: any relative or rounded value ("3 weeks ago", "32 min left", a percentage, a rounded count) must show the exact value on long press (touch) or hover/focus (desktop), and expose it as the accessible label. No summary ships without it.
 - **Fonts.** Decided: platform default fonts only (`FontFamily.Default`: Roboto or the OEM font on Android, San Francisco on Apple platforms, Segoe UI on Windows). No bundled typeface.
 - **Tablets and window sizes.** Decided: v1 supports all three Material window size classes. Compact (phones, under 600dp): bottom navigation bar, one pane. Medium (600–839dp): navigation rail, one wider pane. Expanded (840dp and up, which covers landscape tablets, unfolded foldables and desktop): rail plus two panes. Home is In Progress and Up Next beside Now Playing, Genres is the list beside the selected queue, Played is the list beside the episode. Built with `NavigationSuiteScaffold` and `ListDetailPaneScaffold` from Material 3 adaptive. Check early that the Compose Multiplatform port covers desktop; if it doesn't, branch on window size class by hand.

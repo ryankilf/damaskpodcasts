@@ -53,8 +53,39 @@ class FeedFetcherTest {
         web.status("https://example.com/private", HttpStatusCode.Forbidden)
         web.status("https://example.com/broken", HttpStatusCode.InternalServerError)
         assertEquals(FetchResult.Unavailable(403), web.fetcher.fetch("https://example.com/private"))
-        assertEquals(FetchResult.Failed("HTTP 500"), web.fetcher.fetch("https://example.com/broken"))
+        val broken = web.fetcher.fetch("https://example.com/broken")
+        assertEquals(FetchResult.Failed("The show’s server is having problems"), broken)
     }
+
+    @Test
+    fun httpFeedsAreFetchedOverHttpsWithoutCountingAsAMove() = runTest {
+        val secure = MockFeeds(upgrade = true)
+        secure.feed("https://example.com/feed", "<rss/>")
+        val result = assertIs<FetchResult.Fetched>(secure.fetcher.fetch("http://example.com/feed"))
+        assertNull(result.movedPermanentlyTo)
+        assertEquals(listOf("https://example.com/feed"), secure.requests.map { it.url.toString() })
+    }
+
+    @Test
+    fun httpFallsBackWhenHttpsFails() = runTest {
+        val secure = MockFeeds(upgrade = true)
+        secure.status("https://legacy.example.com/feed", HttpStatusCode.NotFound)
+        secure.feed("http://legacy.example.com/feed", "<rss/>")
+        assertIs<FetchResult.Fetched>(secure.fetcher.fetch("http://legacy.example.com/feed"))
+        assertEquals(
+            listOf("https://legacy.example.com/feed", "http://legacy.example.com/feed"),
+            secure.requests.map { it.url.toString() },
+        )
+    }
+
+    @Test
+    fun failuresAreDescribedReadably() {
+        assertEquals("No secure connection available", describeNetworkFailure(UnknownServiceException()))
+        assertEquals("Couldn’t connect", describeNetworkFailure(IllegalStateException()))
+        assertEquals("This show has gone", describeStatus(404))
+    }
+
+    private class UnknownServiceException : Exception()
 
     @Test
     fun redirectLoopsGiveUp() = runTest {

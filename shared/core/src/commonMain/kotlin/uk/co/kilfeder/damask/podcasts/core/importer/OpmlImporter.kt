@@ -3,7 +3,9 @@ package uk.co.kilfeder.damask.podcasts.core.importer
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 import uk.co.kilfeder.damask.podcasts.core.data.CategoryPrefill
 import uk.co.kilfeder.damask.podcasts.core.data.FeedStore
@@ -12,6 +14,7 @@ import uk.co.kilfeder.damask.podcasts.core.feed.FeedFetcher
 import uk.co.kilfeder.damask.podcasts.core.feed.FeedParseException
 import uk.co.kilfeder.damask.podcasts.core.feed.FeedParser
 import uk.co.kilfeder.damask.podcasts.core.feed.FetchResult
+import uk.co.kilfeder.damask.podcasts.core.feed.NEEDS_LOGIN
 import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
 import uk.co.kilfeder.damask.podcasts.core.model.ShowId
 
@@ -27,8 +30,21 @@ data class ImportCandidate(
     val problem: String?,
 )
 
+/** Progress from [OpmlImporter.prepare]. */
+interface ImportListener {
+    /** The file was parsed: these feeds will be read, in this order. */
+    fun onStarted(entries: List<OpmlEntry>) = Unit
+
+    /** The feed at [index] in the parsed entries has been read (or failed: see [ImportCandidate.problem]). */
+    fun onFeedRead(index: Int, candidate: ImportCandidate) = Unit
+
+    companion object {
+        val NONE = object : ImportListener {}
+    }
+}
+
 /**
- * First run: OPML file -> confirm-or-change category list (one row per show, alphabetical) ->
+ * Import: OPML file -> confirm-or-change category list (one row per show, alphabetical) ->
  * subscribe. Nothing is written until [confirm]; the user must confirm or change every category.
  */
 class OpmlImporter(
@@ -36,19 +52,43 @@ class OpmlImporter(
     private val store: FeedStore,
     private val categories: CategoryPrefill,
 ) {
-    suspend fun prepare(opml: String, concurrency: Int = DEFAULT_CONCURRENCY): List<ImportCandidate> {
+    /**
+     * Fetches every feed in [opml] and prefills its category, reporting progress to [listener]:
+     * the parsed entries first, then each feed as it's read (in completion order, one at a time).
+     */
+    suspend fun prepare(
+        opml: String,
+        concurrency: Int = DEFAULT_CONCURRENCY,
+        listener: ImportListener = ImportListener.NONE,
+    ): List<ImportCandidate> {
         val entries = Opml.parse(opml)
         categories.seedAppleCategories()
         val permits = Semaphore(concurrency)
+        val reporting = Mutex()
+        listener.onStarted(entries)
         val candidates = coroutineScope {
-            entries.map { entry -> async { permits.withPermit { candidate(entry) } } }.awaitAll()
+            entries.mapIndexed { index, entry ->
+                async {
+                    val candidate = permits.withPermit { candidate(entry) }
+                    reporting.withLock { listener.onFeedRead(index, candidate) }
+                    candidate
+                }
+            }.awaitAll()
         }
         return candidates.sortedWith(compareBy<ImportCandidate> { it.title.lowercase() }.thenBy { it.entry.feedUrl })
     }
 
-    /** Subscribes each candidate to the category the user confirmed. */
-    fun confirm(choices: List<Pair<ImportCandidate, CategoryId>>): List<ShowId> =
-        choices.map { (candidate, category) -> store.subscribe(candidate.entry.feedUrl, category, candidate.feed) }
+    /**
+     * Subscribes each candidate to the category the user confirmed. [onProgress] is called with
+     * (shows saved, total) after each one.
+     */
+    fun confirm(
+        choices: List<Pair<ImportCandidate, CategoryId>>,
+        onProgress: (done: Int, total: Int) -> Unit = { _, _ -> },
+    ): List<ShowId> = choices.mapIndexed { index, (candidate, category) ->
+        store.subscribe(candidate.entry.feedUrl, category, candidate.feed)
+            .also { onProgress(index + 1, choices.size) }
+    }
 
     private suspend fun candidate(entry: OpmlEntry): ImportCandidate {
         val (feed, problem) = fetch(entry.feedUrl)
@@ -71,7 +111,7 @@ class OpmlImporter(
                 null to e.message
             }
             FetchResult.NotModified -> null to "Not modified"
-            is FetchResult.Unavailable -> null to "Feed unavailable (HTTP ${result.status})"
+            is FetchResult.Unavailable -> null to NEEDS_LOGIN
             is FetchResult.Failed -> null to result.reason
         }
 

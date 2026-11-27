@@ -56,9 +56,19 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.compose.materialIconsExtended)
+            implementation(libs.compose.backhandler)
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor)
+            implementation(libs.filekit.dialogs.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+        }
+        jvmTest.dependencies {
+            implementation(libs.compose.uiTest)
+            implementation(compose.desktop.currentOs)
+            implementation(libs.kotlinx.coroutinesSwing)
         }
         getByName("androidDeviceTest").dependencies {
             implementation(libs.androidx.testRunner)
@@ -72,4 +82,12 @@ compose.resources {
 
 dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
+}
+
+// Opt-in screenshot tour of the real app: -Pdamask.screenshots=<dir> [-Pdamask.opml=<file>].
+val tourDir = providers.gradleProperty("damask.screenshots").map { rootProject.file(it).absolutePath }
+val tourOpml = providers.gradleProperty("damask.opml").map { rootProject.file(it).absolutePath }
+tasks.withType<Test>().configureEach {
+    tourDir.orNull?.let { systemProperty("damask.screenshots", it) }
+    tourOpml.orNull?.let { systemProperty("damask.opml", it) }
 }

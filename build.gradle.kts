@@ -131,6 +131,10 @@ shippingModules.forEach { modulePath ->
             allowUrl("https://raw.githubusercontent.com/auth0/jwks-rsa-java/master/LICENSE") {
                 because("MIT (jwks-rsa)")
             }
+            // FileKit (OPML file picker) and dbus-java (FileKit's Linux desktop portal) link to their
+            // LICENSE files; both read and confirmed MIT, 27 Nov 2026.
+            allowUrl("https://github.com/vinceglb/FileKit/blob/main/LICENSE") { because("MIT (FileKit)") }
+            allowUrl("https://github.com/hypfvieh/dbus-java/blob/master/LICENSE") { because("MIT (dbus-java)") }
         }
 
         val verifyBanned = tasks.register("verifyNoBannedArtifacts") {
