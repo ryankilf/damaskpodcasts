@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.LinearProgressIndicator
@@ -34,6 +35,7 @@ import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.readString
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 import uk.co.kilfeder.damask.podcasts.presentation.importer.CategoryOptionUi
@@ -53,6 +55,7 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.import_reading
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_review_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_review_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_start_again
+import uk.co.kilfeder.damask.podcasts.ui.resources.import_subscribe_to
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_subscribing
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_title
 import uk.co.kilfeder.damask.podcasts.ui.theme.DamaskTextStyles
@@ -75,6 +78,7 @@ internal fun ImportScreen(
         state = state,
         onChooseFile = { picker.launch() },
         onCategoryChange = viewModel::onCategoryChanged,
+        onSelectionChange = viewModel::onSelectionChanged,
         onConfirm = viewModel::onConfirm,
         onStartAgain = viewModel::onStartAgain,
         modifier = modifier,
@@ -86,6 +90,7 @@ private fun ImportContent(
     state: ImportUiState,
     onChooseFile: () -> Unit,
     onCategoryChange: (Int, String) -> Unit,
+    onSelectionChange: (Int, Boolean) -> Unit,
     onConfirm: () -> Unit,
     onStartAgain: () -> Unit,
     modifier: Modifier = Modifier,
@@ -104,7 +109,7 @@ private fun ImportContent(
             total = state.total,
             modifier = modifier,
         )
-        is ImportUiState.Review -> Review(state, onCategoryChange, onConfirm, modifier)
+        is ImportUiState.Review -> Review(state, onCategoryChange, onSelectionChange, onConfirm, modifier)
         is ImportUiState.Subscribing -> Progress(
             label = stringResource(Res.string.import_subscribing, state.done, state.total),
             done = state.done,
@@ -163,6 +168,7 @@ private fun Progress(label: String, done: Int, total: Int, modifier: Modifier = 
 private fun Review(
     state: ImportUiState.Review,
     onCategoryChange: (Int, String) -> Unit,
+    onSelectionChange: (Int, Boolean) -> Unit,
     onConfirm: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -186,12 +192,17 @@ private fun Review(
                 }
             }
             items(state.rows, key = { it.index }) { row ->
-                ImportRow(row, state.categories, onCategoryChange = { onCategoryChange(row.index, it) })
+                ImportRow(
+                    row = row,
+                    categories = state.categories,
+                    onCategoryChange = { onCategoryChange(row.index, it) },
+                    onSelectionChange = { onSelectionChange(row.index, it) },
+                )
             }
         }
         Box(Modifier.fillMaxWidth().padding(Spacing.Space4)) {
-            Button(onClick = onConfirm, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(Res.string.import_confirm, state.rows.size))
+            Button(onClick = onConfirm, enabled = state.selectedCount > 0, modifier = Modifier.fillMaxWidth()) {
+                Text(pluralStringResource(Res.plurals.import_confirm, state.selectedCount, state.selectedCount))
             }
         }
     }
@@ -202,15 +213,23 @@ private fun ImportRow(
     row: ImportRowUi,
     categories: List<CategoryOptionUi>,
     onCategoryChange: (String) -> Unit,
+    onSelectionChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val subscribeLabel = stringResource(Res.string.import_subscribe_to, row.title)
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.Space3),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.Space2),
         modifier = modifier
             .heightIn(min = Sizes.RowMinHeight)
-            .padding(horizontal = Spacing.Space4, vertical = Spacing.Space2),
+            .padding(start = Spacing.Space1, end = Spacing.Space4, top = Spacing.Space2, bottom = Spacing.Space2),
     ) {
+        // Material's Checkbox already has a 48dp touch target and the checkbox role.
+        Checkbox(
+            checked = row.selected,
+            onCheckedChange = onSelectionChange,
+            modifier = Modifier.semantics { contentDescription = subscribeLabel },
+        )
         Artwork(row.artworkUrl)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.Space1)) {
             Text(row.title, style = DamaskTextStyles.Title, maxLines = 2)

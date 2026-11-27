@@ -21,6 +21,8 @@ data class ImportRowUi(
     val categoryId: String,
     /** Why the feed couldn't be read; it can still be subscribed and is retried on refresh. */
     val problem: String?,
+    /** Ticked by default; unticked shows aren't subscribed. */
+    val selected: Boolean = true,
 )
 
 /** Import: choose an OPML file, confirm or change every show's category, subscribe. */
@@ -30,7 +32,9 @@ sealed interface ImportUiState {
     /** Fetching feeds: [done] of [total] read so far. */
     data class Reading(val done: Int = 0, val total: Int = 0) : ImportUiState
 
-    data class Review(val rows: List<ImportRowUi>, val categories: List<CategoryOptionUi>) : ImportUiState
+    data class Review(val rows: List<ImportRowUi>, val categories: List<CategoryOptionUi>) : ImportUiState {
+        val selectedCount: Int get() = rows.count { it.selected }
+    }
 
     /** Saving shows and their episodes: [done] of [total]. */
     data class Subscribing(val done: Int = 0, val total: Int = 0) : ImportUiState
@@ -67,11 +71,19 @@ class ImportViewModel internal constructor(private val graph: AppGraph) : ViewMo
         )
     }
 
+    fun onSelectionChanged(index: Int, selected: Boolean) {
+        val current = state.value as? ImportUiState.Review ?: return
+        state.value = current.copy(
+            rows = current.rows.map { if (it.index == index) it.copy(selected = selected) else it },
+        )
+    }
+
     fun onConfirm() {
         val review = state.value as? ImportUiState.Review ?: return
-        state.value = ImportUiState.Subscribing(0, review.rows.size)
+        if (review.selectedCount == 0) return
+        state.value = ImportUiState.Subscribing(0, review.selectedCount)
         viewModelScope.launch {
-            val choices = review.rows.map { candidates[it.index] to CategoryId(it.categoryId) }
+            val choices = review.rows.filter { it.selected }.map { candidates[it.index] to CategoryId(it.categoryId) }
             graph.onDb {
                 graph.importer.confirm(choices) { done, total -> state.value = ImportUiState.Subscribing(done, total) }
             }

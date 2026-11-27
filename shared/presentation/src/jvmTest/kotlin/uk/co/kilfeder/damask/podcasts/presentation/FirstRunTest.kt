@@ -76,6 +76,11 @@ class FirstRunTest {
         assertEquals(listOf("apple:news", "apple:history"), review.rows.map { it.categoryId })
         assertTrue(review.categories.last().name == "Uncategorised", "Uncategorised listed last")
 
+        // Untick one show, re-tick it: only ticked shows are subscribed.
+        import.onSelectionChanged(review.rows.first().index, false)
+        assertEquals(1, (import.uiState.value as ImportUiState.Review).selectedCount)
+        import.onSelectionChanged(review.rows.first().index, true)
+
         import.onConfirm()
         import.uiState.await { it == ImportUiState.Done(2) }
 
