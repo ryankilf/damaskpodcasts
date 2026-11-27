@@ -36,6 +36,10 @@ DIAPER_OPACITY = 0.16
 
 # The play triangle: M38 29 Q33 27 33 33 V75 Q33 81 38 79 L80 57.5 Q85 54 80 50.5 Z
 PLAY_PATH = "M38,29 Q33,27 33,33 V75 Q33,81 38,79 L80,57.5 Q85,54 80,50.5 Z"
+# Android only: launchers mask the adaptive icon to a circle (or similar) that shows the middle
+# 72 units, so the artboard's mark, drawn for a rounded square, reaches the mask's edge. Scale it
+# about the centre so it breathes like other launcher icons. The ground and diaper stay full size.
+ANDROID_MARK_SCALE = 0.8
 # Strands (x 28..88): light, accent, light, with 3-unit gaps.
 STRANDS = [(26, 43, "light"), (46, 62, "accent"), (65, 82, "light")]
 
@@ -149,7 +153,11 @@ def strands_group(light, accent):
         f'            android:pathData="M28,{top} H88 V{bottom} H28 Z" />\n'
         for top, bottom, kind in STRANDS
     )
-    return f'    <group>\n        <clip-path android:pathData="{PLAY_PATH}" />\n{paths}    </group>\n'
+    return (
+        f'    <group android:pivotX="54" android:pivotY="54"\n'
+        f'        android:scaleX="{ANDROID_MARK_SCALE}" android:scaleY="{ANDROID_MARK_SCALE}">\n'
+        f'        <clip-path android:pathData="{PLAY_PATH}" />\n{paths}    </group>\n'
+    )
 
 
 def android(res):
