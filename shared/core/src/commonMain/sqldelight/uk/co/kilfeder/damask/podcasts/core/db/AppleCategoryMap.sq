@@ -1,0 +1,28 @@
+-- Drives the import prefill only. Seeded from Apple's list; user-editable.
+-- A row with a subcategory beats the '' (any) row for the same category.
+CREATE TABLE apple_category_map (
+  apple_category     TEXT NOT NULL,             -- e.g. 'News'
+  apple_subcategory  TEXT NOT NULL DEFAULT '',  -- e.g. 'Politics'; '' = any
+  category_id        TEXT NOT NULL REFERENCES category(id),
+  deleted            INTEGER NOT NULL DEFAULT 0,  -- tombstone
+  hlc                INTEGER NOT NULL,
+  PRIMARY KEY (apple_category, apple_subcategory)
+);
+
+upsert:
+INSERT INTO apple_category_map (apple_category, apple_subcategory, category_id, deleted, hlc)
+VALUES (:apple_category, :apple_subcategory, :category_id, :deleted, :hlc)
+ON CONFLICT (apple_category, apple_subcategory) DO UPDATE SET
+  category_id = excluded.category_id,
+  deleted = excluded.deleted,
+  hlc = excluded.hlc
+WHERE excluded.hlc > apple_category_map.hlc;
+
+-- The prefill for one feed category: the exact subcategory row if there is one, else the '' row.
+selectPrefill:
+SELECT category_id FROM apple_category_map
+WHERE deleted = 0
+  AND apple_category = :apple_category
+  AND apple_subcategory IN (:apple_subcategory, '')
+ORDER BY apple_subcategory = '' ASC
+LIMIT 1;

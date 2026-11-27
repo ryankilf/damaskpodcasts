@@ -1,0 +1,62 @@
+-- ===== Local only: re-derived from feeds =====
+
+CREATE TABLE show_feed (
+  show_id      TEXT NOT NULL PRIMARY KEY REFERENCES show(id),
+  title        TEXT NOT NULL,
+  image_url    TEXT,                     -- channel itunes:image
+  itunes_type  TEXT                      -- episodic | serial; drives the auto defaults
+);
+
+-- Every category the feed declares, as written. Input for the prefill and any future tags.
+CREATE TABLE show_feed_category (
+  show_id            TEXT NOT NULL REFERENCES show(id),
+  position           INTEGER NOT NULL,   -- order in the feed
+  apple_category     TEXT NOT NULL,
+  apple_subcategory  TEXT NOT NULL DEFAULT '',
+  PRIMARY KEY (show_id, position)
+);
+
+CREATE TABLE episode (
+  show_id        TEXT NOT NULL REFERENCES show(id),
+  guid           TEXT NOT NULL,
+  title          TEXT NOT NULL,
+  published_at   INTEGER NOT NULL,
+  enclosure_url  TEXT NOT NULL,
+  image_url      TEXT,                   -- item itunes:image; null = use show's
+  duration_ms    INTEGER,                -- feed value; episode_meta holds the player's
+  download_path  TEXT,                   -- per device, never synced
+  PRIMARY KEY (show_id, guid)
+);
+
+CREATE INDEX episode_show_published ON episode (show_id, published_at);
+
+upsertShowFeed:
+INSERT OR REPLACE INTO show_feed (show_id, title, image_url, itunes_type)
+VALUES (:show_id, :title, :image_url, :itunes_type);
+
+deleteShowFeedCategories:
+DELETE FROM show_feed_category WHERE show_id = :show_id;
+
+insertShowFeedCategory:
+INSERT INTO show_feed_category (show_id, position, apple_category, apple_subcategory)
+VALUES (:show_id, :position, :apple_category, :apple_subcategory);
+
+-- Feed refresh: keeps the local download path, refreshes everything else.
+upsertEpisode:
+INSERT INTO episode (show_id, guid, title, published_at, enclosure_url, image_url, duration_ms, download_path)
+VALUES (:show_id, :guid, :title, :published_at, :enclosure_url, :image_url, :duration_ms, NULL)
+ON CONFLICT (show_id, guid) DO UPDATE SET
+  title = excluded.title,
+  published_at = excluded.published_at,
+  enclosure_url = excluded.enclosure_url,
+  image_url = excluded.image_url,
+  duration_ms = excluded.duration_ms;
+
+setDownloadPath:
+UPDATE episode SET download_path = :download_path WHERE show_id = :show_id AND guid = :guid;
+
+deleteEpisode:
+DELETE FROM episode WHERE show_id = :show_id AND guid = :guid;
+
+selectShowFeeds:
+SELECT * FROM show_feed;

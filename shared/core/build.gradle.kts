@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidMultiplatformLibrary)
+    alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -19,12 +20,42 @@ kotlin {
         }
         withHostTest {}
     }
+    compilerOptions {
+        optIn.add("kotlin.uuid.ExperimentalUuidApi")
+    }
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutinesCore)
+            implementation(libs.sqldelight.coroutines)
+        }
+        androidMain.dependencies {
+            implementation(libs.sqldelight.androidDriver)
+        }
+        jvmMain.dependencies {
+            implementation(libs.sqldelight.sqliteDriver)
+        }
+        iosMain.dependencies {
+            implementation(libs.sqldelight.nativeDriver)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+        }
+        getByName("androidHostTest").dependencies {
+            // Host tests run on the JVM, so they use the JDBC SQLite driver.
+            implementation(libs.sqldelight.sqliteDriver)
+        }
+    }
+}
+
+sqldelight {
+    databases {
+        create("DamaskDatabase") {
+            packageName.set("uk.co.kilfeder.damask.podcasts.core.db")
+            // Android 12 (minSdk 31) ships SQLite 3.32; don't use newer syntax.
+            dialect(libs.sqldelight.dialect)
+            // Every released schema is snapshotted here and migrations are verified against it.
+            schemaOutputDirectory.set(file("src/commonMain/sqldelight/databases"))
+            verifyMigrations.set(true)
         }
     }
 }

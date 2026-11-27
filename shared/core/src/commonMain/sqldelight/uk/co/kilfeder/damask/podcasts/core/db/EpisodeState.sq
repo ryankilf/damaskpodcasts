@@ -1,0 +1,46 @@
+-- Position and played state live in separate tables so each is plain row-level LWW
+-- (Postgres applies an upsert's WHERE to the whole row).
+
+CREATE TABLE episode_position (
+  show_id      TEXT NOT NULL,
+  guid         TEXT NOT NULL,
+  position_ms  INTEGER NOT NULL,
+  duration_at_save_ms  INTEGER,      -- length of the copy the position was saved on (ad insertion guard)
+  play_context  TEXT,                -- UP_NEXT | GENRE:<id> | SHOW:<id> | NONE; drives autoplay
+  hlc          INTEGER NOT NULL,
+  PRIMARY KEY (show_id, guid)
+);
+
+CREATE TABLE episode_played (
+  show_id  TEXT NOT NULL,
+  guid     TEXT NOT NULL,
+  played   INTEGER NOT NULL,             -- 1 = played, 0 = marked unplayed
+  played_by  TEXT,                       -- FINISHED | MARKED; only FINISHED counts for rotation
+  hlc      INTEGER NOT NULL,
+  PRIMARY KEY (show_id, guid)
+);
+
+upsertPosition:
+INSERT INTO episode_position (show_id, guid, position_ms, duration_at_save_ms, play_context, hlc)
+VALUES (:show_id, :guid, :position_ms, :duration_at_save_ms, :play_context, :hlc)
+ON CONFLICT (show_id, guid) DO UPDATE SET
+  position_ms = excluded.position_ms,
+  duration_at_save_ms = excluded.duration_at_save_ms,
+  play_context = excluded.play_context,
+  hlc = excluded.hlc
+WHERE excluded.hlc > episode_position.hlc;
+
+upsertPlayed:
+INSERT INTO episode_played (show_id, guid, played, played_by, hlc)
+VALUES (:show_id, :guid, :played, :played_by, :hlc)
+ON CONFLICT (show_id, guid) DO UPDATE SET
+  played = excluded.played,
+  played_by = excluded.played_by,
+  hlc = excluded.hlc
+WHERE excluded.hlc > episode_played.hlc;
+
+selectPosition:
+SELECT * FROM episode_position WHERE show_id = :show_id AND guid = :guid;
+
+selectPlayed:
+SELECT * FROM episode_played WHERE show_id = :show_id AND guid = :guid;

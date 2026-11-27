@@ -1,0 +1,34 @@
+CREATE TABLE show (
+  id             TEXT NOT NULL PRIMARY KEY,  -- UUIDv5(first feed_url); fixed for life
+  feed_url       TEXT NOT NULL,              -- current URL; mutable; a secret for private feeds
+  feed_url_norm  TEXT NOT NULL,              -- normalised for duplicate detection
+  category_id    TEXT NOT NULL REFERENCES category(id),  -- exactly one
+  episode_order  TEXT,                       -- NEWEST | OLDEST; NULL = auto from itunes:type
+  keep_mode      TEXT,                       -- LATEST | ALL; NULL = auto from itunes:type
+  keep_count     INTEGER NOT NULL DEFAULT 10,            -- used when keep_mode is LATEST
+  subscribed     INTEGER NOT NULL DEFAULT 1,             -- 0 = unsubscribed (tombstone)
+  hlc            INTEGER NOT NULL
+);
+
+CREATE INDEX show_category ON show (category_id);
+CREATE INDEX show_feed_url_norm ON show (feed_url_norm);
+
+upsert:
+INSERT INTO show (id, feed_url, feed_url_norm, category_id, episode_order, keep_mode, keep_count, subscribed, hlc)
+VALUES (:id, :feed_url, :feed_url_norm, :category_id, :episode_order, :keep_mode, :keep_count, :subscribed, :hlc)
+ON CONFLICT (id) DO UPDATE SET
+  feed_url = excluded.feed_url,
+  feed_url_norm = excluded.feed_url_norm,
+  category_id = excluded.category_id,
+  episode_order = excluded.episode_order,
+  keep_mode = excluded.keep_mode,
+  keep_count = excluded.keep_count,
+  subscribed = excluded.subscribed,
+  hlc = excluded.hlc
+WHERE excluded.hlc > show.hlc;
+
+selectAll:
+SELECT * FROM show;
+
+selectById:
+SELECT * FROM show WHERE id = :id;

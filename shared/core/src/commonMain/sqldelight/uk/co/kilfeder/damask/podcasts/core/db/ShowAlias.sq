@@ -1,0 +1,18 @@
+-- Two show IDs found to be the same feed. Reads resolve alias_id to canonical_id.
+-- Aliases always point straight at the group's root (re-flattened on each pull).
+CREATE TABLE show_alias (
+  alias_id      TEXT NOT NULL PRIMARY KEY,
+  canonical_id  TEXT NOT NULL,
+  hlc           INTEGER NOT NULL
+);
+
+upsert:
+INSERT INTO show_alias (alias_id, canonical_id, hlc)
+VALUES (:alias_id, :canonical_id, :hlc)
+ON CONFLICT (alias_id) DO UPDATE SET
+  canonical_id = excluded.canonical_id,
+  hlc = excluded.hlc
+WHERE excluded.hlc > show_alias.hlc;
+
+selectAll:
+SELECT * FROM show_alias;

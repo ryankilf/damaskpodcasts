@@ -1,0 +1,30 @@
+-- Minimal record for any episode with position or played state; lets Played outlive the feed.
+CREATE TABLE episode_meta (
+  show_id          TEXT NOT NULL,
+  guid             TEXT NOT NULL,
+  title            TEXT NOT NULL,
+  published_at     INTEGER NOT NULL,
+  duration_ms      INTEGER,              -- player-reported only; the feed's duration stays local
+  hlc              INTEGER NOT NULL,
+  PRIMARY KEY (show_id, guid)
+);
+
+upsert:
+INSERT INTO episode_meta (show_id, guid, title, published_at, duration_ms, hlc)
+VALUES (:show_id, :guid, :title, :published_at, :duration_ms, :hlc)
+ON CONFLICT (show_id, guid) DO UPDATE SET
+  title = excluded.title,
+  published_at = excluded.published_at,
+  duration_ms = excluded.duration_ms,
+  hlc = excluded.hlc
+WHERE excluded.hlc > episode_meta.hlc;
+
+-- Creates the minimal record from the feed cache the first time an episode gets user state.
+insertFromFeedIfAbsent:
+INSERT OR IGNORE INTO episode_meta (show_id, guid, title, published_at, duration_ms, hlc)
+SELECT show_id, guid, title, published_at, NULL, :hlc
+FROM episode
+WHERE show_id = :show_id AND guid = :guid;
+
+selectByKey:
+SELECT * FROM episode_meta WHERE show_id = :show_id AND guid = :guid;

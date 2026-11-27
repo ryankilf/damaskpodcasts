@@ -1,0 +1,43 @@
+-- Read queries that assemble the rotation's snapshot.
+
+-- Every episode the rules can see: the feed cache, plus episodes that have left their feed but
+-- still have user state (episode_meta), so Played survives. SQLite 3.30 has no FULL OUTER JOIN,
+-- hence the UNION ALL of the two halves.
+selectEpisodes:
+SELECT
+  e.show_id,
+  e.guid,
+  e.published_at,
+  e.duration_ms AS feed_duration_ms,
+  m.duration_ms AS player_duration_ms,
+  e.download_path IS NOT NULL AS downloaded,
+  p.position_ms,
+  p.duration_at_save_ms,
+  p.play_context,
+  p.hlc AS position_hlc,
+  pl.played,
+  pl.played_by,
+  pl.hlc AS played_hlc
+FROM episode e
+LEFT JOIN episode_meta m ON m.show_id = e.show_id AND m.guid = e.guid
+LEFT JOIN episode_position p ON p.show_id = e.show_id AND p.guid = e.guid
+LEFT JOIN episode_played pl ON pl.show_id = e.show_id AND pl.guid = e.guid
+UNION ALL
+SELECT
+  m.show_id,
+  m.guid,
+  m.published_at,
+  CAST(NULL AS INTEGER),
+  m.duration_ms,
+  0,
+  p.position_ms,
+  p.duration_at_save_ms,
+  p.play_context,
+  p.hlc,
+  pl.played,
+  pl.played_by,
+  pl.hlc
+FROM episode_meta m
+LEFT JOIN episode_position p ON p.show_id = m.show_id AND p.guid = m.guid
+LEFT JOIN episode_played pl ON pl.show_id = m.show_id AND pl.guid = m.guid
+WHERE NOT EXISTS (SELECT 1 FROM episode e WHERE e.show_id = m.show_id AND e.guid = m.guid);

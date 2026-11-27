@@ -1,0 +1,27 @@
+-- ===== Synced: user state =====
+-- Every synced table merges with last-write-wins on its HLC, locally and on the server:
+-- an upsert only replaces the row when the incoming hlc is newer.
+
+CREATE TABLE category (
+  id          TEXT NOT NULL PRIMARY KEY,   -- UUID (or a fixed well-known ID for seeded rows)
+  name        TEXT NOT NULL,               -- user-editable; seeded from Apple's top level
+  is_system   INTEGER NOT NULL DEFAULT 0,  -- 1 = Uncategorised: can't be renamed or deleted
+  deleted     INTEGER NOT NULL DEFAULT 0,  -- tombstone
+  hlc         INTEGER NOT NULL             -- last write wins, per record
+);
+
+-- Uncategorised has a fixed ID so every device seeds the *same* row (no duplicates after sync).
+INSERT INTO category (id, name, is_system, deleted, hlc) VALUES ('uncategorised', 'Uncategorised', 1, 0, 0);
+
+upsert:
+INSERT INTO category (id, name, is_system, deleted, hlc)
+VALUES (:id, :name, :is_system, :deleted, :hlc)
+ON CONFLICT (id) DO UPDATE SET
+  name = excluded.name,
+  is_system = excluded.is_system,
+  deleted = excluded.deleted,
+  hlc = excluded.hlc
+WHERE excluded.hlc > category.hlc;
+
+selectLive:
+SELECT * FROM category WHERE deleted = 0;

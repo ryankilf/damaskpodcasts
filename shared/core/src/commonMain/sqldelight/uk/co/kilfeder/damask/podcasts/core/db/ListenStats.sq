@@ -1,0 +1,32 @@
+-- Listening-time counters. Each device writes only its own rows, so LWW is exact
+-- and totals are sums across devices. Recorded from v1; no stats screen yet.
+CREATE TABLE listen_stats (
+  device_id    TEXT NOT NULL,
+  day          TEXT NOT NULL,            -- device-local date, 'YYYY-MM-DD'
+  category_id  TEXT NOT NULL,
+  wall_ms      INTEGER NOT NULL,         -- real time spent listening
+  content_ms   INTEGER NOT NULL,         -- audio covered (2x speed = double wall_ms)
+  hlc          INTEGER NOT NULL,
+  PRIMARY KEY (device_id, day, category_id)
+);
+
+-- This device adding time to today's row. Remote rows arrive via upsert.
+addLocal:
+INSERT INTO listen_stats (device_id, day, category_id, wall_ms, content_ms, hlc)
+VALUES (:device_id, :day, :category_id, :wall_ms, :content_ms, :hlc)
+ON CONFLICT (device_id, day, category_id) DO UPDATE SET
+  wall_ms = listen_stats.wall_ms + excluded.wall_ms,
+  content_ms = listen_stats.content_ms + excluded.content_ms,
+  hlc = excluded.hlc;
+
+upsert:
+INSERT INTO listen_stats (device_id, day, category_id, wall_ms, content_ms, hlc)
+VALUES (:device_id, :day, :category_id, :wall_ms, :content_ms, :hlc)
+ON CONFLICT (device_id, day, category_id) DO UPDATE SET
+  wall_ms = excluded.wall_ms,
+  content_ms = excluded.content_ms,
+  hlc = excluded.hlc
+WHERE excluded.hlc > listen_stats.hlc;
+
+selectByDevice:
+SELECT * FROM listen_stats WHERE device_id = :device_id;

@@ -1,0 +1,36 @@
+-- ===== Local only: sync machinery =====
+
+CREATE TABLE device (
+  id           TEXT NOT NULL PRIMARY KEY,  -- generated on first launch
+  last_hlc     INTEGER NOT NULL,           -- highest HLC issued or seen
+  pull_cursor  INTEGER NOT NULL DEFAULT 0  -- highest server_seq pulled
+);
+
+CREATE TABLE outbox (
+  seq      INTEGER PRIMARY KEY AUTOINCREMENT,  -- local order only
+  kind     TEXT NOT NULL,              -- e.g. episode_position, listen_stats, show, category
+  payload  TEXT NOT NULL,              -- JSON, including its original hlc
+  hlc      INTEGER NOT NULL
+);
+
+selectDevice:
+SELECT * FROM device LIMIT 1;
+
+insertDevice:
+INSERT INTO device (id, last_hlc, pull_cursor) VALUES (:id, :last_hlc, 0);
+
+-- Only ever moves forward.
+advanceLastHlc:
+UPDATE device SET last_hlc = :last_hlc WHERE id = :id AND last_hlc < :last_hlc;
+
+advancePullCursor:
+UPDATE device SET pull_cursor = :pull_cursor WHERE id = :id AND pull_cursor < :pull_cursor;
+
+enqueue:
+INSERT INTO outbox (kind, payload, hlc) VALUES (:kind, :payload, :hlc);
+
+selectOutboxBatch:
+SELECT * FROM outbox ORDER BY seq LIMIT :limit;
+
+deleteOutboxUpTo:
+DELETE FROM outbox WHERE seq <= :seq;
