@@ -19,6 +19,7 @@ application {
 
 dependencies {
     implementation(projects.shared.api)
+    implementation(projects.server.meili)
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.cio)
     implementation(libs.ktor.server.auth)
@@ -36,7 +37,7 @@ dependencies {
     testImplementation(libs.ktor.server.testHost)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.kotlinx.coroutinesTest)
-    testImplementation(libs.testcontainers)
+    testImplementation(testFixtures(projects.server.meili))
     testImplementation(libs.slf4j.simple)
 }
 

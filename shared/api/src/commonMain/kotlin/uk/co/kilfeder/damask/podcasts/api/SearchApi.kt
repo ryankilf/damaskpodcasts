@@ -86,9 +86,36 @@ object ApiErrorCode {
     const val INTERNAL = "internal"
 }
 
-/** `GET /health` response (no auth). */
+/**
+ * `GET /health` response (no auth), for an external uptime monitor. HTTP 503 when [status] is
+ * `down`, 200 otherwise.
+ */
 @Serializable
 data class HealthResponse(
+    /** [HealthStatus]: `down` if ![db], else `warning` if the certificate needs attention, else `ok`. */
     val status: String,
-    val meilisearch: Boolean,
+    /** Meilisearch is reachable and the `podcasts` index exists. */
+    val db: Boolean,
+    /** [CertStatus] of the gateway's own public TLS certificate. */
+    val cert: String,
 )
+
+object HealthStatus {
+    const val OK = "ok"
+    const val WARNING = "warning"
+    const val DOWN = "down"
+}
+
+object CertStatus {
+    /** More than 14 days left. */
+    const val OK = "ok"
+
+    /** 14 days or fewer left. */
+    const val WARNING = "warning"
+
+    /** Expired, or the certificate couldn't be read. */
+    const val EXPIRED = "expired"
+
+    /** No public hostname configured (local compose): not checked, doesn't affect status. */
+    const val UNKNOWN = "unknown"
+}

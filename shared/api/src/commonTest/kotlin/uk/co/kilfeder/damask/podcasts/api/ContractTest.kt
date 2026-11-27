@@ -89,9 +89,26 @@ class ContractTest {
             json("""{ "error": "rate_limited", "message": "Too many requests" }"""),
             json(ApiJson.encodeToString(ApiError.serializer(), error)),
         )
+    }
+
+    @Test
+    fun healthMatchesGolden() {
+        val cases = mapOf(
+            HealthResponse(HealthStatus.OK, db = true, cert = CertStatus.OK) to
+                """{ "status": "ok", "db": true, "cert": "ok" }""",
+            HealthResponse(HealthStatus.WARNING, db = true, cert = CertStatus.WARNING) to
+                """{ "status": "warning", "db": true, "cert": "warning" }""",
+            HealthResponse(HealthStatus.DOWN, db = false, cert = CertStatus.UNKNOWN) to
+                """{ "status": "down", "db": false, "cert": "unknown" }""",
+        )
+        cases.forEach { (health, golden) ->
+            assertEquals(json(golden), json(ApiJson.encodeToString(HealthResponse.serializer(), health)))
+            assertEquals(health, ApiJson.decodeFromString(HealthResponse.serializer(), golden))
+        }
+        assertEquals(listOf("ok", "warning", "down"), listOf(HealthStatus.OK, HealthStatus.WARNING, HealthStatus.DOWN))
         assertEquals(
-            json("""{ "status": "ok", "meilisearch": true }"""),
-            json(ApiJson.encodeToString(HealthResponse.serializer(), HealthResponse("ok", meilisearch = true))),
+            listOf("ok", "warning", "expired", "unknown"),
+            listOf(CertStatus.OK, CertStatus.WARNING, CertStatus.EXPIRED, CertStatus.UNKNOWN),
         )
     }
 
