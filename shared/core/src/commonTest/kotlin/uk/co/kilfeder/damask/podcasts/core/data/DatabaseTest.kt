@@ -25,7 +25,8 @@ class DatabaseTest {
     private val driver = inMemoryDriver()
     private val db = DamaskDatabase(driver)
     private var now = NOW_MS
-    private val store = UserStateStore(db) { now }
+    private val clock = DeviceClock(db) { now }
+    private val store = UserStateStore(db, clock)
     private val repository = LibraryRepository(db)
 
     @AfterTest
@@ -130,11 +131,12 @@ class DatabaseTest {
         val first = db.episodeStateQueries.selectPosition("s", "e").executeAsOne().hlc
 
         now -= DAY_MS // the device clock is wound back a day, then the app restarts
-        val restarted = UserStateStore(db) { now }
+        val restartedClock = DeviceClock(db) { now }
+        val restarted = UserStateStore(db, restartedClock)
         restarted.savePosition(key("s", "e"), 2 * MINUTE_MS, null, PlayContext.None)
         val second = db.episodeStateQueries.selectPosition("s", "e").executeAsOne()
 
-        assertEquals(store.deviceId, restarted.deviceId)
+        assertEquals(clock.deviceId, restartedClock.deviceId)
         assertTrue(second.hlc > first, "the newer write must win")
         assertEquals(2 * MINUTE_MS, second.position_ms)
     }

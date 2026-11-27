@@ -5,15 +5,12 @@ import uk.co.kilfeder.damask.podcasts.core.model.EpisodeKey
 import uk.co.kilfeder.damask.podcasts.core.model.Hlc
 import uk.co.kilfeder.damask.podcasts.core.model.PlayContext
 import uk.co.kilfeder.damask.podcasts.core.model.PlayedBy
-import uk.co.kilfeder.damask.podcasts.core.sync.HlcClock
-import kotlin.uuid.Uuid
 
 /**
  * Writes this device's user state: playback position, played state, the player's duration.
  *
- * Every write gets a fresh HLC from a clock that resumes from `device.last_hlc`, so timestamps
- * keep increasing across restarts even if the wall clock goes backwards. Each write also makes
- * sure the episode has its `episode_meta` record, so Played outlives the feed.
+ * Every write gets a fresh HLC from the [DeviceClock]. Each write also makes sure the episode has
+ * its `episode_meta` record, so Played outlives the feed.
  *
  * Writes aren't queued in the outbox yet: the private build has no sync. When sync lands, enqueue
  * here, inside the same transaction.
@@ -22,21 +19,8 @@ import kotlin.uuid.Uuid
  */
 class UserStateStore(
     private val db: DamaskDatabase,
-    wallClockMs: () -> Long,
+    private val clock: DeviceClock,
 ) {
-    val deviceId: String
-    private val clock: HlcClock
-
-    init {
-        val device = db.deviceQueries.selectDevice().executeAsOneOrNull()
-            ?: Uuid.random().toString().let { id ->
-                db.deviceQueries.insertDevice(id = id, last_hlc = 0)
-                db.deviceQueries.selectDevice().executeAsOne()
-            }
-        deviceId = device.id
-        clock = HlcClock(wallClockMs, Hlc(device.last_hlc))
-    }
-
     /** Called on the spec's write triggers: every 30 s of playback, pause, stop, seek. */
     fun savePosition(key: EpisodeKey, positionMs: Long, durationAtSaveMs: Long?, context: PlayContext) =
         db.transaction {
@@ -90,12 +74,6 @@ class UserStateStore(
         )
     }
 
-    /** Called for every HLC pulled from the server, so later local writes order after it. */
-    fun receive(remote: Hlc) {
-        clock.receive(remote)
-        persistClock()
-    }
-
     private fun writePlayed(key: EpisodeKey, played: Boolean, by: PlayedBy?, hlc: Hlc) {
         db.episodeStateQueries.upsertPlayed(
             show_id = key.showId.value,
@@ -110,9 +88,5 @@ class UserStateStore(
         db.episodeMetaQueries.insertFromFeedIfAbsent(hlc = hlc.value, show_id = key.showId.value, guid = key.guid)
     }
 
-    private fun issue(): Hlc = clock.issue().also { persistClock() }
-
-    private fun persistClock() {
-        db.deviceQueries.advanceLastHlc(last_hlc = clock.last.value, id = deviceId)
-    }
+    private fun issue(): Hlc = clock.issue()
 }

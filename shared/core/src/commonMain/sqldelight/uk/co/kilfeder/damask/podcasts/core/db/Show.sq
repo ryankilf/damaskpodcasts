@@ -32,3 +32,6 @@ SELECT * FROM show;
 
 selectById:
 SELECT * FROM show WHERE id = :id;
+
+selectSubscribedIds:
+SELECT id FROM show WHERE subscribed = 1;

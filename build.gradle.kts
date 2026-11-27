@@ -119,6 +119,9 @@ shippingModules.forEach { modulePath ->
             allow("BSD-3-Clause")
             allow("ISC")
             allow("CC0-1.0")
+            // SLF4J (via Ktor) declares MIT using opensource.org's newer URL, which Licensee
+            // doesn't map to an SPDX ID yet.
+            allowUrl("https://opensource.org/license/mit") { because("MIT (SLF4J)") }
         }
 
         val verifyBanned = tasks.register("verifyNoBannedArtifacts") {

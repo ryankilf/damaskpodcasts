@@ -27,18 +27,26 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutinesCore)
             implementation(libs.sqldelight.coroutines)
+            implementation(libs.ktor.client.core)
+            implementation(libs.xmlutil.core)
+            implementation(libs.okio)
         }
         androidMain.dependencies {
             implementation(libs.sqldelight.androidDriver)
+            implementation(libs.ktor.client.okhttp)
         }
         jvmMain.dependencies {
             implementation(libs.sqldelight.sqliteDriver)
+            implementation(libs.ktor.client.okhttp)
         }
         iosMain.dependencies {
             implementation(libs.sqldelight.nativeDriver)
+            implementation(libs.ktor.client.darwin)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.ktor.client.mock)
+            implementation(libs.kotlinx.coroutinesTest)
         }
         getByName("androidHostTest").dependencies {
             // Host tests run on the JVM, so they use the JDBC SQLite driver.
@@ -54,6 +62,8 @@ sqldelight {
             // Android 12 (minSdk 31) ships SQLite 3.32; don't use newer syntax.
             dialect(libs.sqldelight.dialect)
             // Every released schema is snapshotted here and migrations are verified against it.
+            // After changing the schema: add migrations/<n>.sqm, then run
+            // `./gradlew :shared:core:generateCommonMainDamaskDatabaseSchema` on its own.
             schemaOutputDirectory.set(file("src/commonMain/sqldelight/databases"))
             verifyMigrations.set(true)
         }

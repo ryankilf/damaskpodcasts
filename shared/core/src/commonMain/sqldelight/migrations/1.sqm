@@ -1,0 +1,9 @@
+-- Schema 1 -> 2: per-feed HTTP cache headers and health.
+CREATE TABLE feed_fetch_state (
+  show_id          TEXT NOT NULL PRIMARY KEY,  -- show.id (FKs aren't enforced)
+  etag             TEXT,
+  last_modified    TEXT,
+  status           TEXT NOT NULL DEFAULT 'OK',
+  last_fetched_at  INTEGER,
+  failure          TEXT
+);

@@ -1,0 +1,33 @@
+-- Local only: HTTP caching and health per feed. Added in schema 2 (see migrations/1.sqm).
+CREATE TABLE feed_fetch_state (
+  show_id          TEXT NOT NULL PRIMARY KEY,  -- show.id (FKs aren't enforced)
+  etag             TEXT,                  -- for If-None-Match
+  last_modified    TEXT,                  -- for If-Modified-Since, as the server sent it
+  status           TEXT NOT NULL DEFAULT 'OK',  -- OK | UNAVAILABLE (401/403) | FAILED
+  last_fetched_at  INTEGER,               -- wall-clock ms of the last attempt
+  failure          TEXT                   -- short reason for FAILED; never contains the URL
+);
+
+selectByShow:
+SELECT * FROM feed_fetch_state WHERE show_id = :show_id;
+
+recordSuccess:
+INSERT INTO feed_fetch_state (show_id, etag, last_modified, status, last_fetched_at, failure)
+VALUES (:show_id, :etag, :last_modified, 'OK', :fetched_at, NULL)
+ON CONFLICT (show_id) DO UPDATE SET
+  etag = excluded.etag,
+  last_modified = excluded.last_modified,
+  status = 'OK',
+  last_fetched_at = excluded.last_fetched_at,
+  failure = NULL;
+
+recordNotModified:
+UPDATE feed_fetch_state SET status = 'OK', last_fetched_at = :fetched_at, failure = NULL WHERE show_id = :show_id;
+
+recordProblem:
+INSERT INTO feed_fetch_state (show_id, status, last_fetched_at, failure)
+VALUES (:show_id, :status, :fetched_at, :failure)
+ON CONFLICT (show_id) DO UPDATE SET
+  status = excluded.status,
+  last_fetched_at = excluded.last_fetched_at,
+  failure = excluded.failure;

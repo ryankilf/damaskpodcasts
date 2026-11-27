@@ -49,7 +49,12 @@ data class Category(
     val name: String,
     /** The built-in Uncategorised category: can't be renamed or deleted. */
     val isSystem: Boolean = false,
-)
+) {
+    companion object {
+        /** Fixed so every device seeds the same row (see Category.sq). */
+        val UNCATEGORISED_ID = CategoryId("uncategorised")
+    }
+}
 
 /** Orders a show's episodes in its own order (newest- or oldest-first); ties broken by GUID. */
 fun Show.episodeComparator(): Comparator<Episode> = when (episodeOrder) {

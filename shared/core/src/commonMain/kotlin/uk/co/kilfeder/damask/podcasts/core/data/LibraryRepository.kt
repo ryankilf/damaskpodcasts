@@ -1,22 +1,14 @@
 package uk.co.kilfeder.damask.podcasts.core.data
 
 import uk.co.kilfeder.damask.podcasts.core.db.DamaskDatabase
-import uk.co.kilfeder.damask.podcasts.core.db.SelectEpisodes
 import uk.co.kilfeder.damask.podcasts.core.model.Category
 import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
 import uk.co.kilfeder.damask.podcasts.core.model.Episode
-import uk.co.kilfeder.damask.podcasts.core.model.EpisodeKey
-import uk.co.kilfeder.damask.podcasts.core.model.Hlc
-import uk.co.kilfeder.damask.podcasts.core.model.PlayContext
-import uk.co.kilfeder.damask.podcasts.core.model.PlayedState
-import uk.co.kilfeder.damask.podcasts.core.model.PositionState
-import uk.co.kilfeder.damask.podcasts.core.model.Show
 import uk.co.kilfeder.damask.podcasts.core.model.ShowId
 import uk.co.kilfeder.damask.podcasts.core.model.ShowType
 import uk.co.kilfeder.damask.podcasts.core.rotation.Library
 import uk.co.kilfeder.damask.podcasts.core.sync.ShowAliases
 import uk.co.kilfeder.damask.podcasts.core.db.Category as CategoryRow
-import uk.co.kilfeder.damask.podcasts.core.db.Show as ShowRow
 
 /**
  * Builds the rotation's [Library] snapshot from the database.
@@ -34,8 +26,8 @@ class LibraryRepository(private val db: DamaskDatabase) {
         val shows = db.showQueries.selectAll().executeAsList()
             .filter { ShowId(it.id) !in aliases }
             .map { it.toModel(ShowType.fromItunesType(itunesTypes[it.id])) }
-        val episodes = db.libraryQueries.selectEpisodes().executeAsList()
-            .map { row -> row.toModel().canonical(aliases) }
+        val episodes = db.libraryQueries.selectEpisodes(::episodeRow).executeAsList()
+            .map { it.canonical(aliases) }
             .groupBy { it.key }
             .values
             .map { copies -> copies.reduce(::merge) }
@@ -55,37 +47,4 @@ class LibraryRepository(private val db: DamaskDatabase) {
     )
 
     private fun CategoryRow.toModel() = Category(CategoryId(id), name, isSystem = Columns.bool(is_system))
-
-    private fun ShowRow.toModel(type: ShowType) = Show(
-        id = ShowId(id),
-        categoryId = CategoryId(category_id),
-        type = type,
-        episodeOrderOverride = Columns.episodeOrder(episode_order),
-        keepModeOverride = Columns.keepMode(keep_mode),
-        keepCount = keep_count.toInt(),
-        subscribed = Columns.bool(subscribed),
-    )
-
-    private fun SelectEpisodes.toModel() = Episode(
-        key = EpisodeKey(ShowId(show_id), guid),
-        publishedAt = published_at,
-        feedDurationMs = feed_duration_ms,
-        playerDurationMs = player_duration_ms,
-        isDownloaded = downloaded,
-        position = position_ms?.let { ms ->
-            PositionState(
-                positionMs = ms,
-                hlc = Hlc(requireNotNull(position_hlc)),
-                durationAtSaveMs = duration_at_save_ms,
-                context = PlayContext.decode(play_context),
-            )
-        },
-        played = played?.let { flag ->
-            PlayedState(
-                played = Columns.bool(flag),
-                playedBy = Columns.playedBy(played_by),
-                hlc = Hlc(requireNotNull(played_hlc)),
-            )
-        },
-    )
 }

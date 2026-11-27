@@ -17,6 +17,9 @@ junit = "4.13.2"
 konsist = "1.0.0-beta.1"
 licensee = "1.14.1"
 sqldelight = "2.4.1"
+ktor = "3.6.2"
+xmlutil = "1.0.2"
+okio = "3.18.2"
 kotlin = "2.4.21"
 kotlinx-coroutines = "1.11.0"
 material3 = "1.12.0-alpha03"
@@ -53,6 +56,12 @@ sqldelight-nativeDriver = { module = "app.cash.sqldelight:native-driver", versio
 sqldelight-sqliteDriver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
 sqldelight-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }
 sqldelight-dialect = { module = "app.cash.sqldelight:sqlite-3-30-dialect", version.ref = "sqldelight" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+xmlutil-core = { module = "io.github.pdvrieze.xmlutil:core", version.ref = "xmlutil" }
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
