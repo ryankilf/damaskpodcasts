@@ -56,9 +56,13 @@ Seeded rows use HLC 0, so any user rename, merge or delete wins over them.
 
 `savePosition`, `markPlayed`, `markUnplayed` (also resets the position to 0) and `reportPlayerDuration`. Each runs in a transaction, takes a fresh HLC, and first makes sure the episode has its `episode_meta` record.
 
-## Planned: schema 3
+## Schema 3: preferences
 
-[Spec › Data model](spec.md#data-model) adds a nullable `show.podcast_guid`, filled from the feed's `podcast:guid`. Shows with the same GUID alias like shows with the same `feed_url_norm`, and URL normalisation stays the fallback. That will be migration `2.sqm`, and `ShowAliases.detect` will group by either key.
+`app_setting` (local only) holds this device's preferences as key/value text: the 18+ self-declaration, "Hide explicit" and "Use wallpaper colours". `presentation/app/Settings` reads and writes it.
+
+## Planned: schema 4
+
+[Spec › Data model](spec.md#data-model) adds a nullable `show.podcast_guid`, filled from the feed's `podcast:guid`. Shows with the same GUID alias like shows with the same `feed_url_norm`, and URL normalisation stays the fallback. That will be migration `3.sqm`, and `ShowAliases.detect` will group by either key.
 
 ## Changing the schema
 

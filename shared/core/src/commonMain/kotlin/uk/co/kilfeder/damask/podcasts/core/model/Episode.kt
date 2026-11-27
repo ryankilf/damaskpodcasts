@@ -69,6 +69,10 @@ data class Episode(
     val position: PositionState? = null,
     val played: PlayedState? = null,
     val isDownloaded: Boolean = false,
+    /** Display only: the rules never read these. */
+    val title: String = "",
+    /** The episode's artwork, falling back to the show's. */
+    val imageUrl: String? = null,
 ) {
     /** duration(episode): the player's value when known, otherwise the feed's, otherwise unknown. */
     val durationMs: Long? get() = playerDurationMs ?: feedDurationMs

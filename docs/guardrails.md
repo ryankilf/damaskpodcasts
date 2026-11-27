@@ -37,6 +37,15 @@ In `shared/ui/.../ui/theme`: `DamaskColors.kt` (copied from the design hand-off;
 - `UiState` types are immutable data classes.
 - `ui` does no formatting.
 
+## Seeing the real app
+
+`ScreenshotTour` (`shared/ui` jvmTest) drives the real `App` offscreen at phone size with a throwaway database. It taps through the age gate, imports an OPML file over the network and writes PNGs of each screen. It's opt-in, so `check` never runs it:
+
+```sh
+./gradlew :shared:ui:jvmTest --tests '*ScreenshotTour*' \
+    -Pdamask.screenshots=llm-scrapbook/screens -Pdamask.opml=llm-scrapbook/podcasts_opml.xml
+```
+
 ## Build checks
 
 | Task | Fails when |

@@ -1,0 +1,12 @@
+-- Local only: this device's preferences (age declaration, Hide explicit, appearance).
+-- Added in schema 3 (see migrations/2.sqm).
+CREATE TABLE app_setting (
+  key    TEXT NOT NULL PRIMARY KEY,
+  value  TEXT NOT NULL
+);
+
+selectAll:
+SELECT * FROM app_setting;
+
+put:
+INSERT OR REPLACE INTO app_setting (key, value) VALUES (:key, :value);

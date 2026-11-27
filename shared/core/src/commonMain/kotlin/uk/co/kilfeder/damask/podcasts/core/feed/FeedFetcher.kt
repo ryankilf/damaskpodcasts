@@ -88,6 +88,9 @@ class FeedFetcher(private val client: HttpClient) {
         private val PERMANENT_REDIRECTS = setOf(301, 308)
         private const val TIMEOUT_MS = 30_000L
 
+        /** The fetcher the app uses, on [createClient]. */
+        fun create(): FeedFetcher = FeedFetcher(createClient())
+
         /** The client the app uses: platform engine, no automatic redirects, sane timeouts. */
         fun createClient(): HttpClient = HttpClient {
             followRedirects = false

@@ -122,6 +122,10 @@ shippingModules.forEach { modulePath ->
             // SLF4J (via Ktor) declares MIT using opensource.org's newer URL, which Licensee
             // doesn't map to an SPDX ID yet.
             allowUrl("https://opensource.org/license/mit") { because("MIT (SLF4J)") }
+            // FileKit (OPML file picker) and dbus-java (FileKit's Linux desktop portal) link to their
+            // LICENSE files; both read and confirmed MIT, 27 Nov 2026.
+            allowUrl("https://github.com/vinceglb/FileKit/blob/main/LICENSE") { because("MIT (FileKit)") }
+            allowUrl("https://github.com/hypfvieh/dbus-java/blob/master/LICENSE") { because("MIT (dbus-java)") }
         }
 
         val verifyBanned = tasks.register("verifyNoBannedArtifacts") {

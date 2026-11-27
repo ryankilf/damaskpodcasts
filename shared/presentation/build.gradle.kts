@@ -27,10 +27,16 @@ kotlin {
             implementation(projects.shared.core)
             api(libs.androidx.lifecycle.viewmodel)
             api(libs.kotlinx.coroutinesCore)
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.sqldelight.coroutines)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutinesTest)
+        }
+        jvmTest.dependencies {
+            implementation(libs.sqldelight.sqliteDriver)
+            implementation(libs.ktor.client.mock)
         }
     }
 }

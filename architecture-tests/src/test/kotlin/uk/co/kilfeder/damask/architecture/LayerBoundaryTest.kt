@@ -26,7 +26,12 @@ class LayerBoundaryTest {
     @Test
     fun `presentation never imports Compose, Android or the ui layer`() =
         scope(PRESENTATION).files.assertFalse(testName = "presentation imports") { file ->
-            file.hasImport { it.name.startsWithAny(PRESENTATION_FORBIDDEN) }
+            // Platform bootstrap files (AppGraph.create) may take an android.content.Context to open
+            // the database; everything else, including all ViewModels, stays Android-free.
+            val bootstrap = file.sourceSetName == "androidMain"
+            val forbidden = if (bootstrap) PRESENTATION_FORBIDDEN - "android." else PRESENTATION_FORBIDDEN
+            val otherAndroid = file.hasImport { it.name.startsWith("android.") && it.name != ANDROID_CONTEXT }
+            file.hasImport { it.name.startsWithAny(forbidden) } || (bootstrap && otherAndroid)
         }
 
     @Test
@@ -62,7 +67,7 @@ class LayerBoundaryTest {
     fun `ViewModels expose state only as StateFlow`() =
         scope(PRESENTATION).classes()
             .filter { it.name.endsWith("ViewModel") }
-            .flatMap { it.properties() }
+            .flatMap { it.properties(includeNested = false) }
             .filter { it.hasPublicOrDefaultModifier }
             .assertTrue(testName = "ViewModel public state") {
                 it.type?.name?.startsWith("StateFlow") == true
@@ -93,6 +98,7 @@ class LayerBoundaryTest {
         const val CORE_PKG = "uk.co.kilfeder.damask.podcasts.core"
         const val PRESENTATION_PKG = "uk.co.kilfeder.damask.podcasts.presentation"
         const val UI_PKG = "uk.co.kilfeder.damask.podcasts.ui"
+        const val ANDROID_CONTEXT = "android.content.Context"
 
         val FORMATTING_APIS = listOf(
             "java.text",
