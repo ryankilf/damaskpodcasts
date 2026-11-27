@@ -1,6 +1,6 @@
 # Podcast App — v1 Spec
 
-Nov 26, 2026 · @Ryan Kilfedder
+Nov 26, 2026 (search and compliance revised Nov 27) · @Ryan Kilfedder
 
 ## Purpose
 
@@ -8,7 +8,7 @@ A paid, closed-source podcast player that brings neglected genres back into rota
 
 - **Replaces Pocket Casts.** Its genre grouping (Smart Folders) is paywalled.
 - **Fills a gap.** AntennaPod and Podcast Addict both import OPML, but they need manual tagging, and AntennaPod has only one queue. Neither app rotates genres.
-- **Cheap to run.** The backend (Supabase) stays on its free tier until revenue covers Pro. Feeds are fetched on the device, and only user state syncs.
+- **Cheap to run.** The backend (Supabase) stays on its free tier until revenue covers Pro, and search runs on one small VPS of our own. Feeds are fetched on the device, and only user state syncs.
 
 ## Scope
 
@@ -16,8 +16,8 @@ Nothing is released publicly until sync exists. The private build is local-only 
 
 | Release | In scope |
 | --- | --- |
-| Private build (Android, desktop) | OPML import from Pocket Casts; genre assignment; Up Next, Genres, genre queues; In Progress, Now Playing, Played; stream and download; resume position; search via Podcast Index (key in the app); local storage with SQLDelight; Android Auto (Media3 browse tree) |
-| v1: first public release | Everything in the private build, plus Supabase sync and Google sign-in; the Podcast Index key behind an Edge Function; daily background sync; store age signals; store billing |
+| Private build (Android, desktop) | OPML import from Pocket Casts; genre assignment; Up Next, Genres, genre queues; In Progress, Now Playing, Played; stream and download; resume position; search through our search gateway (private token); local storage with SQLDelight; Android Auto (Media3 browse tree) |
+| v1: first public release | Everything in the private build, plus Supabase sync and Google sign-in; search for every install, anonymous sessions included; daily background sync; 18+ age gate with store age signals; store billing; UK launch first |
 | v2 | Android Automotive OS (standalone, using sync); iOS player with Sign in with Apple and CarPlay (requires Apple's CarPlay audio entitlement) |
 | Later | Chapters; skip-silence |
 
@@ -81,8 +81,8 @@ The home screen leads with what you've started, then the cross-genre rotation.
 | Genre queue | That category's in-progress episodes, then one episode per show, interleaved | In-progress first, then shows by LRP |
 | Now Playing | The current episode, held until it is played. Starting another episode leaves this one in In Progress at its saved position | — |
 | Played | Log of every play session, finished episodes included; supports re-listening and undoing an accidental mark-played | Newest first |
-| Import | OPML file, then a confirm-or-change category list, one row per show | Alphabetical |
-| Search | Podcast Index search results, with their artwork. Subscribing sends the show through the same category confirmation step | API relevance |
+| Import | OPML file, one batched lookup against our index, then a confirm-or-change category list, one row per show | Alphabetical |
+| Search | Results from our index of the Podcast Index catalogue, with their artwork; "Hide explicit" applies. Subscribing sends the show through the same category confirmation step | Index relevance, then popularity |
 
 Design work lives in the [screen flow board](https://claude.ai/artifact/AEBbsBe7TLKUWNa2QKms3Q) and the [Podcast App design system](https://claude.ai/artifact/EZHMHvdS5nqQch8gN5a4SK).
 
@@ -148,6 +148,7 @@ CREATE TABLE show (
   id             TEXT PRIMARY KEY,       -- UUIDv5(first feed_url); fixed for life
   feed_url       TEXT NOT NULL,          -- current URL; mutable; a secret for private feeds
   feed_url_norm  TEXT NOT NULL,          -- normalised for duplicate detection (see Sync)
+  podcast_guid   TEXT,                   -- podcast:guid from the feed or from lookup; same GUID = same show
   category_id    TEXT NOT NULL REFERENCES category(id),  -- exactly one
   episode_order  TEXT,                   -- NEWEST | OLDEST; NULL = auto from itunes:type
   keep_mode      TEXT,                   -- LATEST | ALL; NULL = auto from itunes:type
@@ -312,7 +313,46 @@ Devices that are only browsing never write playback state.
 
 The query string is **never** touched, because premium tokens live in it. When two subscribed shows share a `feed_url_norm`, the group's root is the show with the earliest HLC (ties broken by ID). Every other member gets a `show_alias` row pointing straight at that root, never at another alias. Every device computes the same root from the same rows, and aliases are re-flattened on each pull. The alias's state and settings are then read through `canonical()`, so nothing is rewritten.
 
+**Same GUID, same show.** `show.podcast_guid` is filled from the feed's `podcast:guid` or from lookup. Two subscribed shows with the same GUID are the same show and are aliased exactly as above. URL normalisation stays the fallback when either show has no GUID. The normaliser lives in `shared/api`, so the app and the search server use one implementation.
+
 **Auth.** Social sign-in only: Google on Android, Automotive OS and desktop, and Sign in with Apple on iOS (required alongside Google). There's no email/password and no magic links, so no SMTP is needed. Phones get the native account picker through supabase-kt Compose Auth; desktop uses supabase-kt's localhost callback. Every server table has `user_id UUID NOT NULL DEFAULT auth.uid()` with the row-level security policy `user_id = auth.uid()`, so the publishable key can ship in the app.
+
+## Search
+
+Search and OPML lookup run on our own index, built weekly from Podcast Index's public catalogue dump. The app never talks to Podcast Index: their terms (v2.0, October 2026) forbid API credentials in client code and any public service that proxies their API, but allow downloading the weekly dump and running our own index and API from it.
+
+**Shape.** One small VPS runs Meilisearch (community edition, MIT) on `127.0.0.1:7700` and a Ktor gateway beside it. The gateway is the only public endpoint, reached through a Cloudflare Tunnel, so the box opens no inbound ports.
+
+**Weekly import.** A JVM CLI runs overnight once a week:
+
+1. Download the dump from podcastindex.org/datasets and read it with sqlite-jdbc.
+2. Keep a feed only if it isn't dead, isn't a duplicate of another feed, has episodes, and last answered with a 2xx. Drop junk: a popularity score of 0 together with fewer than 3 episodes, or nothing newer than 3 years.
+3. Map each feed to a small document: ID, title, author, owner name, artwork, feed URL with its normalised forms (`urlNorm`, `originalUrlNorm`), podcast GUID, language, explicit flag, `itunesType`, episode count, newest item date, popularity score, categories (`category1..10`, deduplicated) and `dedupeKey`. Every other column is dropped.
+4. Build a fresh index `podcasts_<yyyyMMdd>`, apply the settings, upload in batches and wait for every task to succeed. Swap it with `podcasts`, then delete the old index. Any failure leaves `podcasts` untouched and the run exits non-zero.
+
+Meilisearch's indexing memory is capped, so an import can't starve the gateway.
+
+**Ranking.** Only title, author and owner name are searchable; descriptions are too keyword-stuffed. The ranking rules are words, typo, proximity, attribute, sort and exactness, then popularity score and newest item date, both descending. `dedupeKey` (the podcast GUID, else the content hash `chash`, else `id:<id>`) collapses one show listed under several feeds. A query returns at most 100 hits.
+
+**Endpoints.**
+
+| Endpoint | Does |
+| --- | --- |
+| `GET /v1/search` | `q` (1–100 characters after trimming), optional `lang` (matches the language prefix) and `hideExplicit`, `limit` up to 20, `offset` up to 40. Out-of-range input is a 400. Returns the hits and an estimated total |
+| `POST /v1/lookup` | 1–500 feed URLs, normalised and matched against each feed's current and original URL. Each result carries its match, or none, and `moved` when the feed's current URL differs from the one asked about |
+| `GET /health` | No auth. Reports the gateway up and Meilisearch reachable |
+
+A hit carries raw facts only: Podcast Index ID, podcast GUID, title, author, artwork, feed URL, language, categories, `itunesType`, explicit flag, episode count and newest item date. The client decides labels such as "Ended".
+
+**OPML import.** One batched lookup, before any feed is fetched, pre-fills each show's category, artwork and `itunesType`, and flags feeds that have moved. *Open question: lookup sends every OPML URL to our server, including private feed URLs, which conflicts with "the URL is a secret" in Premium feeds.*
+
+**Auth.** Every install has a Supabase session, anonymous until the user subscribes, so the gateway accepts any valid Supabase access token, anonymous ones included. Search isn't gated on entitlement. Tokens are verified locally against Supabase's published keys (ES256 by default): expiry, issuer and audience are checked, and the keys are cached, refreshed hourly or when an unknown key ID appears. The gateway never calls Supabase per request and holds no shared JWT secret. The private build has no account, so it sends a private token instead, compared in constant time and disabled when the server doesn't set one.
+
+**Limits.** Per user (the token's `sub`): search allows bursts of 20, refilling at 1 a second; lookup allows 5 a minute. Over the limit is a 429 with `Retry-After`. Logs record method, path, status, latency and a hash of `sub`, never query text or lookup URLs. Meilisearch errors are a 503, never a stack trace.
+
+**Private-build passthrough.** Search sits behind a `SearchSource` interface. An optional source calls the Podcast Index API with the key and secret held on the server (environment only) and an honest `Damask/<version>` User-Agent. It's on only when `PI_PASSTHROUGH=true`, for the private build before the first import exists, and never for public users unless Podcast Index agree in writing.
+
+**Hide explicit.** A plain preference in Settings, off by default, not a safety feature: the app is 18+. It filters search results on the show's explicit flag and hides episodes flagged explicit in their feed.
 
 ## Architecture
 
@@ -320,7 +360,21 @@ All logic lives in a shared KMP module. Each platform app supplies only audio pl
 
 &#91;embedded content: architecture · shared module + 3 platform apps\]
 
-Each platform implements the Player API and reports position back to the shared module, which writes the play events. Once you've subscribed, episodes come straight from each show's RSS feed; Podcast Index is used only for discovery.
+Each platform implements the Player API and reports position back to the shared module, which writes the play events. Once you've subscribed, episodes come straight from each show's RSS feed; our search index is used only for discovery and import lookup.
+
+**Repository layout.**
+
+| Path | Contains |
+| --- | --- |
+| `shared/core`, `shared/presentation`, `shared/ui` | The app's shared code: rules and data, ViewModels, Compose screens |
+| `shared/api` | The search API's `@Serializable` request and response types, and the feed URL normaliser. Pure Kotlin on every app target plus JVM; depends only on kotlinx-serialization |
+| `server/search` | The Ktor search gateway (JVM) |
+| `server/importer` | The weekly dump-to-Meilisearch CLI (JVM) |
+| `deploy/` | docker-compose, Dockerfiles, Meilisearch settings, the importer's schedule |
+
+**Dependency rule.** `server/*` may depend on `shared/api` and nothing else from `shared/`; a Konsist test enforces it. CI path filters build and test the server only when `server/`, `shared/api/` or `deploy/` change.
+
+**API versioning.** The search API is path-versioned (`/v1/...`) and additive-only. Within a version, fields are only ever added, each with a default, and never removed or renamed; clients decode with `ignoreUnknownKeys = true`. A breaking change is a new `/v2` running alongside `/v1`. Golden-JSON contract tests in `shared/api` fail the build on an accidental break.
 
 **Thin UI rule.** Every screen's state and logic lives in a shared ViewModel in `commonMain`. That's the AndroidX KMP `ViewModel`, exposing a `StateFlow<UiState>` and taking intents. Composables only render state and forward intents.
 
@@ -388,23 +442,28 @@ Premium shows arrive as private RSS feeds: a per-subscriber URL with a token in 
 - **A premium feed is its own show.** There's no linking or matching between feeds. Shows and episodes can't be matched reliably across feeds: GUIDs, titles, artwork and timings all differ. If you switch to an ad-free feed, you unsubscribe from the public one yourself. Played state doesn't carry over.
 - **Lapsed or revoked feeds.** A 401 or 403 marks the show "feed unavailable" with a prompt to replace the URL. Episodes already downloaded stay playable, and nothing gets deleted.
 - **Signed audio links.** Some hosts' enclosure URLs expire. A download that gets a 403 triggers a feed re-fetch for fresh links before it's reported as a failure.
-- **Pocket Casts import.** Check whether its OPML export includes private feed URLs. If it doesn't, premium shows have to be re-added by URL after import.
+- **Pocket Casts import.** Its OPML export includes private feed URLs (checked on a real export with an Acast premium feed), so premium shows come across with the import.
 
 ## Compliance
 
-As designed, the app is outside the UK Online Safety Act, and age signals are required only for builds distributed through an app store. This is a conservative reading, not legal advice.
+As designed, the app is outside the UK Online Safety Act, and it's for over-18s only. This is a conservative reading, not legal advice; a solicitor reviews it if the app does well.
 
 **UK Online Safety Act: stay out of scope**
 
-- **Search a single directory only** (Podcast Index). Searching more than one website or database makes the app a regulated search service. Adding the iTunes Search API, or any other second directory, would cross that line.
+- **Search a single directory only:** our index of the Podcast Index catalogue. Searching more than one website or database makes the app a regulated search service. Adding the iTunes Search API, or any other second directory, would cross that line.
 - **No user-to-user features without a review first.** That means no shared playlists, comments, public profiles or anything else users publish for one another.
 - The app publishes no content of its own, so the pornography duties don't apply.
 
-**Age signals: required for store builds**
+**18+ only, everywhere**
 
-- On mobile, query the Play Age Signals API (Android) or Apple's Declared Age Range API (iOS) at sign-in and on each launch.
-- Store the age **band** only (`18+`, `13–17`, `under-13`, `unknown`), never a birthdate. Use it only to enforce the age rating.
-- Every store build has accounts, because nothing ships publicly before sync. Store one row per device on the server, and derive the account's effective band from those rows:
+The catalogue has nothing reliable for age-limiting search results, so the app is for adults. Per-country ages of majority may come later; the rules differ by country, so for now it's one rating.
+
+- Store listings are rated 18+.
+- On mobile, query the Play Age Signals API (Android) or Apple's Declared Age Range API (iOS) at sign-in and on each launch. A minor signal shows a blocking "Damask is for over-18s" screen.
+- An unknown signal means a self-declaration at first launch.
+- Desktop and other non-store builds have no store signal: a self-declaration plus the terms of service. A minor signal on any of the account's devices blocks the account everywhere.
+- Launch in the UK only at first.
+- Store the age **band** only (`18+`, `13–17`, `under-13`, `unknown`), never a birthdate, with one row per device on the server:
 
 ```sql
 CREATE TABLE age_signal (               -- server; RLS on user_id
@@ -417,10 +476,9 @@ CREATE TABLE age_signal (               -- server; RLS on user_id
 );
 ```
 
-- **The most restrictive known band wins across the account.** `unknown` counts as no information, so it never overrides a known band. One device reporting a minor restricts every device on the account.
-- **Restrictions lift only when the account holder acts:** signing a device out or removing it from the device list deletes that device's row. Rows never expire on their own.
-- **Desktop and other non-store builds** have no store signal. They read the account's effective band; an account with only `unknown` rows gets the default policy.
-- **Default policy for `unknown` and for minors:** hide shows and episodes flagged `itunes:explicit`. The same explicit filter is also available to every user as a setting.
+- `unknown` counts as no information, so it never overrides a known band.
+- **A block lifts only when the account holder acts:** signing a device out or removing it from the device list deletes that device's row. Rows never expire on their own.
+- "Hide explicit" is a plain preference, not part of the age gate (see Search).
 
 **Mapping signals to bands.** Check the signal's status before its bounds, because the two APIs read null differently:
 
@@ -441,7 +499,7 @@ The app is free on a single device and charges a subscription for sync. Sync is 
 - **Trial:** a 1-month store introductory offer. Apple's "1 month" is a calendar month, 28 to 31 days. Google allows any length.
 - **No lifetime purchase.** Sync costs money every month.
 - **What you keep from a £12.99 annual sale:** about £9.20 through the stores (after 20% VAT and the 15% small-developer commission), or about £9.78 through Paddle. Monthly plans go through the stores only, because Paddle's fixed fee eats a third of £1.49.
-- **Fixed costs:** roughly £300–350 a year (Supabase Pro, the Apple Developer Program, Google Play's one-off fee). That's covered by about 35 annual subscribers. The cost per user is close to zero, because audio and artwork never pass through our servers.
+- **Fixed costs:** roughly £360–470 a year (Supabase Pro, the search VPS, the Apple Developer Program, Google Play's one-off fee). That's covered by about 50 annual subscribers. The cost per user is close to zero, because audio and artwork never pass through our servers.
 
 **Entitlements.** RevenueCat is the source of truth for purchases. It wraps Play Billing, StoreKit and web checkout, and is free below $2,500 monthly tracked revenue, then 1%. Its webhooks write an `entitlement` row to Supabase:
 
@@ -460,25 +518,25 @@ CREATE TABLE entitlement (              -- server; RLS on user_id
 - `PROMO` covers free time for beta testers or goodwill credit.
 - **Web checkout (later, annual plans only):** Paddle as merchant of record, connected through RevenueCat's Paddle integration. It's for desktop-only users and anyone who'd rather pay on the web. The mobile apps don't point users to it while UK steering is restricted. Revisit when the CMA's steering rules take effect.
 
-**Protecting the search endpoint.** Free users call the search Edge Function too, so it must not be an open proxy for our Podcast Index key:
+**Protecting search.** Free users search too, so the gateway must not be open to anyone:
 
 - Every install signs in anonymously with Supabase, silently and with no account screen. When the user subscribes, the anonymous account is upgraded to Google or Apple sign-in, keeping its data.
-- The Edge Function accepts only valid tokens and rate-limits each user, for example 60 searches an hour.
+- The gateway accepts only valid Supabase tokens and rate-limits each user (see Search).
 - Play Integrity (Android) and App Attest (iOS) prove that requests come from the genuine app.
-- Popular searches are cached on the server, within the index's cache headers.
 
 ## Licences
 
-Every library is under a permissive licence or the LGPL; nothing is GPL. Search uses Podcast Index, which is designed for third-party apps.
+Every library is under a permissive licence or the LGPL; nothing is GPL. Search is built from Podcast Index's public catalogue dump.
 
 | Component | Licence | Notes |
 | --- | --- | --- |
 | Nucleus Media Control | MIT | Use `dev.nucleusframework:nucleus.media-control`, the current group ID |
 | FFmpeg through JavaCV | FFmpeg LGPL 2.1+; JavaCV Apache 2.0 | Depend on `org.bytedeco:ffmpeg`, never the `-gpl` artifacts |
 | JMTC (fallback) | MIT | Pre-1.0, and no macOS support |
-| Kotlin, Compose Multiplatform, AndroidX (Media3, WorkManager, ViewModel), SQLDelight, Ktor, OkHttp, Coil, kotlinx.serialization, RSS-Parser, moko-resources, SKIE | Apache 2.0 |  |
+| Kotlin, Compose Multiplatform, AndroidX (Media3, WorkManager, ViewModel), SQLDelight, Ktor, OkHttp, Coil, kotlinx.serialization, xmlutil, Okio, moko-resources, SKIE | Apache 2.0 |  |
 | supabase-kt, KMP-NativeCoroutines | MIT |  |
 | sqlite-jdbc | Apache 2.0 (SQLite: public domain) |  |
+| Meilisearch (community edition) | MIT | Server-side only; not distributed |
 
 **FFmpeg's LGPL obligations**
 
@@ -489,7 +547,7 @@ Every library is under a permissive licence or the LGPL; nothing is GPL. Search 
 
 **Patents.** MP3 patents have expired. FFmpeg's own AAC decoder on desktop isn't covered by a patent licence, whereas the OS decoders on Android, iOS, macOS and Windows are. In a paid product this is a little more exposed. Where the build supports it, prefer FFmpeg's wrappers around the OS's own licensed decoders: `aac_at` (AudioToolbox) on macOS and `aac_mf` (Media Foundation) on Windows. Check during the desktop spike whether bytedeco's builds include them. Linux uses FFmpeg's own decoder; that risk is accepted.
 
-**Podcast Index.** Public builds call it through a Supabase Edge Function, so the API key never ships in a public binary. The private build embeds the key directly. That's allowed, because the app is closed-source and the terms forbid credentials only in open-source projects. Search results are discarded once their cache headers expire, and nothing from the index is stored: everything kept about a show comes from its own feed. Usage limits are at the index's discretion, so search stays behind an interface. The iTunes Search API was rejected because Apple's terms permit its content only for promoting Apple's stores.
+**Podcast Index.** No build ships the key: the app only ever calls our gateway, and the index is rebuilt weekly from the public dump, as the terms (v2.0) allow. Every request we make to Podcast Index (the dump download, and the private-build passthrough) carries an honest `Damask/<version>` User-Agent. Everything the app keeps about a show comes from its own feed, apart from the podcast GUID, which lookup can supply. The iTunes Search API was rejected because Apple's terms permit its content only for promoting Apple's stores.
 
 ## Decisions
 
@@ -499,6 +557,8 @@ Questions that came up while the spec was being written, with how each was settl
 - **Definition of "finished".** Decided: the true end, or stopping with 2 minutes or less left (see Finishing and autoplay). Multi-part stories inside episodic shows aren't detected, because no feed tag marks them. A show can be switched to oldest-first by hand.
 - **Unknown duration.** The player's duration replaces the feed's \`itunes:duration\` as soon as the media is prepared. Unknown durations use a 10-minute threshold (see Derived values). Dynamic ad insertion is handled by keeping one copy per device and rewinding when the copies don't match (see Storage).
 - **Category list.** Decided: categories are user-created, and Apple's categories act as overridable defaults through the mapping table.
+- **Search backend.** Decided (Nov 2026): our own Meilisearch index, rebuilt weekly from the Podcast Index dump, behind a Ktor gateway on one VPS (see Search). Podcast Index's terms v2.0 forbid client-side credentials and public proxies of their API.
+- **Age rating.** Decided (Nov 2026): 18+ only, everywhere, launching in the UK first (see Compliance).
 - **Sync transport.** Decided: Supabase, with social sign-in only (see Sync). Drive, Firebase and gpodder were considered and rejected.
 - **iOS UI.** Decided: Compose Multiplatform first. The thin UI rule (see Architecture) lets screens move to SwiftUI one at a time later. CarPlay, the audio session and Now Playing are native Swift either way.
 - **Colour and Material You.** Decided: Material You is supported as a user option, Settings › Appearance › "Use wallpaper colours", on by default on Android 12+ and hidden where the platform lacks it. Everywhere else, and for users who turn it off, the app uses a Default brand scheme `(teal #0f766e primary, indigo tertiary; no red, orange or amber in the brand, since those read as danger)` with light and dark variants. UI code reads Material 3 colour roles only (`MaterialTheme.colorScheme`), never hex values, so the scheme can be swapped at runtime. The roles and both schemes are in the [design system](https://claude.ai/artifact/EZHMHvdS5nqQch8gN5a4SK).

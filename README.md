@@ -29,7 +29,7 @@ Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
 
 ### How it works
 
-See [docs/](./docs/README.md): architecture, the rotation rules, the database, feeds, the lint and architecture guardrails, and every place the code interprets the spec. The product spec and design hand-off are in [spec-and-design/](./spec-and-design).
+See [docs/](./docs/README.md): architecture, the rotation rules, the database, feeds, the lint and architecture guardrails, and every place the code interprets the spec. The product spec is [docs/spec.md](./docs/spec.md); the design hand-off is in [spec-and-design/](./spec-and-design).
 
 ---|---|---|
 | Cyclomatic complexity ≤ 10, cognitive complexity ≤ 15 (plus nesting depth, method length) | [config/detekt/detekt.yml](./config/detekt/detekt.yml) | detekt (`./gradlew detekt`) |

@@ -2,8 +2,8 @@
 
 These docs explain how the code works and where things live. They sit between two other sources:
 
-- **[The spec](../spec-and-design/spec.md)** is the source of truth for *intended behaviour*. If the code and the spec disagree, the spec wins (or the spec gets changed on purpose).
-- **[The design hand-off](../spec-and-design/damask-design/README.md)** is the source of truth for *look*.
+- **[The spec](spec.md)** is the source of truth for *intended behaviour*. If the code and the spec disagree, the spec wins (or the spec gets changed on purpose).
+- **[The design hand-off](../spec-and-design/damask-design/README.md)** is the source of truth for *look*. Its `spec/v1-spec.md` is an older snapshot; [spec.md](spec.md) supersedes it.
 
 The docs don't repeat either. They describe the implementation and record every place the code had to interpret the spec.
 
@@ -11,6 +11,7 @@ The docs don't repeat either. They describe the implementation and record every 
 
 | Doc | Covers |
 |---|---|
+| [Spec](spec.md) | What the app should do (product, behaviour, compliance, costs) |
 | [Architecture](architecture.md) | Modules and layers, what may depend on what, how a future SwiftUI app fits |
 | [Rotation](rotation.md) | The listening rules, the rotation (LRP), autoplay and retention, as implemented |
 | [Data](data.md) | The SQLite schema, last-write-wins merging, HLC timestamps, migrations |
@@ -28,7 +29,9 @@ The docs don't repeat either. They describe the implementation and record every 
 | Presentation (ViewModels), screens | Not started (template greeting screen only) |
 | Playback (Android Media3, desktop FFmpeg), Android Auto | Not started |
 | Downloads, background refresh scheduling | Not started |
-| Search (hosted Podcast Index dataset) | Not started; design changing (see [decisions](decisions.md)), revised spec to follow |
+| Search backend (`shared/api`, `server/search`, `server/importer`, `deploy/`) | Specified ([spec › Search](spec.md#search)); not started |
+| OPML lookup, `podcast_guid` aliasing | Specified; not started |
+| 18+ age gate, "Hide explicit" | Specified ([spec › Compliance](spec.md#compliance)); not started |
 | Sync, sign-in, billing | v1, not started |
 
 ## Keeping these docs current
