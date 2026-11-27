@@ -1,0 +1,355 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-11-27T11:00:00Z"
+ },
+ "title": "Damask \u2014 v1 screens",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Home",
+   "is_interactive": true
+  },
+  "Genres.dc.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Genres",
+   "is_interactive": true
+  },
+  "GenreQueue.dc.html": {
+   "x": 940,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Genre queue \u00b7 History",
+   "is_interactive": true
+  },
+  "NowPlaying.dc.html": {
+   "x": 1410,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Now Playing",
+   "is_interactive": true
+  },
+  "History.dc.html": {
+   "x": 1880,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Played",
+   "is_interactive": true
+  },
+  "Import.dc.html": {
+   "x": 0,
+   "y": 1244,
+   "w": 390,
+   "h": 844,
+   "title": "Import \u00b7 confirm categories",
+   "is_interactive": true
+  },
+  "Search.dc.html": {
+   "x": 470,
+   "y": 1244,
+   "w": 390,
+   "h": 844,
+   "title": "Search",
+   "is_interactive": true
+  },
+  "Subscribe.dc.html": {
+   "x": 940,
+   "y": 1244,
+   "w": 390,
+   "h": 844,
+   "title": "Subscribe \u00b7 choose category",
+   "is_interactive": true
+  },
+  "Appearance.dc.html": {
+   "x": 1410,
+   "y": 1244,
+   "w": 390,
+   "h": 844,
+   "title": "Settings \u00b7 Appearance",
+   "is_interactive": true
+  },
+  "ExactValue.dc.html": {
+   "x": 1880,
+   "y": 1244,
+   "w": 390,
+   "h": 844,
+   "title": "Long press \u00b7 exact value",
+   "is_interactive": true
+  },
+  "HomeDark.dc.html": {
+   "x": 0,
+   "y": 2488,
+   "w": 390,
+   "h": 844,
+   "title": "Home \u00b7 Default dark",
+   "is_interactive": true
+  },
+  "HomeBlueLight.dc.html": {
+   "x": 470,
+   "y": 2488,
+   "w": 390,
+   "h": 844,
+   "title": "Home \u00b7 Material You blue, light",
+   "is_interactive": true
+  },
+  "HomeGreenDark.dc.html": {
+   "x": 940,
+   "y": 2488,
+   "w": 390,
+   "h": 844,
+   "title": "Home \u00b7 Material You green, dark",
+   "is_interactive": true
+  },
+  "NowPlayingBlueDark.dc.html": {
+   "x": 1410,
+   "y": 2488,
+   "w": 390,
+   "h": 844,
+   "title": "Now Playing \u00b7 Material You blue, dark",
+   "is_interactive": true
+  },
+  "NowPlayingGreenLight.dc.html": {
+   "x": 1880,
+   "y": 2488,
+   "w": 390,
+   "h": 844,
+   "title": "Now Playing \u00b7 Material You green, light",
+   "is_interactive": true
+  },
+  "EpisodeRow.dc.html": {
+   "x": 0,
+   "y": 4932,
+   "w": 390,
+   "h": 100,
+   "title": "Component \u00b7 EpisodeRow"
+  },
+  "MiniPlayer.dc.html": {
+   "x": 470,
+   "y": 4932,
+   "w": 390,
+   "h": 80,
+   "title": "Component \u00b7 MiniPlayer"
+  },
+  "NavBar.dc.html": {
+   "x": 940,
+   "y": 4932,
+   "w": 390,
+   "h": 80,
+   "title": "Component \u00b7 NavBar"
+  },
+  "TabletHome.dc.html": {
+   "x": 0,
+   "y": 3732,
+   "w": 1280,
+   "h": 800,
+   "title": "Tablet / desktop \u00b7 Home, expanded",
+   "is_interactive": true
+  },
+  "TabletGenres.dc.html": {
+   "x": 1360,
+   "y": 3732,
+   "w": 1280,
+   "h": 800,
+   "title": "Tablet / desktop \u00b7 Genres, expanded",
+   "is_interactive": true
+  },
+  "NavRail.dc.html": {
+   "x": 1410,
+   "y": 4932,
+   "w": 80,
+   "h": 800,
+   "title": "Component \u00b7 NavRail"
+  },
+  "NowPlayingPane.dc.html": {
+   "x": 1570,
+   "y": 4932,
+   "w": 420,
+   "h": 800,
+   "title": "Component \u00b7 NowPlayingPane"
+  },
+  "GenreListPane.dc.html": {
+   "x": 2070,
+   "y": 4932,
+   "w": 390,
+   "h": 760,
+   "title": "Component \u00b7 GenreListPane"
+  },
+  "GenreQueuePane.dc.html": {
+   "x": 2540,
+   "y": 4932,
+   "w": 390,
+   "h": 760,
+   "title": "Component \u00b7 GenreQueuePane"
+  },
+  "NowPlayingNotes.dc.html": {
+   "x": 2750,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Now Playing \u00b7 show notes",
+   "is_interactive": true
+  },
+  "LogoWeave.dc.html": {
+   "x": 800,
+   "y": 6132,
+   "w": 720,
+   "h": 480,
+   "title": "Logo B \u00b7 Weave"
+  },
+  "LogoFold.dc.html": {
+   "x": 1600,
+   "y": 6132,
+   "w": 720,
+   "h": 480,
+   "title": "Logo C \u00b7 Folded corner"
+  },
+  "LogoStrands.dc.html": {
+   "x": 2400,
+   "y": 6132,
+   "w": 720,
+   "h": 480,
+   "title": "Logo D \u00b7 Woven play"
+  },
+  "LogoMedallion.dc.html": {
+   "x": 0,
+   "y": 6132,
+   "w": 720,
+   "h": 480,
+   "title": "Logo A \u00b7 Damask rosette"
+  },
+  "LogoStrandsDamask.dc.html": {
+   "x": 2400,
+   "y": 6732,
+   "w": 720,
+   "h": 480,
+   "title": "Logo D2 \u00b7 Woven play on damask ground"
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "Genres.dc.html",
+  "GenreQueue.dc.html",
+  "NowPlaying.dc.html",
+  "NowPlayingNotes.dc.html",
+  "History.dc.html",
+  "Import.dc.html",
+  "Search.dc.html",
+  "Subscribe.dc.html",
+  "Appearance.dc.html",
+  "ExactValue.dc.html",
+  "HomeDark.dc.html",
+  "HomeBlueLight.dc.html",
+  "HomeGreenDark.dc.html",
+  "NowPlayingBlueDark.dc.html",
+  "NowPlayingGreenLight.dc.html",
+  "TabletHome.dc.html",
+  "TabletGenres.dc.html",
+  "EpisodeRow.dc.html",
+  "MiniPlayer.dc.html",
+  "NavBar.dc.html",
+  "NavRail.dc.html",
+  "NowPlayingPane.dc.html",
+  "GenreListPane.dc.html",
+  "GenreQueuePane.dc.html",
+  "LogoMedallion.dc.html",
+  "LogoWeave.dc.html",
+  "LogoFold.dc.html",
+  "LogoStrands.dc.html",
+  "LogoStrandsDamask.dc.html"
+ ],
+ "notes": {
+  "review1": {
+   "x": 3220,
+   "y": 0,
+   "w": 380,
+   "fill": "orange",
+   "text": "Spec review, 27 Nov: these designs contradict the spec (https://claude.ai/artifact/3Frn7vpC4A8RsnnSNPNCsz). Please fix.\n\n1. Unplayed counts. Genres rows show \"12 unplayed\", and the genre queue tooltip shows counts too. The spec says no unplayed counts or badges anywhere (Core concepts, \"Unplayed is not a backlog\"). Retention keeps only 10 episodes per show, so the number would be misleading anyway. Remove them.\n\n2. \"Clear all\" on Home's In Progress. In Progress is derived: an episode leaves it by finishing, or by expiring after 6 months untouched. There is no clear or dismiss action, and clearing would wipe saved positions. Remove the button.\n\n3. Chapters. Show notes have a working Chapters list, and the Now Playing sheet shows the current chapter. Chapters are in Scope as Later, not v1. Drop them from the v1 screens (show notes text and links can stay).\n\n4. Up Next order. The sample breaks the core rule: one episode per category, stalest category first. With the Genres sample (Science, Comedy, Society & Culture, Technology, News, History), Up Next should run in that order. History, played today, comes last, not fourth, and Technology and News are missing.\n\n6. \"Not now\" in the design system's Do labels. v1 has no Not now action, and dismissing doesn't affect rotation. Remove it from the README.\n\nNaming: a genre called History sits next to the History tab, so \"Genre queue \u00b7 History\" reads like the History screen. Real users will hit this. Rename the History tab, for example to \"Recent\" or \"Played\", everywhere: NavBar, NavRail, screens and the whiteboard."
+  },
+  "t1": {
+   "x": 0,
+   "y": -300,
+   "text": "Core screens",
+   "kind": "title1",
+   "maxW": 2270
+  },
+  "t2": {
+   "x": 0,
+   "y": 944,
+   "text": "Adding shows, settings, exact values",
+   "kind": "title1",
+   "maxW": 2270
+  },
+  "t3": {
+   "x": 0,
+   "y": 2188,
+   "text": "Same screens, other colour schemes",
+   "kind": "title1",
+   "maxW": 2270
+  },
+  "t4": {
+   "x": 0,
+   "y": 4632,
+   "text": "Shared components",
+   "kind": "title1",
+   "maxW": 2930
+  },
+  "s1": {
+   "x": 2350,
+   "y": 0,
+   "w": 320,
+   "text": "Every screen uses only Material 3 colour roles from the Damask design system (theme.css, generated from its tokens). Change the system, regenerate theme.css, and every artboard follows. Each screen has a Theme tweak to flip between Default and the Material You samples.",
+   "fill": "yellow"
+  },
+  "t5": {
+   "x": 0,
+   "y": 3432,
+   "text": "Tablet and desktop: expanded, 840dp and up",
+   "kind": "title1",
+   "maxW": 2640
+  },
+  "s2": {
+   "x": 2720,
+   "y": 3732,
+   "w": 320,
+   "text": "Medium windows (600\u2013839dp: portrait tablets, unfolded foldables) use the phone layouts with the nav rail in place of the bottom bar. Expanded windows add a second pane: Home beside Now Playing, Genres beside the selected queue, Played beside the episode.",
+   "fill": "yellow"
+  },
+  "t6": {
+   "x": 0,
+   "y": 5832,
+   "text": "Logo directions",
+   "kind": "title1",
+   "maxW": 3120
+  },
+  "s3": {
+   "x": 3200,
+   "y": 6132,
+   "w": 320,
+   "text": "Each direction shows the full-colour launcher icon, the Material You themed icon (Android 13+ tints a monochrome layer from the wallpaper, so every mark must work in one colour), dark, and the wordmark lockup. Flip the Theme tweak to see the themed icon follow the wallpaper samples.",
+   "fill": "yellow"
+  }
+ },
+ "designSystems": [
+  {
+   "title": "Damask",
+   "namespace": "podcastapp",
+   "artifact": "https://claude.ai/artifact/EZHMHvdS5nqQch8gN5a4SK",
+   "version": "1795779858-c8e4",
+   "copiedAt": "2026-11-27T11:45:00Z"
+  }
+ ]
+}

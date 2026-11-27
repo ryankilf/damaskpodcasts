@@ -1,0 +1,4 @@
+<resources>
+    <string name="greeting_toggle">Click me!</string>
+    <string name="greeting_message">Compose: %1$s</string>
+</resources>

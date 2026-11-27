@@ -1,0 +1,223 @@
+/* Podcast App — generated from the design system tokens.json. Do not edit by hand. */
+:root{
+  --primary:#006a63;
+  --on-primary:#ffffff;
+  --primary-container:#c0ebe5;
+  --on-primary-container:#00201d;
+  --secondary:#4a6360;
+  --on-secondary:#ffffff;
+  --secondary-container:#cce8e4;
+  --on-secondary-container:#324b48;
+  --tertiary:#5557a1;
+  --on-tertiary:#ffffff;
+  --tertiary-container:#e1dfff;
+  --on-tertiary-container:#0f0d5b;
+  --error:#ba1a1a;
+  --on-error:#ffffff;
+  --surface:#f4fbf8;
+  --on-surface:#161d1c;
+  --on-surface-variant:#3f4947;
+  --surface-container-lowest:#ffffff;
+  --surface-container-low:#eff5f3;
+  --surface-container:#e9efed;
+  --surface-container-high:#e3eae7;
+  --surface-container-highest:#dde4e2;
+  --outline:#6f7977;
+  --outline-variant:#bec9c6;
+  --inverse-surface:#2b3231;
+  --inverse-on-surface:#ecf2f0;
+}
+[data-theme="light"]{
+  --primary:#006a63;
+  --on-primary:#ffffff;
+  --primary-container:#c0ebe5;
+  --on-primary-container:#00201d;
+  --secondary:#4a6360;
+  --on-secondary:#ffffff;
+  --secondary-container:#cce8e4;
+  --on-secondary-container:#324b48;
+  --tertiary:#5557a1;
+  --on-tertiary:#ffffff;
+  --tertiary-container:#e1dfff;
+  --on-tertiary-container:#0f0d5b;
+  --error:#ba1a1a;
+  --on-error:#ffffff;
+  --surface:#f4fbf8;
+  --on-surface:#161d1c;
+  --on-surface-variant:#3f4947;
+  --surface-container-lowest:#ffffff;
+  --surface-container-low:#eff5f3;
+  --surface-container:#e9efed;
+  --surface-container-high:#e3eae7;
+  --surface-container-highest:#dde4e2;
+  --outline:#6f7977;
+  --outline-variant:#bec9c6;
+  --inverse-surface:#2b3231;
+  --inverse-on-surface:#ecf2f0;
+}
+[data-theme="dark"]{
+  --primary:#51dbce;
+  --on-primary:#003733;
+  --primary-container:#254d49;
+  --on-primary-container:#c0ebe5;
+  --secondary:#b1ccc8;
+  --on-secondary:#1c3532;
+  --secondary-container:#324b48;
+  --on-secondary-container:#cce8e4;
+  --tertiary:#c1c1ff;
+  --on-tertiary:#26276f;
+  --tertiary-container:#3d3e87;
+  --on-tertiary-container:#e1dfff;
+  --error:#ffb4ab;
+  --on-error:#690005;
+  --surface:#0e1514;
+  --on-surface:#dde4e2;
+  --on-surface-variant:#bec9c6;
+  --surface-container-lowest:#090f0e;
+  --surface-container-low:#161d1c;
+  --surface-container:#1a2120;
+  --surface-container-high:#252b2a;
+  --surface-container-highest:#303635;
+  --outline:#899391;
+  --outline-variant:#3f4947;
+  --inverse-surface:#dde4e2;
+  --inverse-on-surface:#2b3231;
+}
+[data-theme="blue-light"]{
+  --primary:#3e5f90;
+  --on-primary:#ffffff;
+  --primary-container:#d5e3ff;
+  --on-primary-container:#244777;
+  --secondary:#555f71;
+  --on-secondary:#ffffff;
+  --secondary-container:#d9e3f8;
+  --on-secondary-container:#3d4758;
+  --tertiary:#6e5676;
+  --on-tertiary:#ffffff;
+  --tertiary-container:#f8d8fe;
+  --on-tertiary-container:#553e5d;
+  --error:#ba1a1a;
+  --on-error:#ffffff;
+  --surface:#f9f9ff;
+  --on-surface:#191c20;
+  --on-surface-variant:#43474e;
+  --surface-container-lowest:#ffffff;
+  --surface-container-low:#f3f3fa;
+  --surface-container:#ededf4;
+  --surface-container-high:#e7e8ee;
+  --surface-container-highest:#e1e2e9;
+  --outline:#74777f;
+  --outline-variant:#c4c6cf;
+  --inverse-surface:#2e3035;
+  --inverse-on-surface:#f0f0f7;
+}
+[data-theme="blue-dark"]{
+  --primary:#a7c8ff;
+  --on-primary:#03305f;
+  --primary-container:#244777;
+  --on-primary-container:#d5e3ff;
+  --secondary:#bdc7dc;
+  --on-secondary:#273141;
+  --secondary-container:#3d4758;
+  --on-secondary-container:#d9e3f8;
+  --tertiary:#dbbde2;
+  --on-tertiary:#3e2845;
+  --tertiary-container:#553e5d;
+  --on-tertiary-container:#f8d8fe;
+  --error:#ffb4ab;
+  --on-error:#690005;
+  --surface:#111318;
+  --on-surface:#e1e2e9;
+  --on-surface-variant:#c4c6cf;
+  --surface-container-lowest:#0c0e13;
+  --surface-container-low:#191c20;
+  --surface-container:#1d2024;
+  --surface-container-high:#282a2f;
+  --surface-container-highest:#32353a;
+  --outline:#8e9199;
+  --outline-variant:#43474e;
+  --inverse-surface:#e1e2e9;
+  --inverse-on-surface:#2e3035;
+}
+[data-theme="green-light"]{
+  --primary:#49672e;
+  --on-primary:#ffffff;
+  --primary-container:#caeea6;
+  --on-primary-container:#324e18;
+  --secondary:#57624a;
+  --on-secondary:#ffffff;
+  --secondary-container:#dae7c9;
+  --on-secondary-container:#3f4a34;
+  --tertiary:#386664;
+  --on-tertiary:#ffffff;
+  --tertiary-container:#bbece9;
+  --on-tertiary-container:#1e4e4c;
+  --error:#ba1a1a;
+  --on-error:#ffffff;
+  --surface:#f9faef;
+  --on-surface:#1a1d16;
+  --on-surface-variant:#44483e;
+  --surface-container-lowest:#ffffff;
+  --surface-container-low:#f3f5e9;
+  --surface-container:#edefe4;
+  --surface-container-high:#e7e9de;
+  --surface-container-highest:#e2e3d9;
+  --outline:#74796d;
+  --outline-variant:#c4c8ba;
+  --inverse-surface:#2e312a;
+  --inverse-on-surface:#f0f2e7;
+}
+[data-theme="green-dark"]{
+  --primary:#aed18c;
+  --on-primary:#1c3703;
+  --primary-container:#324e18;
+  --on-primary-container:#caeea6;
+  --secondary:#becbae;
+  --on-secondary:#29341f;
+  --secondary-container:#3f4a34;
+  --on-secondary-container:#dae7c9;
+  --tertiary:#a0cfcd;
+  --on-tertiary:#003736;
+  --tertiary-container:#1e4e4c;
+  --on-tertiary-container:#bbece9;
+  --error:#ffb4ab;
+  --on-error:#690005;
+  --surface:#11140e;
+  --on-surface:#e2e3d9;
+  --on-surface-variant:#c4c8ba;
+  --surface-container-lowest:#0c0f09;
+  --surface-container-low:#1a1d16;
+  --surface-container:#1e211a;
+  --surface-container-high:#282b24;
+  --surface-container-highest:#33362e;
+  --outline:#8e9286;
+  --outline-variant:#44483e;
+  --inverse-surface:#e2e3d9;
+  --inverse-on-surface:#2e312a;
+}
+:root{
+  --font-sans:system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --space-1:4px;
+  --space-2:8px;
+  --space-4:16px;
+  --space-6:24px;
+  --radius-sm:8px;
+  --radius-md:16px;
+  --radius-full:9999px;
+}
+.t-display{font-family:var(--font-sans);font-size:32px;line-height:38px;font-weight:700;}
+.t-title-lg{font-family:var(--font-sans);font-size:22px;line-height:28px;font-weight:600;}
+.t-title{font-family:var(--font-sans);font-size:17px;line-height:24px;font-weight:600;}
+.t-body{font-family:var(--font-sans);font-size:15px;line-height:22px;font-weight:400;}
+.t-body-sm{font-family:var(--font-sans);font-size:13px;line-height:18px;font-weight:400;}
+.t-label{font-family:var(--font-sans);font-size:13px;line-height:16px;font-weight:600;}
+.t-time{font-family:var(--font-sans);font-size:12px;line-height:16px;font-weight:500;}
+.t-time{font-variant-numeric:tabular-nums;}
+.ms{font-family:'Material Symbols Rounded';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;direction:ltr;-webkit-font-smoothing:antialiased;font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;user-select:none;}
+.ms.fill{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24;}
+.clamp2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.clamp1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+button{font:inherit;color:inherit;}
+/* Damask pattern: tone-on-tone diaper on filled play/resume buttons. Follows the theme because it is a mask, not a colour. */
+.damask-fill{position:relative;isolation:isolate;overflow:hidden;}
+.damask-fill::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:var(--on-primary);opacity:.16;-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'%3E%3Cpath d='M9 2L13 9L9 16L5 9Z M0 -7L4 0L0 7L-4 0Z M18 -7L22 0L18 7L14 0Z M0 11L4 18L0 25L-4 18Z M18 11L22 18L18 25L14 18Z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'%3E%3Cpath d='M9 2L13 9L9 16L5 9Z M0 -7L4 0L0 7L-4 0Z M18 -7L22 0L18 7L14 0Z M0 11L4 18L0 25L-4 18Z M18 11L22 18L18 25L14 18Z'/%3E%3C/svg%3E");-webkit-mask-size:var(--damask-pitch,10px) var(--damask-pitch,10px);mask-size:var(--damask-pitch,10px) var(--damask-pitch,10px);}

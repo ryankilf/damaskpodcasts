@@ -1,0 +1,163 @@
+# Project overrides on top of detekt's default config (buildUponDefaultConfig = true).
+# Only deviations from the defaults live here.
+
+# --- Complexity ------------------------------------------------------------------------------
+complexity:
+  CyclomaticComplexMethod:
+    active: true
+    # McCabe's classic limit. Detekt's default is 14.
+    allowedComplexity: 10
+    # A `when` mapping UiState/intents to branches is readable even when long.
+    ignoreSimpleWhenEntries: true
+  CognitiveComplexMethod:
+    active: true # off by default in detekt
+    allowedComplexity: 15 # SonarSource's recommended limit
+  NestedBlockDepth:
+    active: true
+    allowedDepth: 4
+  LongMethod:
+    active: true
+    allowedLines: 60
+  LongParameterList:
+    active: true
+    # Composables legitimately take many params (state, callbacks, modifier, slots).
+    ignoreAnnotated: ['Composable']
+
+# --- Naming / style tweaks for Compose -------------------------------------------------------
+naming:
+  FunctionNaming:
+    active: true
+    # Composables are PascalCase.
+    ignoreAnnotated: ['Composable']
+
+style:
+  MagicNumber:
+    active: true
+    # Dp/sp literals in layouts aren't magic numbers.
+    ignoreAnnotated: ['Composable', 'Preview']
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+  ReturnCount:
+    active: true
+    max: 2
+    # Early-exit guards (`?: return`, `if (x) return`) aren't the complexity this rule targets.
+    excludeGuardClauses: true
+  UnusedPrivateFunction:
+    active: true
+    # Private @Preview functions are only called by tooling.
+    ignoreAnnotated: ['Preview']
+
+# --- Compose (io.nlopez.compose.rules) -------------------------------------------------------
+# Layering-critical rules for the future SwiftUI layer are called out; the rest are the
+# rule set's recommended defaults made explicit.
+Compose:
+  # Keep logic out of the UI tree so SwiftUI can reproduce every screen from presentation alone:
+  ViewModelInjection: # ViewModels obtained only at the top-level screen composable
+    active: true
+  ViewModelForwarding: # never pass a ViewModel down to children; pass state + lambdas
+    active: true
+  MutableStateParam:
+    active: true
+  StateParam: # take plain values, not State<T>
+    active: true
+  ConditionHoist:
+    active: true
+  RememberMissing:
+    active: true
+  RememberContentMissing:
+    active: true
+  VarsWithoutStateBacking:
+    active: true
+
+  ComposableAnnotationNaming:
+    active: true
+  ComposableNaming:
+    active: true
+  ComposableParamOrder:
+    active: true
+  CompositionLocalAllowlist:
+    active: true
+  CompositionLocalNaming:
+    active: true
+  ContentEmitterReturningValues:
+    active: true
+  ContentSlotReused:
+    active: true
+  ContentTrailingLambda:
+    active: true
+  DefaultsVisibility:
+    active: true
+  InvalidReadOnlyComposable:
+    active: true
+  LambdaParameterEventTrailing:
+    active: true
+  LambdaParameterInRestartableEffect:
+    active: true
+  Material2:
+    active: true # Material3 only
+  MissingNonRestartableComposable:
+    active: true
+  MissingReadOnlyComposable:
+    active: true
+  ModifierClickableOrder:
+    active: true
+  ModifierComposed:
+    active: true
+  ModifierMissing:
+    active: true
+  ModifierNaming:
+    active: true
+  ModifierNotUsedAtRoot:
+    active: true
+  ModifierReused:
+    active: true
+  ModifierShouldBeForwardedToEveryBranch:
+    active: true
+  ModifierWithoutDefault:
+    active: true
+  MultipleEmitters:
+    active: true
+  MutableParams:
+    active: true
+  MutableStateAutoboxing:
+    active: true
+  ParameterNaming:
+    active: true
+  PreviewAnnotationNaming:
+    active: true
+  PreviewPublic:
+    active: true
+  StaleRememberUpdatedStateInRemember:
+    active: true
+  UnnecessaryComposable:
+    active: true
+  UnnecessaryLaunchedEffect:
+    active: true
+
+# --- Accessibility & design system (:detekt-rules) -----------------------------------------------------------
+DamaskA11y:
+  active: true
+  ContentDescriptionRequired:
+    active: true
+    # Add project wrappers around Image/Icon here, e.g. 'PodcastArtwork'.
+    functions:
+      - 'Image'
+      - 'Icon'
+      - 'AsyncImage'
+      - 'SubcomposeAsyncImage'
+      - 'KamelImage'
+  ClickableRoleRequired:
+    active: true
+  MinimumTouchTarget:
+    active: true
+    minSizeDp: 48
+  NoHardcodedDimensions: # dp/sp literals only in ui.theme or *Dimens*.kt
+    active: true
+    allowedValues: ['0']
+  NoHardcodedColors: # MaterialTheme.colorScheme roles only, outside ui.theme
+    active: true
+  DefaultFontsOnly: # spec: platform fonts only
+    active: true
+  NoHardcodedUiStrings: # string resources for text + a11y labels (translatable, reachable from Swift)
+    active: true
+    excludes: ['**/commonTest/**', '**/jvmTest/**', '**/androidHostTest/**', '**/iosTest/**', '**/test/**']

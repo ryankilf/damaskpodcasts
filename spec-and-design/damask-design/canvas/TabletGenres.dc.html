@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Genres, expanded</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div data-theme="{{theme}}" style="width: 1280px; height: 800px; display: flex; background: var(--surface); color: var(--on-surface); font-family: var(--font-sans); overflow: hidden">
+  <dc-import name="NavRail" active="genres" hint-size="80px,800px"></dc-import>
+  <div style="width: 440px; flex: none; overflow: hidden">
+    <dc-import name="GenreListPane" selected="history" href="TabletGenres.dc.html" hint-size="100%,760px"></dc-import>
+  </div>
+  <section aria-label="History queue" style="flex: 1; min-width: 0; margin: 16px 16px 16px 8px; border-radius: var(--radius-md); background: var(--surface-container-low); display: flex; flex-direction: column; overflow: hidden">
+    <div style="width: 100%; max-width: 640px">
+      <dc-import name="GenreQueuePane" compact="{{no}}" hint-size="100%,760px"></dc-import>
+    </div>
+    <div style="flex: 1"></div>
+    <dc-import name="MiniPlayer" item="{{nowPlaying}}" hint-size="100%,72px"></dc-import>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark","blue-light","blue-dark","green-light","green-dark"],"default":"light"},"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      theme: this.props.theme ?? 'light',
+      no: false,
+      nowPlaying: { art: '#6b3f2a', initials: 'LI', title: 'The Siege of Derry, part 2', show: 'Ledger & Ink', pct: 41 }
+    };
+  }
+}
+</script>
+</body>
+</html>

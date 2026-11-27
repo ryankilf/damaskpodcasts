@@ -1,0 +1,52 @@
+DamaskA11y:
+  active: true
+  ContentDescriptionRequired:
+    active: true
+    functions:
+      - 'Image'
+      - 'Icon'
+      - 'AsyncImage'
+      - 'SubcomposeAsyncImage'
+      - 'KamelImage'
+  ClickableRoleRequired:
+    active: true
+    functions:
+      - 'clickable'
+      - 'combinedClickable'
+      - 'selectable'
+      - 'toggleable'
+      - 'triStateToggleable'
+  MinimumTouchTarget:
+    active: true
+    minSizeDp: 48
+    interactiveFunctions:
+      - 'clickable'
+      - 'combinedClickable'
+      - 'selectable'
+      - 'toggleable'
+      - 'triStateToggleable'
+    sizeFunctions:
+      - 'size'
+      - 'requiredSize'
+      - 'width'
+      - 'requiredWidth'
+      - 'height'
+      - 'requiredHeight'
+  NoHardcodedDimensions:
+    active: true
+    units: ['dp', 'sp', 'em']
+    constructors: ['Dp', 'TextUnit', 'DpSize', 'DpOffset']
+    allowedValues: ['0']
+    allowedPackageSuffixes: ['.theme']
+    allowedFileNamePattern: '.*Dimens.*\.kt'
+  NoHardcodedColors:
+    active: true
+    allowedConstants: ['Transparent', 'Unspecified']
+    allowedPackageSuffixes: ['.theme']
+    allowedFileNamePattern: '^$'
+  DefaultFontsOnly:
+    active: true
+  NoHardcodedUiStrings:
+    active: true
+    textFunctions: ['Text', 'BasicText']
+    accessibilityArguments: ['contentDescription', 'onClickLabel', 'onLongClickLabel', 'stateDescription']

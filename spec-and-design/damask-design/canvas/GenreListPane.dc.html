@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Genre list pane</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="display: flex; flex-direction: column; font-family: var(--font-sans); color: var(--on-surface)">
+  <header style="height: 64px; display: flex; align-items: center; gap: 4px; padding: 0 4px 0 16px">
+    <h1 class="t-title-lg" style="margin: 0; flex: 1">Genres</h1>
+    <button type="button" aria-label="Manage categories" style="width: 48px; height: 48px; border: none; background: transparent; border-radius: var(--radius-full); color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center"><span class="ms" aria-hidden="true">more_vert</span></button>
+  </header>
+  <ul style="list-style: none; margin: 0; padding: 0 12px; display: flex; flex-direction: column; gap: 4px">
+    <sc-for list="{{genres}}" as="g" hint-placeholder-count="6">
+      <li>
+        <a href="{{href}}" aria-current="{{g.current}}" style="display: flex; align-items: center; gap: 12px; min-height: 80px; padding: 8px 12px; box-sizing: border-box; border-radius: var(--radius-md); text-decoration: none; color: inherit; background: {{g.bg}}">
+          <div aria-hidden="true" style="display: flex; flex: none">
+            <span style="width: 32px; height: 48px; border-radius: var(--radius-sm); background: {{g.a1}}"></span>
+            <span style="width: 32px; height: 48px; margin-left: -12px; border-radius: var(--radius-sm); border: 2px solid var(--surface); background: {{g.a2}}"></span>
+          </div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+              <span class="t-title">{{g.name}}</span>
+              <sc-if value="{{g.stalest}}" hint-placeholder-val="{{false}}">
+                <span class="t-label" style="padding: 2px 8px; border-radius: var(--radius-full); background: var(--tertiary-container); color: var(--on-tertiary-container)">Longest unplayed</span>
+              </sc-if>
+            </div>
+            <span class="t-body-sm" title="{{g.exact}}" style="color: var(--on-surface-variant)">{{g.last}}</span>
+          </div>
+          <span class="ms" aria-hidden="true" style="color: var(--on-surface-variant)">chevron_right</span>
+        </a>
+      </li>
+    </sc-for>
+  </ul>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"selected":{"editor":"enum","options":["none","science","comedy","society","technology","news","history"],"default":"none"},"href":{"editor":null,"default":"GenreQueue.dc.html"},"$preview":{"width":390,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const sel = this.props.selected ?? 'none';
+    const list = [
+      { id: 'science', name: 'Science', last: 'Last played 3 weeks ago', exact: 'Last played Thu 6 Nov 2026, 21:14 · 3 shows', a1: '#3f6b4a', a2: '#2d5d7b', stalest: true },
+      { id: 'comedy', name: 'Comedy', last: 'Last played 2 weeks ago', exact: 'Last played Wed 12 Nov 2026, 18:02 · 2 shows', a1: '#7a4b6e', a2: '#5c6b2f', stalest: false },
+      { id: 'society', name: 'Society & Culture', last: 'Last played 5 days ago', exact: 'Last played Sat 22 Nov 2026, 10:31 · 3 shows', a1: '#55586b', a2: '#6b5a3f', stalest: false },
+      { id: 'technology', name: 'Technology', last: 'Last played 3 days ago', exact: 'Last played Mon 24 Nov 2026, 07:55 · 4 shows', a1: '#2f5a6b', a2: '#4b3f6b', stalest: false },
+      { id: 'news', name: 'News', last: 'Last played yesterday', exact: 'Last played Wed 26 Nov 2026, 17:20 · 2 shows', a1: '#6b2f3a', a2: '#3a4a5c', stalest: false },
+      { id: 'history', name: 'History', last: 'Last played today', exact: 'Last played Thu 27 Nov 2026, 08:12 · 4 shows, 1 in progress', a1: '#6b3f2a', a2: '#8a6a2f', stalest: false }
+    ];
+    const genres = list.map((g) => ({ ...g, current: g.id === sel ? 'page' : 'false', bg: g.id === sel ? 'var(--secondary-container)' : 'transparent' }));
+    return { genres, href: this.props.href ?? 'GenreQueue.dc.html' };
+  }
+}
+</script>
+</body>
+</html>
