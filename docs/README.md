@@ -17,6 +17,7 @@ The docs don't repeat either. They describe the implementation and record every 
 | [Data](data.md) | The SQLite schema, last-write-wins merging, HLC timestamps, migrations |
 | [Feeds](feeds.md) | OPML import, fetching, parsing, refresh, category prefill |
 | [Guardrails](guardrails.md) | Lint, architecture tests and build checks, and what each one enforces |
+| [Branding](branding.md) | The app icon and how it's generated for every platform |
 | [Decisions](decisions.md) | Where the code interprets or deviates from the spec, and why |
 
 ## Status

@@ -12,6 +12,11 @@ Now specified in [spec › Search](spec.md#search) and [spec › Compliance](spe
 - **Search results prefill from `category1`** when you subscribe from search: it's the main category. If it isn't an Apple top-level category, the prefill falls back to the feed's own `itunes:category` once the feed is fetched.
 - **Anonymous Supabase users are accepted** (as specified). Each has its own stable `sub`, kept when the account is later upgraded, so per-user limits work. Scripted creation of fresh anonymous users is held back by Supabase's anonymous sign-in limits and a Cloudflare per-IP rule; see `deploy/README.md` when it exists.
 
+## Branding
+
+- **The app icon is logo D2, "Woven play on damask"** (27 Nov), generated for every platform by `branding/icon/generate.py` (see [branding.md](branding.md)). The PNGs are drawn directly with Pillow, supersampled, rather than rendered from SVG, because the only local SVG renderer handled the design's clip paths poorly. Android's monochrome layer keeps the diaper at 16% so themed icons stay tone-on-tone, as in the design's "Themed" variant.
+- **The desktop app's package name is "Damask"** (was the reverse-domain ID), so menus, the Dock and installers show the app's name.
+
 ## Screens
 
 - **Empty categories are hidden on Genres.** All 19 Apple categories are seeded at import, and most users fill only some of them. `GenresViewModel`.
