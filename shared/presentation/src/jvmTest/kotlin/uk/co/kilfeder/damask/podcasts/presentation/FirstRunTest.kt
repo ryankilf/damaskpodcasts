@@ -80,6 +80,10 @@ class FirstRunTest {
         import.onSelectionChanged(review.rows.first().index, false)
         assertEquals(1, (import.uiState.value as ImportUiState.Review).selectedCount)
         import.onSelectionChanged(review.rows.first().index, true)
+        import.onSelectAllChanged(false)
+        assertEquals(0, (import.uiState.value as ImportUiState.Review).selectedCount)
+        import.onSelectAllChanged(true)
+        assertTrue((import.uiState.value as ImportUiState.Review).allSelected)
 
         import.onConfirm()
         import.uiState.await { it == ImportUiState.Done(2) }

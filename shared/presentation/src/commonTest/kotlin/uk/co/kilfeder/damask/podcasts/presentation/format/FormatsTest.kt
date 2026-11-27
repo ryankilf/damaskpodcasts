@@ -1,6 +1,8 @@
 package uk.co.kilfeder.damask.podcasts.presentation.format
 
 import kotlinx.datetime.TimeZone
+import uk.co.kilfeder.damask.podcasts.presentation.importer.CategoryOptionUi
+import uk.co.kilfeder.damask.podcasts.presentation.importer.matching
 import uk.co.kilfeder.damask.podcasts.presentation.navigation.Destination
 import uk.co.kilfeder.damask.podcasts.presentation.navigation.NavState
 import uk.co.kilfeder.damask.podcasts.presentation.navigation.Tab
@@ -39,6 +41,20 @@ class FormatsTest {
             Formats.length(3_250_000, 3_250_000 - 1_924_000),
         )
         assertNull(Formats.length(null, 1_000))
+    }
+
+    @Test
+    fun categorySearchIgnoresCaseAndAmpersands() {
+        val options = listOf(
+            CategoryOptionUi("a", "Health & Fitness"),
+            CategoryOptionUi("b", "History"),
+            CategoryOptionUi("c", "TV & Film"),
+        )
+        assertEquals(listOf("Health & Fitness"), options.matching("health and").map { it.name })
+        assertEquals(listOf("Health & Fitness", "History"), options.matching(" H ").map { it.name })
+        assertEquals(listOf("TV & Film"), options.matching("tv & f").map { it.name })
+        assertEquals(options, options.matching(""))
+        assertEquals(emptyList(), options.matching("zzz"))
     }
 
     @Test

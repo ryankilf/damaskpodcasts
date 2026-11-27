@@ -63,13 +63,16 @@
     <string name="import_tile_read">%1$s, read</string>
     <string name="import_tile_failed">%1$s, couldn’t be read</string>
     <string name="import_tile_unnamed">Show %1$d of %2$d</string>
-    <string name="import_subscribe_to">Subscribe to %1$s</string>
+    <string name="import_all_shows">All shows</string>
     <string name="import_subscribing">Saving shows: %1$d of %2$d</string>
     <string name="import_done">Subscribed to %1$d shows.</string>
     <string name="import_problem">Couldn’t read this feed (%1$s). It will be retried later.</string>
     <string name="import_failed">That file couldn’t be imported: %1$s</string>
     <string name="import_start_again">Choose another file</string>
     <string name="import_category">Category for %1$s: %2$s</string>
+    <string name="category_sheet_title">Category for %1$s</string>
+    <string name="category_search">Search categories</string>
+    <string name="category_no_match">No categories match “%1$s”</string>
     <string name="import_from_settings">Import from OPML</string>
 
     <!-- Settings -->

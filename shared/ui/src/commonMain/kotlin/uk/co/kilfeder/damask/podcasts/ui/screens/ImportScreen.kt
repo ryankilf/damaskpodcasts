@@ -10,10 +10,21 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.selection.triStateToggleable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.TriStateCheckbox
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -27,8 +38,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.state.ToggleableState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.vinceglb.filekit.dialogs.FileKitType
@@ -42,9 +55,13 @@ import uk.co.kilfeder.damask.podcasts.presentation.importer.CategoryOptionUi
 import uk.co.kilfeder.damask.podcasts.presentation.importer.ImportRowUi
 import uk.co.kilfeder.damask.podcasts.presentation.importer.ImportUiState
 import uk.co.kilfeder.damask.podcasts.presentation.importer.ImportViewModel
+import uk.co.kilfeder.damask.podcasts.presentation.importer.matching
 import uk.co.kilfeder.damask.podcasts.ui.components.Artwork
 import uk.co.kilfeder.damask.podcasts.ui.components.ImportGrid
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
+import uk.co.kilfeder.damask.podcasts.ui.resources.category_no_match
+import uk.co.kilfeder.damask.podcasts.ui.resources.category_search
+import uk.co.kilfeder.damask.podcasts.ui.resources.category_sheet_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_category
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_choose
@@ -56,7 +73,7 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.import_reading
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_review_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_review_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_start_again
-import uk.co.kilfeder.damask.podcasts.ui.resources.import_subscribe_to
+import uk.co.kilfeder.damask.podcasts.ui.resources.import_all_shows
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_subscribing
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_title
 import uk.co.kilfeder.damask.podcasts.ui.theme.DamaskTextStyles
@@ -80,6 +97,7 @@ internal fun ImportScreen(
         onChooseFile = { picker.launch() },
         onCategoryChange = viewModel::onCategoryChanged,
         onSelectionChange = viewModel::onSelectionChanged,
+        onSelectAllChange = viewModel::onSelectAllChanged,
         onConfirm = viewModel::onConfirm,
         onStartAgain = viewModel::onStartAgain,
         modifier = modifier,
@@ -92,6 +110,7 @@ private fun ImportContent(
     onChooseFile: () -> Unit,
     onCategoryChange: (Int, String) -> Unit,
     onSelectionChange: (Int, Boolean) -> Unit,
+    onSelectAllChange: (Boolean) -> Unit,
     onConfirm: () -> Unit,
     onStartAgain: () -> Unit,
     modifier: Modifier = Modifier,
@@ -114,7 +133,14 @@ private fun ImportContent(
                 fill = false,
             )
         }
-        is ImportUiState.Review -> Review(state, onCategoryChange, onSelectionChange, onConfirm, modifier)
+        is ImportUiState.Review -> Review(
+            state = state,
+            onCategoryChange = onCategoryChange,
+            onSelectionChange = onSelectionChange,
+            onSelectAllChange = onSelectAllChange,
+            onConfirm = onConfirm,
+            modifier = modifier,
+        )
         is ImportUiState.Subscribing -> Progress(
             label = stringResource(Res.string.import_subscribing, state.done, state.total),
             done = state.done,
@@ -174,6 +200,7 @@ private fun Review(
     state: ImportUiState.Review,
     onCategoryChange: (Int, String) -> Unit,
     onSelectionChange: (Int, Boolean) -> Unit,
+    onSelectAllChange: (Boolean) -> Unit,
     onConfirm: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -196,6 +223,7 @@ private fun Review(
                     )
                 }
             }
+            item(key = "select-all") { SelectAll(state, onSelectAllChange) }
             items(state.rows, key = { it.index }) { row ->
                 ImportRow(
                     row = row,
@@ -221,20 +249,16 @@ private fun ImportRow(
     onSelectionChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val subscribeLabel = stringResource(Res.string.import_subscribe_to, row.title)
+    // The whole row toggles; the category button inside keeps its own tap.
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.Space2),
         modifier = modifier
+            .toggleable(value = row.selected, role = Role.Checkbox, onValueChange = onSelectionChange)
             .heightIn(min = Sizes.RowMinHeight)
-            .padding(start = Spacing.Space1, end = Spacing.Space4, top = Spacing.Space2, bottom = Spacing.Space2),
+            .padding(start = Spacing.Space4, end = Spacing.Space4, top = Spacing.Space2, bottom = Spacing.Space2),
     ) {
-        // Material's Checkbox already has a 48dp touch target and the checkbox role.
-        Checkbox(
-            checked = row.selected,
-            onCheckedChange = onSelectionChange,
-            modifier = Modifier.semantics { contentDescription = subscribeLabel },
-        )
+        Checkbox(checked = row.selected, onCheckedChange = null)
         Artwork(row.artworkUrl)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.Space1)) {
             Text(row.title, style = DamaskTextStyles.Title, maxLines = 2)
@@ -250,6 +274,36 @@ private fun ImportRow(
     }
 }
 
+/** Ticks every show, or unticks them all when every show is already ticked. */
+@Composable
+private fun SelectAll(
+    state: ImportUiState.Review,
+    onSelectAllChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val toggle = when {
+        state.allSelected -> ToggleableState.On
+        state.selectedCount == 0 -> ToggleableState.Off
+        else -> ToggleableState.Indeterminate
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.Space2),
+        modifier = modifier
+            .fillMaxWidth()
+            .triStateToggleable(
+                state = toggle,
+                role = Role.Checkbox,
+                onClick = { onSelectAllChange(!state.allSelected) },
+            )
+            .heightIn(min = Sizes.MinTouchTarget)
+            .padding(horizontal = Spacing.Space4),
+    ) {
+        TriStateCheckbox(state = toggle, onClick = null)
+        Text(stringResource(Res.string.import_all_shows), style = DamaskTextStyles.Title)
+    }
+}
+
 @Composable
 private fun CategoryPicker(
     row: ImportRowUi,
@@ -257,24 +311,83 @@ private fun CategoryPicker(
     onCategoryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var open by remember { mutableStateOf(false) }
     val current = categories.firstOrNull { it.id == row.categoryId }?.name.orEmpty()
     val description = stringResource(Res.string.import_category, row.title, current)
-    Box(modifier) {
-        OutlinedButton(
-            onClick = { expanded = true },
-            modifier = Modifier.semantics { contentDescription = description },
-        ) { Text(current) }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            categories.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(option.name) },
-                    onClick = {
-                        expanded = false
-                        onCategoryChange(option.id)
-                    },
-                )
+    OutlinedButton(
+        onClick = { open = true },
+        modifier = modifier.semantics { contentDescription = description },
+    ) { Text(current) }
+    if (open) {
+        CategorySheet(
+            showTitle = row.title,
+            categories = categories,
+            selectedId = row.categoryId,
+            onSelect = {
+                open = false
+                onCategoryChange(it)
+            },
+            onDismiss = { open = false },
+        )
+    }
+}
+
+/** A searchable list of categories in a bottom sheet; the current one is marked. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CategorySheet(
+    showTitle: String,
+    categories: List<CategoryOptionUi>,
+    selectedId: String,
+    onSelect: (String) -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var query by remember { mutableStateOf("") }
+    val matches = categories.matching(query)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        modifier = modifier,
+    ) {
+        Text(
+            text = stringResource(Res.string.category_sheet_title, showTitle),
+            style = DamaskTextStyles.TitleLarge,
+            maxLines = 2,
+            modifier = Modifier.padding(horizontal = Spacing.Space4).semantics { heading() },
+        )
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            singleLine = true,
+            label = { Text(stringResource(Res.string.category_search)) },
+            leadingIcon = { Icon(imageVector = Icons.Rounded.Search, contentDescription = null) },
+            modifier = Modifier.fillMaxWidth().padding(Spacing.Space4),
+        )
+        LazyColumn(Modifier.selectableGroup()) {
+            if (matches.isEmpty()) {
+                item(key = "none") { EmptyMessage(stringResource(Res.string.category_no_match, query)) }
+            }
+            items(matches, key = { it.id }) { option ->
+                CategoryOption(option.name, option.id == selectedId, onClick = { onSelect(option.id) })
             }
         }
+    }
+}
+
+@Composable
+private fun CategoryOption(name: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.Space4),
+        modifier = modifier
+            .fillMaxWidth()
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+            .heightIn(min = Sizes.MinTouchTarget)
+            .padding(horizontal = Spacing.Space4),
+    ) {
+        // The row is the touch target; the radio button only shows the state.
+        RadioButton(selected = selected, onClick = null)
+        Text(name, style = DamaskTextStyles.Body)
     }
 }

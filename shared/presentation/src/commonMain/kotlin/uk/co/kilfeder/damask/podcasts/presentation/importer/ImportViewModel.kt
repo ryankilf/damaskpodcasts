@@ -16,6 +16,18 @@ import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 
 data class CategoryOptionUi(val id: String, val name: String)
 
+/**
+ * The categories matching a search: case-insensitive, and "&" matches "and" both ways, so
+ * "health and" finds "Health & Fitness". An empty query matches everything.
+ */
+fun List<CategoryOptionUi>.matching(query: String): List<CategoryOptionUi> {
+    val wanted = searchKey(query)
+    return if (wanted.isEmpty()) this else filter { searchKey(it.name).contains(wanted) }
+}
+
+private fun searchKey(text: String): String =
+    text.lowercase().replace("&", " and ").split(Regex("\\s+")).filter { it.isNotEmpty() }.joinToString(" ")
+
 data class ImportRowUi(
     val index: Int,
     val title: String,
@@ -51,6 +63,7 @@ sealed interface ImportUiState {
 
     data class Review(val rows: List<ImportRowUi>, val categories: List<CategoryOptionUi>) : ImportUiState {
         val selectedCount: Int get() = rows.count { it.selected }
+        val allSelected: Boolean get() = rows.isNotEmpty() && rows.all { it.selected }
     }
 
     /** Saving shows and their episodes: [done] of [total]. */
@@ -91,6 +104,12 @@ class ImportViewModel internal constructor(private val graph: AppGraph) : ViewMo
         state.value = current.copy(
             rows = current.rows.map { if (it.index == index) it.copy(selected = selected) else it },
         )
+    }
+
+    /** Tick or untick every show at once. */
+    fun onSelectAllChanged(selected: Boolean) {
+        val current = state.value as? ImportUiState.Review ?: return
+        state.value = current.copy(rows = current.rows.map { it.copy(selected = selected) })
     }
 
     fun onConfirm() {
