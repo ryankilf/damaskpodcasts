@@ -1,0 +1,113 @@
+# The search backend: shared/api, server/*, deploy/. Runs only when they (or shared build config)
+# change; app-only changes don't trigger it.
+name: Server
+
+on:
+  push:
+    branches: [main, backend]
+    paths:
+      - "server/**"
+      - "shared/api/**"
+      - "deploy/**"
+      - "architecture-tests/**"
+      - "config/detekt/**"
+      - "gradle/**"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - ".github/workflows/server.yml"
+      - ".github/scripts/**"
+  pull_request:
+    paths:
+      - "server/**"
+      - "shared/api/**"
+      - "deploy/**"
+      - "architecture-tests/**"
+      - "config/detekt/**"
+      - "gradle/**"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - ".github/workflows/server.yml"
+      - ".github/scripts/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: server-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build and test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v6
+      # Testcontainers uses the runner's Docker for the Meilisearch integration tests.
+      - name: Gradle checks
+        run: >
+          ./gradlew --continue
+          :shared:api:jvmTest :shared:api:detekt :shared:api:verifyApiDependencies
+          :server:meili:check :server:search:check :server:importer:check
+          :architecture-tests:test
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: server-test-reports
+          path: "**/build/reports/tests/"
+
+  deploy-lint:
+    name: Deploy lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Images are pinned and Meilisearch matches the catalog
+        run: sh .github/scripts/check-image-pins.sh
+      - name: hadolint
+        run: sh .github/scripts/hadolint.sh
+      - name: Compose files are valid
+        working-directory: deploy
+        run: |
+          docker compose --env-file local.env -f docker-compose.yml -f docker-compose.local.yml config --quiet
+          sed -E 's/^(MEILI_MASTER_KEY|MEILI_SEARCH_KEY_UID|MEILI_SEARCH_KEY)=$/\1=ci/' .env.example > .env.ci
+          docker compose --env-file .env.ci --profile public --profile import config --quiet
+      - name: Shell scripts
+        run: shellcheck deploy/*.sh .github/scripts/*.sh
+
+  compose-smoke:
+    name: docker compose up (fixture index)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Build images
+        run: sh deploy/build.sh
+      - name: Start the local stack
+        working-directory: deploy
+        run: docker compose --env-file local.env -f docker-compose.yml -f docker-compose.local.yml up -d --wait gateway
+      - name: Health and a search
+        run: |
+          for attempt in $(seq 30); do
+            curl -fsS http://localhost:8080/health && break
+            sleep 2
+          done
+          curl -fsS http://localhost:8080/health | grep -q '"db":true'
+          curl -fsS -H 'Authorization: Bearer local-dev-private-token' \
+            'http://localhost:8080/v1/search?q=hardcore%20histry' | grep -q '"guid-hardcore-history"'
+      - name: Logs
+        if: always()
+        working-directory: deploy
+        run: docker compose --env-file local.env -f docker-compose.yml -f docker-compose.local.yml logs --no-color

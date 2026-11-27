@@ -5,6 +5,7 @@
 # from the server. (Covered by MeiliClientTest, so a Meilisearch upgrade that changes it fails CI.)
 set -eu
 cd "$(dirname "$0")"
+# shellcheck source=/dev/null  # .env exists only on the server
 . ./.env
 : "${MEILI_MASTER_KEY:?set MEILI_MASTER_KEY in .env}"
 : "${MEILI_SEARCH_KEY_UID:?set MEILI_SEARCH_KEY_UID in .env}"
