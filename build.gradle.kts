@@ -13,6 +13,7 @@ plugins {
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.licensee) apply false
     alias(libs.plugins.sqldelight) apply false
+    alias(libs.plugins.kotlinSerialization) apply false
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -93,7 +94,7 @@ composeFreeModules.forEach { modulePath ->
 // runtime classpaths cover everything that ships: both apps plus the iOS framework module.
 // When adding FFmpeg/JavaCV, allow LGPL-2.1-or-later deliberately, in a reviewed change.
 // ---------------------------------------------------------------------------------------------
-val shippingModules = listOf(":androidApp", ":desktopApp", ":shared:ui")
+val shippingModules = listOf(":androidApp", ":desktopApp", ":shared:ui", ":server:search", ":server:importer")
 
 // Banned by coordinates or file name regardless of declared licence (spec › Licences). Matched
 // against "group:name:version (file.jar)" so classifier-only GPL builds are caught too.
@@ -107,6 +108,8 @@ val shippingClasspaths = mapOf(
     ":androidApp" to listOf("debugRuntimeClasspath", "releaseRuntimeClasspath"),
     ":desktopApp" to listOf("runtimeClasspath"),
     ":shared:ui" to listOf("jvmRuntimeClasspath"),
+    ":server:search" to listOf("runtimeClasspath"),
+    ":server:importer" to listOf("runtimeClasspath"),
 )
 
 shippingModules.forEach { modulePath ->
@@ -169,5 +172,40 @@ shippingModules.forEach { modulePath ->
             }
         }
         tasks.matching { it.name == "check" }.configureEach { dependsOn(verifyBanned) }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// shared/api is the contract between the app and server/search: it may depend on the Kotlin
+// stdlib and kotlinx-serialization only, so neither side can leak its dependencies into the other.
+// ---------------------------------------------------------------------------------------------
+project(":shared:api") {
+    pluginManager.withPlugin("org.jetbrains.kotlin.multiplatform") {
+        val verify = tasks.register("verifyApiDependencies") {
+            group = "verification"
+            description = "Fails if :shared:api resolves anything beyond the Kotlin stdlib and kotlinx-serialization."
+            val resolved = configurations.named("jvmRuntimeClasspath").flatMap { classpath ->
+                classpath.incoming.artifacts.resolvedArtifacts.map { artifacts ->
+                    artifacts.map { it.id.componentIdentifier.displayName }
+                }
+            }
+            val allowed = listOf(
+                "org.jetbrains.kotlin:",
+                "org.jetbrains.kotlinx:kotlinx-serialization-",
+                "org.jetbrains:annotations:",
+            )
+            inputs.property("resolvedComponents", resolved)
+            inputs.property("allowedPrefixes", allowed)
+            doLast {
+                val offenders = resolved.get().filter { id -> allowed.none { id.startsWith(it) } }
+                if (offenders.isNotEmpty()) {
+                    throw GradleException(
+                        ":shared:api may only depend on kotlinx-serialization, but resolves:\n  " +
+                            offenders.joinToString("\n  "),
+                    )
+                }
+            }
+        }
+        tasks.named("check") { dependsOn(verify) }
     }
 }
