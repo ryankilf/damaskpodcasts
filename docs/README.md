@@ -24,7 +24,7 @@ The docs don't repeat either. They describe the implementation and record every 
 |---|---|
 | Core rules (rotation, listening, autoplay, retention) | Done, tested |
 | Database (schema 2, data layer) | Done, tested |
-| OPML import, feed fetch / parse / refresh | Done, tested; not yet run against real exports |
+| OPML import, feed fetch / parse / refresh | Done, tested; a real 78-feed Pocket Casts export imports cleanly (2 feeds are dead upstream) |
 | Presentation (ViewModels), screens | Not started (template greeting screen only) |
 | Playback (Android Media3, desktop FFmpeg), Android Auto | Not started |
 | Downloads, background refresh scheduling | Not started |

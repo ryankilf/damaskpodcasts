@@ -41,7 +41,7 @@ sequenceDiagram
 
 RSS 2.0 plus iTunes tags, on xmlutil's `KtXmlReader` in relaxed mode (`feed/Xml.kt` builds a small tree):
 
-- HTML entities that XML doesn't define (`&nbsp;`, `&mdash;`, …) are resolved from a table; unknown ones are dropped.
+- Character references (`&#8217;`) and XML's own entities are resolved by the reader. HTML entities that XML doesn't define (`&nbsp;`, `&mdash;`, …) come from a table; unknown ones are dropped.
 - The iTunes namespace is matched leniently (odd capitalisation, or the `itunes:` prefix alone).
 - Channel artwork comes from `itunes:image`, falling back to `<image><url>`. Categories are read with their nested subcategory.
 - An item's GUID falls back to its enclosure URL. Items without an enclosure are skipped, and duplicate GUIDs are dropped.
@@ -57,5 +57,17 @@ RSS 2.0 plus iTunes tags, on xmlutil's `KtXmlReader` in relaxed mode (`feed/Xml.
 | Not modified | Record the time |
 | Unavailable | Mark the feed `UNAVAILABLE`. Nothing is deleted; the UI will prompt to replace the URL |
 | Failed / unparseable | Mark `FAILED` with a short reason |
+
+## Testing against real feeds
+
+`RealOpmlSmokeTest` (jvmTest) runs the real import over the network against any OPML file. It's skipped unless given a path, so `check` never touches the network:
+
+```sh
+./gradlew :shared:core:jvmTest --tests '*RealOpmlSmokeTest*' -Pdamask.opml=llm-scrapbook/podcasts_opml.xml
+```
+
+It writes `import-report.md` next to the OPML file: per show, the type, episode count, undated episodes, missing durations, feed category, prefill and any problem. The report contains no feed URLs. Keep real exports in `llm-scrapbook/`, which is gitignored, because they can contain private feed URLs.
+
+Last run (27 Nov 2026, a 78-feed Pocket Casts export across 26 hosts): 76 imported in about 3 s, every date parsed, and every show prefilled to an Apple category. The two failures are feeds that return 404 upstream.
 
 Not built yet: scheduling (WorkManager on Android), basic-auth feeds (credentials in Keystore/Keychain), and re-fetching a feed when a download's signed audio link has expired.

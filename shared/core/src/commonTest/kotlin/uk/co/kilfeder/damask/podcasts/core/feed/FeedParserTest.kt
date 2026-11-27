@@ -36,7 +36,7 @@ object SampleFeeds {
               <enclosure url="https://cdn.example.com/1-dupe.mp3"/>
             </item>
             <item>
-              <title>No guid</title>
+              <title>Don&#8217;t &#x2014; no guid</title>
               <enclosure url="https://cdn.example.com/2.mp3"/>
             </item>
             <item>
@@ -83,6 +83,7 @@ class FeedParserTest {
         assertEquals(3_600_000, first.durationMs)
         assertEquals("https://example.com/ep1.jpg", first.imageUrl)
         assertNull(feed.episodes[1].publishedAt)
+        assertEquals("Don\u2019t \u2014 no guid", feed.episodes[1].title, "numeric character references")
     }
 
     @Test

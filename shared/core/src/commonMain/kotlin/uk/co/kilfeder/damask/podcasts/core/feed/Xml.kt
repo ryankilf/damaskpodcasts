@@ -111,11 +111,20 @@ internal object Xml {
             if (parent == null) root = node else parent.children += node
         }
 
-        /** XML's own entities come resolved; feeds also use HTML ones, which XML doesn't define. */
-        private fun entityText(reader: KtXmlReader): String =
-            reader.text.takeIf { it.isNotEmpty() && it != "&${reader.localName};" }
-                ?: HTML_ENTITIES[reader.localName]
-                ?: ""
+        /**
+         * Character references (`&#8217;`) and XML's own entities come resolved. Feeds also use HTML
+         * entities, which XML doesn't define. Character references have no entity name, and the
+         * reader throws if asked for one, hence the `runCatching`.
+         */
+        private fun entityText(reader: KtXmlReader): String {
+            val text = reader.text
+            val name = runCatching { reader.localName }.getOrNull()
+            return when {
+                name == null -> text
+                text.isNotEmpty() && text != "&$name;" -> text
+                else -> HTML_ENTITIES[name].orEmpty()
+            }
+        }
 
         private fun KtXmlReader.toBuilder(): Builder {
             val attributes = (0 until attributeCount).associate { getAttributeLocalName(it) to getAttributeValue(it) }

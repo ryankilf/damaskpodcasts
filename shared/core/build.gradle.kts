@@ -69,3 +69,9 @@ sqldelight {
         }
     }
 }
+
+// Opt-in network smoke test: -Pdamask.opml=<path> (see RealOpmlSmokeTest).
+val smokeOpml = providers.gradleProperty("damask.opml").map { rootProject.file(it).absolutePath }
+tasks.withType<Test>().configureEach {
+    smokeOpml.orNull?.let { systemProperty("damask.opml", it) }
+}
