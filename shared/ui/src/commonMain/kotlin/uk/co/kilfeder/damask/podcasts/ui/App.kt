@@ -59,11 +59,11 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.tab_genres
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_home
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_played
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_search
-import uk.co.kilfeder.damask.podcasts.ui.screens.EpisodeScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.GenreQueueScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.GenresScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.HomeScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.ImportScreen
+import uk.co.kilfeder.damask.podcasts.ui.screens.NowPlayingScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.Loading
 import uk.co.kilfeder.damask.podcasts.ui.screens.PlayedScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.SearchScreen
@@ -129,6 +129,17 @@ private fun Shell(
         }
     }
     BackHandler(enabled = top != null) { onBack() }
+    if (top is Destination.Episode) {
+        // Now Playing is full screen: no top bar or tabs (design hand-off › NowPlaying).
+        NowPlayingScreen(
+            graph = graph,
+            id = top.id,
+            onClose = { onBack() },
+            onOpenGenre = { onNavigate(Destination.GenreQueue(it)) },
+            modifier = modifier,
+        )
+        return
+    }
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -152,7 +163,6 @@ private fun Shell(
                     onOpenEpisode = { onNavigate(Destination.Episode(it)) },
                     modifier = content,
                 )
-                top is Destination.Episode -> EpisodeScreen(graph, top.id, content)
                 top == Destination.Settings ->
                     SettingsScreen(graph, onImport = { onNavigate(Destination.Import) }, content)
                 top == Destination.Import -> ImportScreen(graph, onFinish = onImportFinish, modifier = content)

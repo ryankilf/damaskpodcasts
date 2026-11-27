@@ -80,10 +80,13 @@ Now specified in [spec › Search](spec.md#search) and [spec › Compliance](spe
 
 - **No episode search for now; much later.** The search index holds shows only (the Podcast Index dump has no episodes). Searching episodes everywhere means fetching about 2.8 million feeds regularly, and weekly isn't fresh enough for news shows. That's too much crawling and storage for this setup. Cheaper options for when it's picked up: full-text search over the episodes of shows you follow, on the device (it means keeping episode text longer than the 10 kept episodes); filtering a show's back catalogue on its page; or a server index limited to popular, active shows.
 
-## Episode page
+## Now Playing and show notes
 
 - **Show notes are stored per episode in the feed cache (`episode.notes_html`, schema 4)** and read one episode at a time (`EpisodeNotes`), never in the library snapshot, which loads every episode. They come from `content:encoded`, else `description`, else `itunes:summary`, capped at 100,000 characters (some feeds paste whole transcripts).
 - **Migration 3 → 4 clears the feeds' ETag and Last-Modified**, so the next refresh downloads every feed in full and fills in notes for episodes already cached. Otherwise unchanged feeds answer 304 and those episodes would never get notes.
 - **Notes are parsed in presentation, not rendered as HTML** (`ShowNotes` → `NotesBlock`/`NotesSpan`). Compose Multiplatform 1.12 has no common `fromHtml`, and a small structured model works the same on every platform, SwiftUI included. It keeps paragraphs, list items, headings (as bold), bold, italic and links, turns bare URLs into links, and drops images, embeds, scripts and styles. It's a lenient tokenizer, because feed markup is often broken, and nothing in it is executed.
 - **Only http, https and mailto links open**, checked in presentation and again in the UI. `javascript:`, `intent:` and `file:` links show as plain text.
-- **No play button yet**: it arrives with playback and Now Playing, rather than a button that does nothing.
+- **Tapping an episode opens Now Playing**, as the design hand-off says ("Now Playing is reached from any episode"). There's no separate episode page. It's full screen, without the top bar or tabs, following the NowPlaying artboard. A separate episode page was built first by mistake and replaced.
+- **Until playback exists, play, skip and speed show but are disabled** (`PLAYBACK_AVAILABLE` in `NowPlayingScreen.kt`). Mark played works. The position bar shows the saved position.
+- **Links appear twice on purpose:** inline in the text, and listed under Links as full-size rows with their host, as in the NowPlayingNotes artboard. Inline links are small touch targets; the list gives each one 48dp and tells apart links with the same text ("Instagram", "Instagram").
+- **The play button carries the damask diaper** (`damaskFill`), as the design system specifies for filled play and pause buttons only.

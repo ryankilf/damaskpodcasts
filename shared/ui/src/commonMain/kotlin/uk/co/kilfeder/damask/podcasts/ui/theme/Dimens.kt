@@ -66,8 +66,33 @@ object Sizes {
     val AmbientGlowInset = 40.dp
     val AmbientGlowBlur = 40.dp
 
-    /** Artwork at the top of the episode page. */
-    val EpisodeArtwork = 200.dp
+    /** Now Playing artwork, at most (NowPlayingPane artboard); it shrinks on small screens. */
+    val NowPlayingArtworkMax = 340.dp
+
+    /** Now Playing artwork, at least, before the screen scrolls instead. */
+    val NowPlayingArtworkMin = 160.dp
+
+    /** Now Playing's back 10 / forward 30 buttons, and their icons. */
+    val NowPlayingSkipButton = 56.dp
+    val NowPlayingSkipIcon = 32.dp
+
+    /** The icon inside the 80dp play button. */
+    val NowPlayingPlayIcon = 40.dp
+
+    /** The damask diaper's pitch on the 80dp play button, and on 36–48dp ones. */
+    val DamaskPitchLarge = 14.dp
+    val DamaskPitchSmall = 9.dp
+
+    /** The position bar's thumb (NowPlayingPane artboard). */
+    val ScrubberThumbWidth = 4.dp
+    val ScrubberThumbHeight = 20.dp
+
+    /** The show notes sheet's top corners, and its drag handle. */
+    val SheetCornerRadius = 28.dp
+    val SheetHandleWidth = 32.dp
+
+    /** Artwork in the show notes header (NowPlayingNotes artboard). */
+    val NotesHeaderArtwork = 64.dp
 
     /** The import's latest-show cover card, at most. */
     val ImportCoverMax = 280.dp
