@@ -69,7 +69,7 @@ internal fun PlayNextButton(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = Sizes.MinTouchTarget)
-            .damaskButton(colors.primary, colors.onPrimary, Sizes.DamaskPitchMedium, alpha = DIAPER_UNDER_TEXT_ALPHA)
+            .damaskButton(colors.primary, colors.onPrimary, Sizes.DamaskPitchMedium, strength = DAMASK_TONE_UNDER_TEXT)
             .clickable(role = Role.Button, onClickLabel = label) { onPlayPause(next.id) },
     ) {
         PlayPauseIcon(playing, tint = colors.onPrimary, description = "")

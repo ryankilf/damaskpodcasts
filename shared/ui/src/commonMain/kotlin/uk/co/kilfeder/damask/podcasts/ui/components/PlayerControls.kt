@@ -105,7 +105,9 @@ internal fun PlayButton(
         modifier = modifier.size(size),
     ) {
         // Drawn inside the button, over its fill and under the icon; not on the grey disabled fill.
-        val pattern = if (enabled) Modifier.damaskFill(MaterialTheme.colorScheme.onPrimary, pitch) else Modifier
+        val scheme = MaterialTheme.colorScheme
+        val tone = damaskTone(scheme.primary, scheme.onPrimary)
+        val pattern = if (enabled) Modifier.damaskFill(tone, pitch, alpha = 1f) else Modifier
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().clip(CircleShape).then(pattern)) {
             PlayPauseIcon(playing, Modifier.size(iconSize))
         }
