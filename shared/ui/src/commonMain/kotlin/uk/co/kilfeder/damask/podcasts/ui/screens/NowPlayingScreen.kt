@@ -31,6 +31,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -52,6 +54,10 @@ import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeViewModel
 import uk.co.kilfeder.damask.podcasts.ui.components.AmbientGlow
 import uk.co.kilfeder.damask.podcasts.ui.components.PlayButton
 import uk.co.kilfeder.damask.podcasts.ui.components.PositionBar
+import uk.co.kilfeder.damask.podcasts.ui.components.SheetHandle
+import uk.co.kilfeder.damask.podcasts.ui.components.SkipButton
+import uk.co.kilfeder.damask.podcasts.ui.components.SpeedButton
+import uk.co.kilfeder.damask.podcasts.ui.components.sheetDrag
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.episode_gone_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.episode_gone_title
@@ -104,7 +110,7 @@ internal fun NowPlayingScreen(
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     Player(state, episode, onOpenGenre, controls, onOpenNotes = null, Modifier.weight(1f))
-                    NotesSheet(state, Modifier.weight(1f).padding(top = Spacing.Space4))
+                    NotesSheet(state, onClose = null, modifier = Modifier.weight(1f).padding(top = Spacing.Space4))
                 }
             } else {
                 Player(state, episode, onOpenGenre, controls, onOpenNotes)
@@ -253,11 +259,7 @@ private fun Controls(state: EpisodeUiState, actions: PlayerActions, modifier: Mo
         modifier = modifier.fillMaxWidth(),
     ) {
         val speedLabel = stringResource(Res.string.playback_speed, state.speed)
-        TextButton(
-            onClick = actions.onCycleSpeed,
-            enabled = live,
-            modifier = Modifier.semantics { contentDescription = speedLabel },
-        ) { Text(state.speed, style = DamaskTextStyles.Label) }
+        SpeedButton(state.speed, speedLabel, live, actions.onCycleSpeed)
         SkipButton(Icons.Rounded.Replay10, stringResource(Res.string.skip_back), live, actions.onSkipBack)
         PlayButton(
             size = Sizes.NowPlayingPlayButton,
@@ -285,19 +287,6 @@ private fun PlayedToggle(isPlayed: Boolean, onPlayedChange: (Boolean) -> Unit, m
     }
 }
 
-@Composable
-private fun SkipButton(
-    icon: ImageVector,
-    label: String,
-    enabled: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    IconButton(onClick = onClick, enabled = enabled, modifier = modifier.size(Sizes.NowPlayingSkipButton)) {
-        Icon(icon, contentDescription = label, modifier = Modifier.size(Sizes.NowPlayingSkipIcon))
-    }
-}
-
 /** The show notes peek at the bottom (NowPlayingPane artboard); tapping opens the notes view. */
 @Composable
 private fun NotesPeek(preview: String?, onOpen: () -> Unit, modifier: Modifier = Modifier) {
@@ -311,6 +300,7 @@ private fun NotesPeek(preview: String?, onOpen: () -> Unit, modifier: Modifier =
                 RoundedCornerShape(topStart = Sizes.SheetCornerRadius, topEnd = Sizes.SheetCornerRadius),
             )
             .clickable(enabled = preview != null, onClickLabel = label, role = Role.Button, onClick = onOpen)
+            .then(if (preview != null) Modifier.sheetDrag(up = onOpen) else Modifier)
             .padding(horizontal = Spacing.Space6, vertical = Spacing.Space3),
     ) {
         SheetHandle(Modifier.align(Alignment.CenterHorizontally))
@@ -337,16 +327,4 @@ private fun NotesPeek(preview: String?, onOpen: () -> Unit, modifier: Modifier =
             overflow = TextOverflow.Ellipsis,
         )
     }
-}
-
-/** The small bar at the top of a sheet. Decorative. */
-@Composable
-internal fun SheetHandle(modifier: Modifier = Modifier) {
-    Box(
-        modifier
-            .padding(bottom = Spacing.Space2)
-            .width(Sizes.SheetHandleWidth)
-            .heightIn(min = Sizes.ProgressBarHeight)
-            .background(MaterialTheme.colorScheme.outlineVariant, PillShape),
-    )
 }

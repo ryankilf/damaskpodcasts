@@ -51,6 +51,7 @@ internal class ShellActions(
     val onPlayEpisode: (EpisodeId, PlaySource) -> Unit,
     val onOpenGenre: (String) -> Unit,
     val onImportFinish: (Int) -> Unit,
+    val onBack: () -> Unit,
 )
 
 /** On wide layouts Home and Played show the playing episode beside the list. */
@@ -92,7 +93,7 @@ internal fun ShellContent(
         // The notes peek in that pane opens the notes in the same pane; back returns to the player.
         wide && top is Destination.ShowNotes && tab.pairsWithPlayer() -> TwoPanes(
             left = { TabContent(tab, graph, actions, it) },
-            right = { ShowNotesScreen(graph, top.id, it) },
+            right = { ShowNotesScreen(graph, top.id, onClose = actions.onBack, modifier = it) },
             modifier = modifier,
         )
         wide && tab == Tab.GENRES && (top == null || top is Destination.GenreQueue) -> TwoPanes(
@@ -117,7 +118,7 @@ private fun SinglePane(state: AppUiState, graph: AppGraph, actions: ShellActions
                 modifier = readable,
             )
             is Destination.Episode -> EpisodeScreen(top.id, graph, actions, Modifier.fillMaxSize())
-            is Destination.ShowNotes -> ShowNotesScreen(graph, top.id, readable)
+            is Destination.ShowNotes -> ShowNotesScreen(graph, top.id, onClose = actions.onBack, modifier = readable)
             Destination.Settings ->
                 SettingsScreen(graph, onImport = { actions.onNavigate(Destination.Import) }, modifier = readable)
             Destination.Import -> ImportScreen(graph, onFinish = actions.onImportFinish, modifier = readable)

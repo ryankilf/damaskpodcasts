@@ -30,6 +30,7 @@
     <string name="genre_pick_body">Its queue shows here, starting with the shows you’ve heard least lately.</string>
     <string name="show_notes">Show notes</string>
     <string name="show_notes_open">Open show notes</string>
+    <string name="show_notes_close">Close show notes</string>
     <string name="show_notes_links">Links</string>
     <string name="play">Play</string>
     <string name="pause">Pause</string>

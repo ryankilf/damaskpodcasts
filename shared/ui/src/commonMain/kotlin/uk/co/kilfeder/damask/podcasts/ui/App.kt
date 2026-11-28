@@ -104,6 +104,7 @@ private fun Shell(state: AppUiState, graph: AppGraph, intents: AppIntents, modif
             onPlayEpisode = { id, source -> intents.onPlayEpisode(id, source, width != WidthClass.EXPANDED) },
             onOpenGenre = intents.onOpenGenre,
             onImportFinish = intents.onImportFinish,
+            onBack = { intents.onBack() },
         )
         Row(Modifier.fillMaxSize()) {
             if (width != WidthClass.COMPACT) TabRail(state.nav.tab, intents.onSelectTab)

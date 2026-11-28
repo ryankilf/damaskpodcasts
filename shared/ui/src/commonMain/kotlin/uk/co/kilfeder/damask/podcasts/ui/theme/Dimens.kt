@@ -91,6 +91,9 @@ object Sizes {
     val SheetCornerRadius = 28.dp
     val SheetHandleWidth = 32.dp
 
+    /** How far a sheet's handle must be dragged to open or close it. */
+    val SheetDragThreshold = 24.dp
+
     /** The mini-player above the tabs (MiniPlayer artboard): its height, artwork and progress bar. */
     val MiniPlayerHeight = 64.dp
     val MiniPlayerArtwork = 44.dp

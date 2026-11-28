@@ -16,6 +16,10 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.Forward30
+import androidx.compose.material.icons.rounded.Replay10
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -53,9 +57,17 @@ import uk.co.kilfeder.damask.podcasts.presentation.episodes.NotesLink
 import uk.co.kilfeder.damask.podcasts.ui.components.Artwork
 import uk.co.kilfeder.damask.podcasts.ui.components.PlayButton
 import uk.co.kilfeder.damask.podcasts.ui.components.PositionBar
+import uk.co.kilfeder.damask.podcasts.ui.components.SheetHandle
+import uk.co.kilfeder.damask.podcasts.ui.components.SkipButton
+import uk.co.kilfeder.damask.podcasts.ui.components.SpeedButton
+import uk.co.kilfeder.damask.podcasts.ui.components.sheetDrag
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.episode_no_notes
+import uk.co.kilfeder.damask.podcasts.ui.resources.playback_speed
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_notes
+import uk.co.kilfeder.damask.podcasts.ui.resources.skip_back
+import uk.co.kilfeder.damask.podcasts.ui.resources.skip_forward
+import uk.co.kilfeder.damask.podcasts.ui.resources.show_notes_close
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_notes_links
 import uk.co.kilfeder.damask.podcasts.ui.theme.DamaskTextStyles
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
@@ -76,12 +88,21 @@ private const val BULLET = "•  "
 internal fun ShowNotesScreen(
     graph: AppGraph,
     id: EpisodeId,
+    onClose: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: EpisodeViewModel = viewModel(key = episodeKey(id)) { graph.episodeViewModel(id) },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val controls = PlayerActions(
+        onPlayPause = viewModel::onPlayPause,
+        onSkipBack = viewModel::onSkipBack,
+        onSkipForward = viewModel::onSkipForward,
+        onCycleSpeed = viewModel::onCycleSpeed,
+        onSeek = viewModel::onSeek,
+        onPlayedChange = { played -> if (played) viewModel.onMarkPlayed() else viewModel.onMarkUnplayed() },
+    )
     Box(modifier) {
-        EpisodeLoaded(state) { episode -> ShowNotesContent(state, episode, viewModel::onPlayPause) }
+        EpisodeLoaded(state) { episode -> ShowNotesContent(state, episode, controls, onClose) }
     }
 }
 
@@ -89,21 +110,23 @@ internal fun ShowNotesScreen(
 private fun ShowNotesContent(
     state: EpisodeUiState,
     episode: EpisodeRowUi,
-    onPlayPause: () -> Unit,
+    controls: PlayerActions,
+    onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxSize()) {
-        Header(state, episode, onPlayPause)
-        NotesSheet(state, Modifier.weight(1f))
+        Header(state, episode, controls)
+        NotesSheet(state, onClose, Modifier.weight(1f))
     }
 }
 
 /**
  * The show notes on their sheet: heading, notes, then Links. Used by the show notes screen, and
- * beside the player on wide episode screens.
+ * beside the player on wide episode screens. With [onClose] (the notes screen), a down arrow by
+ * the heading and dragging the handle down close it, mirroring the peek's up arrow.
  */
 @Composable
-internal fun NotesSheet(state: EpisodeUiState, modifier: Modifier = Modifier) {
+internal fun NotesSheet(state: EpisodeUiState, onClose: (() -> Unit)?, modifier: Modifier = Modifier) {
     val uriHandler = LocalUriHandler.current
     val links = remember(uriHandler) { SafeLinks(uriHandler) }
     Column(
@@ -118,12 +141,28 @@ internal fun NotesSheet(state: EpisodeUiState, modifier: Modifier = Modifier) {
             .padding(horizontal = Spacing.Space6, vertical = Spacing.Space3),
     ) {
         SheetHandle(Modifier.align(Alignment.CenterHorizontally))
-        Text(
-            text = stringResource(Res.string.show_notes),
-            style = DamaskTextStyles.TitleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.semantics { heading() },
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(if (onClose != null) Modifier.sheetDrag(down = onClose) else Modifier),
+        ) {
+            Text(
+                text = stringResource(Res.string.show_notes),
+                style = DamaskTextStyles.TitleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f).semantics { heading() },
+            )
+            if (onClose != null) {
+                IconButton(onClick = onClose) {
+                    Icon(
+                        imageVector = Icons.Rounded.ExpandMore,
+                        contentDescription = stringResource(Res.string.show_notes_close),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
         if (state.notes.isEmpty()) {
             Text(
                 text = stringResource(Res.string.episode_no_notes),
@@ -141,7 +180,7 @@ internal fun NotesSheet(state: EpisodeUiState, modifier: Modifier = Modifier) {
 private fun Header(
     state: EpisodeUiState,
     episode: EpisodeRowUi,
-    onPlayPause: () -> Unit,
+    controls: PlayerActions,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.padding(horizontal = Spacing.Space3).padding(top = Spacing.Space2, bottom = Spacing.Space3)) {
@@ -167,23 +206,53 @@ private fun Header(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            PlayButton(
-                size = Sizes.MinTouchTarget,
-                iconSize = Sizes.Icon,
-                pitch = Sizes.DamaskPitchSmall,
-                playing = state.isPlaying,
-                enabled = state.playbackAvailable,
-                onClick = onPlayPause,
-            )
         }
         state.position?.let {
             PositionBar(
                 position = it,
                 showThumb = false,
-                onSeek = null,
-                modifier = Modifier.padding(horizontal = Spacing.Space3, vertical = Spacing.Space2),
+                onSeek = controls.onSeek.takeIf { state.isCurrent },
+                modifier = Modifier.padding(horizontal = Spacing.Space3),
             )
         }
+        CompactControls(state, controls, Modifier.padding(horizontal = Spacing.Space3))
+    }
+}
+
+/** Speed, back 10, play/pause, forward 30, at the size of the notes' compact player. */
+@Composable
+private fun CompactControls(state: EpisodeUiState, controls: PlayerActions, modifier: Modifier = Modifier) {
+    val live = state.playbackAvailable && state.isCurrent
+    Row(
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        SpeedButton(state.speed, stringResource(Res.string.playback_speed, state.speed), live, controls.onCycleSpeed)
+        SkipButton(
+            icon = Icons.Rounded.Replay10,
+            label = stringResource(Res.string.skip_back),
+            enabled = live,
+            onClick = controls.onSkipBack,
+            size = Sizes.MinTouchTarget,
+            iconSize = Sizes.Icon,
+        )
+        PlayButton(
+            size = Sizes.MinTouchTarget,
+            iconSize = Sizes.Icon,
+            pitch = Sizes.DamaskPitchSmall,
+            playing = state.isPlaying,
+            enabled = state.playbackAvailable,
+            onClick = controls.onPlayPause,
+        )
+        SkipButton(
+            icon = Icons.Rounded.Forward30,
+            label = stringResource(Res.string.skip_forward),
+            enabled = live,
+            onClick = controls.onSkipForward,
+            size = Sizes.MinTouchTarget,
+            iconSize = Sizes.Icon,
+        )
     }
 }
 

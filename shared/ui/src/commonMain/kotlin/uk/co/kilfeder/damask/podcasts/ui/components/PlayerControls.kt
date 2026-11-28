@@ -18,6 +18,8 @@ import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,6 +37,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.setProgress
@@ -198,4 +201,36 @@ private fun Track(fraction: Float, showThumb: Boolean, modifier: Modifier = Modi
             }
         }
     }
+}
+
+/** Back 10 s or forward 30 s. */
+@Composable
+internal fun SkipButton(
+    icon: ImageVector,
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    size: Dp = Sizes.NowPlayingSkipButton,
+    iconSize: Dp = Sizes.NowPlayingSkipIcon,
+) {
+    IconButton(onClick = onClick, enabled = enabled, modifier = modifier.size(size)) {
+        Icon(icon, contentDescription = label, modifier = Modifier.size(iconSize))
+    }
+}
+
+/** The speed ("1.2×"); each tap steps to the next speed. [label] is read out instead. */
+@Composable
+internal fun SpeedButton(
+    speed: String,
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    TextButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.semantics { contentDescription = label },
+    ) { Text(speed, style = DamaskTextStyles.Label) }
 }
