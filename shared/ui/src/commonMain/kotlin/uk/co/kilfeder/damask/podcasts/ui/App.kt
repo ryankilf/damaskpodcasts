@@ -50,11 +50,15 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.shows_added
 import uk.co.kilfeder.damask.podcasts.ui.screens.Loading
 import uk.co.kilfeder.damask.podcasts.ui.theme.DamaskTheme
 
-/** The whole app. Each platform entry point creates one [AppGraph] and passes it here. */
+/**
+ * The whole app. Each platform entry point creates one [AppGraph] and passes it here. [onReady]
+ * fires once the first real frame is ready (Android holds its splash screen until then).
+ */
 @Composable
 fun App(
     graph: AppGraph,
     modifier: Modifier = Modifier,
+    onReady: () -> Unit = {},
     viewModel: AppViewModel = viewModel { graph.appViewModel() },
 ) {
     setSingletonImageLoaderFactory { context ->
@@ -72,6 +76,9 @@ fun App(
     }
     DamaskTheme(darkTheme = dark, useWallpaperColours = state.useWallpaperColours) {
         Surface(modifier.fillMaxSize()) {
+            val ready by rememberUpdatedState(onReady)
+            // The platform splash (Android) waits for this: the first frame with the app's state.
+            LaunchedEffect(state.stage) { if (state.stage == Stage.MAIN) ready() }
             when (state.stage) {
                 Stage.LOADING -> Loading()
                 Stage.MAIN -> Shell(
