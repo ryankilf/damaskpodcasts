@@ -102,7 +102,6 @@
     <string name="genres_empty_title">No genres yet</string>
     <string name="genres_empty_body">Each show you follow goes into a genre, and Damask takes turns between them so no single genre takes over.</string>
     <string name="genres_never">Not played yet</string>
-    <string name="genres_longest_unplayed">Longest unplayed</string>
     <string name="genres_last">Last played %1$s</string>
 
     <!-- Played -->

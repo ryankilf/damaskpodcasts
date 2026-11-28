@@ -18,8 +18,8 @@ data class GenreRowUi(
     val showCount: Int,
     /** null = never listened (these sort first). */
     val lastListened: Summarised?,
-    /** The genre heard least recently, flagged "Longest unplayed" (only when there's a choice). */
-    val stalest: Boolean = false,
+    /** The genre's colour: the row's tint (and ring, when selected on tablets). */
+    val hue: GenreHue,
     /** Up to [COVER_COUNT] covers, front first: the shows that come next in this genre's queue. */
     val covers: List<CoverUi>,
 )
@@ -29,7 +29,7 @@ data class CoverUi(val url: String?, val fallback: ArtworkFallback)
 
 /** Up to [COVER_COUNT] covers of the shows next in a genre's queue, front first. */
 internal fun Rotation.covers(id: CategoryId): List<CoverUi> =
-    coverShows(id, COVER_COUNT).map { CoverUi(it.imageUrl, ArtworkFallback.of(it.id.value, it.title)) }
+    coverShows(id, COVER_COUNT).map { CoverUi(it.imageUrl, ArtworkFallback.of(it.title, library.hueOf(it))) }
 
 /** How many covers a genre row stacks. */
 const val COVER_COUNT = 3
@@ -53,10 +53,9 @@ class GenresViewModel internal constructor(graph: AppGraph) : ViewModel() {
                 showCount = shows.size,
                 lastListened = rotation.lastPlayed(category.id, now),
                 covers = rotation.covers(category.id),
+                hue = category.colour.toHue(),
             )
         }
-        // Genres come least recently played first, so the first is the one to flag.
-        val flagged = rows.mapIndexed { i, row -> row.copy(stalest = i == 0 && rows.size > 1) }
-        GenresUiState(loading = false, genres = flagged)
+        GenresUiState(loading = false, genres = rows)
     }.stateInUi(viewModelScope, GenresUiState())
 }

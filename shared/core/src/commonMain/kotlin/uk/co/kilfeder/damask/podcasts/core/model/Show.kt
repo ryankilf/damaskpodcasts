@@ -21,6 +21,21 @@ enum class EpisodeOrder { NEWEST_FIRST, OLDEST_FIRST }
  */
 enum class GenreOrder { VARIETY, NEWEST_FIRST, OLDEST_FIRST }
 
+/**
+ * A genre's colour (design hand-off › GenrePalette): 16 fixed hues, a hint beside the genre's
+ * name, never the information. Stored by [storedName]; Uncategorised and unknown names are grey,
+ * which isn't one of these.
+ */
+enum class GenreColour {
+    RED, ORANGE, AMBER, YELLOW, LIME, GREEN, TEAL, CYAN, BLUE, INDIGO, VIOLET, PURPLE, MAGENTA, PINK, BROWN, SLATE;
+
+    val storedName: String get() = name.lowercase()
+
+    companion object {
+        fun fromStored(raw: String?): GenreColour? = entries.firstOrNull { it.storedName == raw }
+    }
+}
+
 enum class KeepMode { LATEST, ALL }
 
 data class Show(
@@ -71,6 +86,8 @@ data class Category(
     /** The built-in Uncategorised category: can't be renamed or deleted. */
     val isSystem: Boolean = false,
     val order: GenreOrder = GenreOrder.VARIETY,
+    /** null = grey: Uncategorised, or a genre with no shows yet. */
+    val colour: GenreColour? = null,
 ) {
     companion object {
         /** Fixed so every device seeds the same row (see Category.sq). */

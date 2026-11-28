@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.presentation.app
 
+import kotlinx.coroutines.launch
 import uk.co.kilfeder.damask.podcasts.core.model.ShowId
 import uk.co.kilfeder.damask.podcasts.core.data.GenreSettings
 import app.cash.sqldelight.coroutines.asFlow
@@ -94,6 +95,11 @@ class AppGraph internal constructor(
      * (they suspend), while every database access stays on the one thread.
      */
     internal suspend fun <T> onDbSuspend(block: suspend () -> T): T = withContext(dbDispatcher) { block() }
+
+    init {
+        // Genres in use get their colours (existing libraries, and any left without one).
+        scope.launch { onDb { genreSettings.assignMissingColours() } }
+    }
 
     /** The latest snapshot, reloaded whenever any table it reads changes. */
     internal val library: Flow<Library> = combine(

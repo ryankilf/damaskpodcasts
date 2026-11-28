@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.presentation.importer
 
+import uk.co.kilfeder.damask.podcasts.presentation.genres.hueOf
 import uk.co.kilfeder.damask.podcasts.presentation.genres.categoryOptions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -90,7 +91,15 @@ class ImportViewModel internal constructor(private val graph: AppGraph) : ViewMo
     fun onCategoryChanged(index: Int, categoryId: String) {
         val current = state.value as? ImportUiState.Review ?: return
         state.value = current.copy(
-            rows = current.rows.map { if (it.index == index) it.copy(categoryId = categoryId) else it },
+            rows = current.rows.map {
+                if (it.index != index) {
+                    it
+                } else {
+                    // The placeholder tile takes the new genre's colour.
+                    val hue = current.categories.hueOf(categoryId)
+                    it.copy(categoryId = categoryId, fallback = it.fallback.copy(hue = hue))
+                }
+            },
         )
     }
 
@@ -121,6 +130,8 @@ class ImportViewModel internal constructor(private val graph: AppGraph) : ViewMo
                     row.artworkUrl?.let { latest = LatestShowUi(row.title.ifBlank { null }, it) }
                     state.value = ImportUiState.Subscribing(done, total, latest)
                 }
+                // Genres the import filled get their colours.
+                graph.genreSettings.assignMissingColours()
             }
             state.value = ImportUiState.Done(choices.size)
         }
@@ -163,8 +174,7 @@ class ImportViewModel internal constructor(private val graph: AppGraph) : ViewMo
                 index = index,
                 title = c.title,
                 artworkUrl = c.imageUrl,
-                // The ID the show will have once subscribed, so it keeps its colour.
-                fallback = ArtworkFallback.of(ShowIds.fromFeedUrl(c.entry.feedUrl).value, c.title),
+                fallback = ArtworkFallback.of(c.title, categories.hueOf(categoryIds[index])),
                 categoryId = categoryIds[index],
                 problem = c.problem,
                 selected = c.problem == null,

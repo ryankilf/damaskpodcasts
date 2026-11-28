@@ -1,5 +1,9 @@
 package uk.co.kilfeder.damask.podcasts.presentation.playback
 
+import uk.co.kilfeder.damask.podcasts.presentation.genres.hueOf
+import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreHue
+import uk.co.kilfeder.damask.podcasts.core.model.ShowId
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import uk.co.kilfeder.damask.podcasts.presentation.format.fraction
 import uk.co.kilfeder.damask.podcasts.presentation.app.stateInUi
@@ -29,8 +33,9 @@ data class MiniPlayerUiState(
 )
 
 class MiniPlayerViewModel internal constructor(private val graph: AppGraph) : ViewModel() {
-    /** Everything comes from what's playing; no library lookup needed. */
-    val uiState: StateFlow<MiniPlayerUiState> = graph.playback.state.map { now ->
+    /** What's playing, with its show's genre colour for the artwork placeholder. */
+    val uiState: StateFlow<MiniPlayerUiState> = combine(graph.playback.state, graph.rotation) { now, rotation ->
+        val library = rotation.library
         MiniPlayerUiState(
             now?.let {
                 MiniPlayerUi(
@@ -38,7 +43,10 @@ class MiniPlayerViewModel internal constructor(private val graph: AppGraph) : Vi
                     title = it.title,
                     showTitle = it.showTitle,
                     artworkUrl = it.artworkUrl,
-                    fallback = ArtworkFallback.of(it.id.showId, it.showTitle),
+                    fallback = ArtworkFallback.of(
+                        it.showTitle,
+                        library.showsById[ShowId(it.id.showId)]?.let(library::hueOf) ?: GenreHue.GREY,
+                    ),
                     isPlaying = it.isPlaying,
                     buffering = it.buffering,
                     progress = fraction(it.positionMs, it.durationMs),

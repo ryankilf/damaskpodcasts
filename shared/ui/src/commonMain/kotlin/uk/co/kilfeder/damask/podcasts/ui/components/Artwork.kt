@@ -1,7 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
-import uk.co.kilfeder.damask.podcasts.ui.theme.ArtworkFallbackText
-import uk.co.kilfeder.damask.podcasts.ui.theme.ArtworkFallbackColors
+import uk.co.kilfeder.damask.podcasts.ui.theme.genreTones
 import uk.co.kilfeder.damask.podcasts.presentation.format.ArtworkFallback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalDensity
@@ -29,7 +28,7 @@ private const val INITIALS_SCALE = 0.32f
 
 /**
  * Show or episode artwork. Decorative: the title next to it says what it is, so screen readers
- * skip it. Behind it sits the show's [fallback] tile (its initials on its colour), which shows
+ * skip it. Behind it sits the show's [fallback] tile (its initials on its genre's colour), which shows
  * while the image loads, and in its place when there's none or it fails.
  *
  * A faint hairline gives it an edge, because a lot of covers are mostly white (or, in dark mode,
@@ -45,17 +44,18 @@ internal fun Artwork(
     shape: Shape = MaterialTheme.shapes.small,
 ) {
     val edge = MaterialTheme.colorScheme.onSurface.copy(alpha = EDGE_ALPHA)
+    val tones = genreTones(fallback.hue)
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .size(size)
             .clip(shape)
-            .background(ArtworkFallbackColors[fallback.seed % ArtworkFallbackColors.size]),
+            .background(tones.container),
     ) {
         val initialsSize = with(LocalDensity.current) { (size * INITIALS_SCALE).toSp() }
         Text(
             text = fallback.initials,
-            color = ArtworkFallbackText,
+            color = tones.onContainer,
             fontSize = initialsSize,
             fontWeight = FontWeight.Bold,
             maxLines = 1,

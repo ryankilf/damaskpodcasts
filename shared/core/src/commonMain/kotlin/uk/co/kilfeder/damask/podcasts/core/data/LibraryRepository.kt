@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.core.data
 
+import uk.co.kilfeder.damask.podcasts.core.model.GenreColour
 import uk.co.kilfeder.damask.podcasts.core.db.DamaskDatabase
 import uk.co.kilfeder.damask.podcasts.core.model.Category
 import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
@@ -58,5 +59,11 @@ class LibraryRepository(private val db: DamaskDatabase) {
     )
 
     private fun CategoryRow.toModel() =
-        Category(CategoryId(id), name, isSystem = Columns.bool(is_system), order = Columns.genreOrder(episode_order))
+        Category(
+            id = CategoryId(id),
+            name = name,
+            isSystem = Columns.bool(is_system),
+            order = Columns.genreOrder(episode_order),
+            colour = GenreColour.fromStored(colour),
+        )
 }

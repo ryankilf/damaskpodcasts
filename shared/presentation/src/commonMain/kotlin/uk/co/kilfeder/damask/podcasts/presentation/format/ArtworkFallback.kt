@@ -1,19 +1,20 @@
 package uk.co.kilfeder.damask.podcasts.presentation.format
 
+import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreHue
+
 /**
  * What to show where a show has no artwork (none in its feed, still loading, or it failed): its
- * initials on a coloured tile (design hand-off › EpisodeRow samples). [seed] picks the colour from
- * the theme's palette, so the same show always gets the same colour on every screen and device.
+ * initials on its genre's colour (the user's call: placeholders match the genre colours), so a
+ * show's tile matches the chips and stripes around it.
  */
-data class ArtworkFallback(val initials: String, val seed: Int) {
+data class ArtworkFallback(val initials: String, val hue: GenreHue) {
     companion object {
         /**
-         * For the show whose permanent ID is [stableId] (its UUID, or its feed URL before it has
-         * one): the initials of [title]'s first two significant words, skipping small words like
-         * "the" and "of" ("Empires of Dust" is ED, "The Rest Is History" RH, "Half-Life FM" HL).
+         * The initials of [title]'s first two significant words, skipping small words like
+         * "the" and "of" ("Empires of Dust" is ED, "The Rest Is History" RH, "Half-Life FM" HL),
+         * on [hue].
          */
-        fun of(stableId: String, title: String): ArtworkFallback =
-            ArtworkFallback(initials(title), stableHash(stableId))
+        fun of(title: String, hue: GenreHue): ArtworkFallback = ArtworkFallback(initials(title), hue)
 
         private fun initials(title: String): String = title
             .split(' ', '\t', '-', ':')
@@ -24,19 +25,7 @@ data class ArtworkFallback(val initials: String, val seed: Int) {
             .joinToString("")
             .uppercase()
 
-        /** FNV-1a: the same value on every platform and every run, unlike some hash codes. */
-        private fun stableHash(text: String): Int {
-            var hash = FNV_OFFSET
-            text.forEach { char ->
-                hash = hash xor char.code
-                hash *= FNV_PRIME
-            }
-            return hash and Int.MAX_VALUE
-        }
-
         private const val MAX_INITIALS = 2
         private val SMALL_WORDS = setOf("the", "a", "an", "of", "and", "is", "in", "on", "to", "for", "with", "at")
-        private const val FNV_OFFSET = -0x7ee3623b // 2166136261 as a signed Int
-        private const val FNV_PRIME = 16777619
     }
 }

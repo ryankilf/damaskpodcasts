@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.presentation.episodes
 
+import uk.co.kilfeder.damask.podcasts.presentation.genres.hueOf
+import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreHue
 import uk.co.kilfeder.damask.podcasts.presentation.format.fraction
 import uk.co.kilfeder.damask.podcasts.core.model.Episode
 import uk.co.kilfeder.damask.podcasts.core.model.EpisodeKey
@@ -20,6 +22,8 @@ data class EpisodeRowUi(
     val showTitle: String,
     /** The genre, for the chip above the title; null where every row shares it (a genre's queue). */
     val genre: String?,
+    /** The genre's colour: its chip, or the row's stripe in a genre's queue. */
+    val genreHue: GenreHue,
     val artworkUrl: String?,
     /** Initials on a colour, behind the artwork and in its place when there isn't any. */
     val fallback: ArtworkFallback,
@@ -43,13 +47,15 @@ internal fun Episode.toRow(library: Library, rotation: Rotation, nowMs: Long): E
     val total = durationMs
     val show = library.showsById[key.showId]
     val showTitle = show?.title.orEmpty()
+    val hue = show?.let(library::hueOf) ?: GenreHue.GREY
     return EpisodeRowUi(
         id = EpisodeId(key.showId.value, key.guid),
         title = title,
         showTitle = showTitle,
         genre = show?.let(library::categoryOf)?.name,
+        genreHue = hue,
         artworkUrl = imageUrl,
-        fallback = ArtworkFallback.of(key.showId.value, showTitle),
+        fallback = ArtworkFallback.of(showTitle, hue),
         published = Formats.date(publishedAt, nowMs),
         length = Formats.length(total, position),
         progress = fraction(position, total),

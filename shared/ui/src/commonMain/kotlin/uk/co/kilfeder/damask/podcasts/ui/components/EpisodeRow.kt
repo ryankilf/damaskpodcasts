@@ -1,5 +1,11 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
+import uk.co.kilfeder.damask.podcasts.ui.theme.genreTones
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.draw.drawBehind
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_plays_next
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.selected
@@ -83,9 +89,11 @@ internal fun EpisodeRow(
     onSwipe: () -> Unit = {},
     background: Color = MaterialTheme.colorScheme.surface,
     dimPlayed: Boolean = false,
+    stripe: Boolean = false,
 ) {
+    val stripeColor = if (stripe) genreTones(row.genreHue).stripe else null
     if (swipeLabel == null) {
-        RowContent(row, playing, onClick, onPlayPause, modifier, dimPlayed && row.played)
+        RowContent(row, playing, onClick, onPlayPause, modifier, dimPlayed && row.played, stripeColor)
         return
     }
     val state = rememberSwipeToDismissBoxState()
@@ -99,7 +107,7 @@ internal fun EpisodeRow(
         },
     ) {
         // Opaque over the swipe background; [background] matches what the row sits on.
-        RowContent(row, playing, onClick, onPlayPause, Modifier.background(background))
+        RowContent(row, playing, onClick, onPlayPause, Modifier.background(background), stripe = stripeColor)
     }
 }
 
@@ -121,6 +129,7 @@ internal fun EpisodeRow(
     background: Color = MaterialTheme.colorScheme.surface,
     dimPlayed: Boolean = false,
     playsNext: Boolean = false,
+    stripe: Boolean = false,
 ) {
     val opened = player.isOpened(row.id)
     // Highlights run full width, so the row lines up with the rows around it.
@@ -143,6 +152,7 @@ internal fun EpisodeRow(
         onSwipe = onSwipe,
         background = tint,
         dimPlayed = dimPlayed,
+        stripe = stripe,
     )
 }
 
@@ -154,11 +164,13 @@ private fun RowContent(
     onPlayPause: () -> Unit,
     modifier: Modifier = Modifier,
     dimmed: Boolean = false,
+    stripe: Color? = null,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.Space3),
         modifier = modifier
+            .then(if (stripe != null) Modifier.genreStripe(stripe) else Modifier)
             .clickable(role = Role.Button, onClick = onClick)
             .heightIn(min = Sizes.RowMinHeight)
             .padding(horizontal = Spacing.Space4, vertical = Spacing.Space2),
@@ -168,7 +180,7 @@ private fun RowContent(
             verticalArrangement = Arrangement.spacedBy(Spacing.Space1),
             modifier = Modifier.weight(1f),
         ) {
-            row.genre?.let { GenreChip(it) }
+            row.genre?.let { GenreChip(it, row.genreHue) }
             Text(
                 text = row.title,
                 style = DamaskTextStyles.Title,
@@ -216,4 +228,18 @@ private fun SwipeBackground(label: String, modifier: Modifier = Modifier) {
             tint = MaterialTheme.colorScheme.onSecondaryContainer,
         )
     }
+}
+
+/** A genre-queue row's 4dp leading stripe in its genre colour (design hand-off › EpisodeRow). */
+private fun Modifier.genreStripe(color: Color): Modifier = drawBehind {
+    val width = Sizes.GenreStripeWidth.toPx()
+    val inset = Sizes.GenreStripeInsetStart.toPx()
+    val x = if (layoutDirection == LayoutDirection.Ltr) inset else size.width - inset - width
+    val top = Sizes.GenreStripeInsetVertical.toPx()
+    drawRoundRect(
+        color = color,
+        topLeft = Offset(x, top),
+        size = Size(width, size.height - top * 2),
+        cornerRadius = CornerRadius(width / 2),
+    )
 }

@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.presentation.shows
 
+import uk.co.kilfeder.damask.podcasts.presentation.genres.hueOf
 import uk.co.kilfeder.damask.podcasts.presentation.format.lastPlayed
 import uk.co.kilfeder.damask.podcasts.presentation.app.stateInUi
 import androidx.lifecycle.ViewModel
@@ -72,7 +73,7 @@ internal fun Show.toRow(library: Library, rotation: Rotation, nowMs: Long) = Sho
     showId = id.value,
     title = title,
     artworkUrl = imageUrl,
-    fallback = ArtworkFallback.of(id.value, title),
+    fallback = ArtworkFallback.of(title, library.hueOf(this)),
     genre = library.categoryOf(this)?.name,
     lastListened = rotation.lastPlayed(id, nowMs),
 )

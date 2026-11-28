@@ -24,11 +24,13 @@ class ColorContrastTest {
     fun darkSchemeMeetsWcagAa() = assertContrast("dark", brandColorScheme(darkTheme = true))
 
     @Test
-    fun artworkFallbackInitialsAreReadable() {
-        // Initials are large, bold text: WCAG AA asks 3:1; every tile clears 4.5:1 as well.
-        ArtworkFallbackColors.forEachIndexed { i, tile ->
-            val ratio = contrastRatio(ArtworkFallbackText, tile)
-            if (ratio < TEXT) fail("fallback tile $i: ${ratio.format()}:1")
+    fun genreChipsAreReadableInBothThemes() {
+        // Chip text, and initials on placeholder tiles, sit on the container tone.
+        listOf("light" to GenreTonesLight, "dark" to GenreTonesDark).forEach { (theme, tones) ->
+            tones.forEach { (hue, t) ->
+                val ratio = contrastRatio(t.onContainer, t.container)
+                if (ratio < TEXT) fail("$theme $hue: ${ratio.format()}:1")
+            }
         }
     }
 

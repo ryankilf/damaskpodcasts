@@ -1,5 +1,9 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.theme.genreTones
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
 import uk.co.kilfeder.damask.podcasts.ui.components.BarPlayButton
 import uk.co.kilfeder.damask.podcasts.ui.components.BarArtwork
 import uk.co.kilfeder.damask.podcasts.ui.components.collapsingTitle
@@ -154,6 +158,7 @@ private fun GenreQueueList(
             onSwipe = { onDismissEpisode(episode.id) },
             background = background,
             playsNext = episode.id == nextId,
+            stripe = true,
         )
     }
     LazyColumn(modifier) {
@@ -263,12 +268,23 @@ private fun GenreHeader(
         ) {
             CoverStack(state.covers, COVER_COUNT, size = Sizes.ShowHeaderArtwork, shape = MaterialTheme.shapes.medium)
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.Space1), modifier = Modifier.weight(1f)) {
-                Text(
-                    text = state.name,
-                    style = DamaskTextStyles.TitleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = titleModifier.semantics { heading() },
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.Space2),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    // The genre's colour beside its name (design hand-off › GenreQueuePane).
+                    Box(
+                        Modifier
+                            .size(Sizes.GenreStripeWidth, Sizes.GenreTitleBarHeight)
+                            .background(genreTones(state.hue).stripe, MaterialTheme.shapes.extraSmall),
+                    )
+                    Text(
+                        text = state.name,
+                        style = DamaskTextStyles.TitleLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = titleModifier.semantics { heading() },
+                    )
+                }
                 LastPlayedText(state.lastListened, after = shows)
             }
         }

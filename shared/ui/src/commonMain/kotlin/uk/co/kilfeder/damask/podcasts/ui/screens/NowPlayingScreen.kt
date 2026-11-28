@@ -207,7 +207,7 @@ private fun Details(
     modifier: Modifier = Modifier,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.Space2), modifier = modifier.fillMaxWidth()) {
-        state.genre?.let { GenreChip(it) }
+        state.genre?.let { GenreChip(it, episode.genreHue) }
         Text(
             text = episode.title,
             style = DamaskTextStyles.TitleLarge,

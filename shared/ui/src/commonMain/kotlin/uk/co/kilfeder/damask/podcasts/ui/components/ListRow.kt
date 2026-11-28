@@ -1,5 +1,8 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
+import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,9 +39,13 @@ internal fun SelectableListRow(
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.small,
     contentPadding: PaddingValues = PaddingValues(horizontal = Spacing.Space1, vertical = Spacing.Space2),
+    background: Color = MaterialTheme.colorScheme.surface,
+    selectedBackground: Color = MaterialTheme.colorScheme.secondaryContainer,
+    selectedRing: Color? = null,
     content: @Composable RowScope.() -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
+    val ring = selectedRing?.takeIf { selected }
     Row(
         horizontalArrangement = Arrangement.spacedBy(Spacing.Space3),
         verticalAlignment = Alignment.CenterVertically,
@@ -46,7 +53,8 @@ internal fun SelectableListRow(
             .fillMaxWidth()
             .padding(horizontal = Spacing.Space3)
             .clip(shape)
-            .background(if (selected) colors.secondaryContainer else colors.surface)
+            .background(if (selected) selectedBackground else background)
+            .then(if (ring != null) Modifier.border(Sizes.GenreRingWidth, ring, shape) else Modifier)
             .semantics { this.selected = selected }
             .clickable(role = Role.Button, onClick = onClick)
             .heightIn(min = minHeight)

@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
+import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreHue
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.Box
@@ -40,7 +41,7 @@ internal fun CoverStack(
     size: Dp = Sizes.RowArtwork,
     shape: Shape = MaterialTheme.shapes.small,
 ) {
-    val shown = covers.take(maxCovers).ifEmpty { listOf(CoverUi(null, ArtworkFallback("", 0))) }
+    val shown = covers.take(maxCovers).ifEmpty { listOf(CoverUi(null, ArtworkFallback("", GenreHue.GREY))) }
     val endOrigin = if (LocalLayoutDirection.current == LayoutDirection.Ltr) 1f else 0f
     // The peek grows with the stack, so a big stack (a genre's page) looks like a small one (a row).
     val peek = Sizes.CoverStackPeek * (size / Sizes.RowArtwork)

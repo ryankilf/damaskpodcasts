@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.presentation.genres
 
+import uk.co.kilfeder.damask.podcasts.presentation.genres.hueOf
 import kotlinx.coroutines.flow.first
 import uk.co.kilfeder.damask.podcasts.presentation.app.refreshShows
 import uk.co.kilfeder.damask.podcasts.core.model.GenreOrder
@@ -38,6 +39,8 @@ data class GenreQueueUiState(
     /** What the big button plays: the start of the queue (resuming, if it's in progress). */
     val nextUp: NextUpUi? = null,
     val order: ListOrder = ListOrder.VARIETY,
+    /** The genre's colour: the bar by its name and its rows' stripes. */
+    val hue: GenreHue = GenreHue.GREY,
     /** The queue's in-progress episodes (it starts with them), shown in their own panel. */
     val inProgress: List<EpisodeRowUi> = emptyList(),
     /** The rest of the queue, in the genre's [order]. */
@@ -70,6 +73,7 @@ class GenreQueueViewModel internal constructor(
             covers = rotation.covers(id),
             nextUp = queue.firstOrNull()?.let { nextUpOf(it, rows.first(), rotation) },
             order = (library.category(id)?.order ?: GenreOrder.VARIETY).toListOrder(),
+            hue = library.hueOf(id),
             lastListened = rotation.lastPlayed(id, now),
             inProgress = inProgress,
             upNext = upNext,

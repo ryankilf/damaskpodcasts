@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.presentation.shows
 
+import uk.co.kilfeder.damask.podcasts.presentation.genres.hueOf
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.NextUpUi
 import uk.co.kilfeder.damask.podcasts.presentation.app.refreshShows
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.nextUpOf
@@ -86,7 +87,7 @@ class ShowViewModel internal constructor(private val graph: AppGraph, showId: St
             title = show.title,
             author = show.author,
             artworkUrl = show.imageUrl,
-            fallback = ArtworkFallback.of(id.value, show.title),
+            fallback = ArtworkFallback.of(show.title, library.hueOf(show)),
             subscribed = show.subscribed,
             genreId = (category?.id ?: show.categoryId).value,
             genre = category?.name,
@@ -99,7 +100,11 @@ class ShowViewModel internal constructor(private val graph: AppGraph, showId: St
     }
 
     /** The genre chip: move the show to another genre. */
-    fun onGenreChange(genreId: String) = write { graph.showSettings.setCategory(id, CategoryId(genreId)) }
+    fun onGenreChange(genreId: String) = write {
+        graph.showSettings.setCategory(id, CategoryId(genreId))
+        // A genre gets its colour once it has a show.
+        graph.genreSettings.assignMissingColours()
+    }
 
     /** The order chip: the list's order, and the order the show plays in. */
     fun onOrderChange(order: ListOrder) {

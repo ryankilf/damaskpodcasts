@@ -145,6 +145,17 @@ object Sizes {
     /** A genre row in the list (GenreListPane artboard). */
     val GenreRowMinHeight = 80.dp
 
+    /** A genre-queue row's leading stripe in the genre colour (design hand-off › EpisodeRow). */
+    val GenreStripeWidth = 4.dp
+    val GenreStripeInsetStart = 4.dp
+    val GenreStripeInsetVertical = 12.dp
+
+    /** The bar beside a genre's name on its page. */
+    val GenreTitleBarHeight = 22.dp
+
+    /** The ring round a selected genre row on tablets. */
+    val GenreRingWidth = 2.dp
+
     /** The playing episode's width in the right-hand pane (TabletHome artboard). */
     val PlayerPaneMaxWidth = 520.dp
 
