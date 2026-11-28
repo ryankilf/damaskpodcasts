@@ -53,5 +53,13 @@ internal fun Modifier.damaskFill(color: Color, pitch: Dp, alpha: Float = DIAPER_
  * A filled primary button's surface: clipped to [shape], filled with [fill], and the damask
  * pattern in [pattern] over it. Play buttons in rows, the show page's Resume / Play.
  */
-internal fun Modifier.damaskButton(fill: Color, pattern: Color, pitch: Dp, shape: Shape = CircleShape): Modifier =
-    clip(shape).background(fill).damaskFill(pattern, pitch)
+internal fun Modifier.damaskButton(
+    fill: Color,
+    pattern: Color,
+    pitch: Dp,
+    shape: Shape = CircleShape,
+    alpha: Float = DIAPER_ALPHA,
+): Modifier = clip(shape).background(fill).damaskFill(pattern, pitch, alpha)
+
+/** Fainter pattern under text (Resume / Play), so the words stay easy to read. */
+internal const val DIAPER_UNDER_TEXT_ALPHA = 0.08f
