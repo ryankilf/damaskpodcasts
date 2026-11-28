@@ -83,10 +83,13 @@ internal fun CollapsingTopBar(
             )
         }
         // Only there when collapsed, so a hidden button can't be pressed.
+        // Room after it: as far from the edge as the back arrow when it's last, apart from a menu
+        // when not. (The filled circle reaches its bounds; an icon button's glyph doesn't.)
         AnimatedVisibility(
             visible = collapsed && collapsedAction != null,
             enter = fadeIn(tween(Motion.FADE_IN_MS)),
             exit = fadeOut(tween(Motion.FADE_OUT_MS)),
+            modifier = Modifier.padding(end = Spacing.Space3),
         ) { collapsedAction?.invoke() }
         actions()
     }
