@@ -52,6 +52,7 @@ import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeRowUi
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeUiState
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeViewModel
 import uk.co.kilfeder.damask.podcasts.ui.components.AmbientGlow
+import uk.co.kilfeder.damask.podcasts.ui.components.GenreChip
 import uk.co.kilfeder.damask.podcasts.ui.components.PlayButton
 import uk.co.kilfeder.damask.podcasts.ui.components.PositionBar
 import uk.co.kilfeder.damask.podcasts.ui.components.SheetHandle
@@ -219,16 +220,7 @@ private fun Details(
     modifier: Modifier = Modifier,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.Space2), modifier = modifier.fillMaxWidth()) {
-        state.genre?.let { genre ->
-            Text(
-                text = genre,
-                style = DamaskTextStyles.Label,
-                color = MaterialTheme.colorScheme.onTertiaryContainer,
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.tertiaryContainer, PillShape)
-                    .padding(horizontal = Spacing.Space2, vertical = Spacing.Space1 / 2),
-            )
-        }
+        state.genre?.let { GenreChip(it) }
         Text(
             text = episode.title,
             style = DamaskTextStyles.TitleLarge,

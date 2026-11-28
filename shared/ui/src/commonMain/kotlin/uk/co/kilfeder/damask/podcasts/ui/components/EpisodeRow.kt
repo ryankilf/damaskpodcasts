@@ -93,6 +93,7 @@ private fun RowContent(
             verticalArrangement = Arrangement.spacedBy(Spacing.Space1),
             modifier = Modifier.weight(1f),
         ) {
+            row.genre?.let { GenreChip(it) }
             Text(
                 text = row.title,
                 style = DamaskTextStyles.Title,

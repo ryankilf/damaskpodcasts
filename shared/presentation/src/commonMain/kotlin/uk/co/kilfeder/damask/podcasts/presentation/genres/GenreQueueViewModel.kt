@@ -43,7 +43,8 @@ class GenreQueueViewModel internal constructor(
         GenreQueueUiState(
             loading = false,
             name = library.categories.firstOrNull { it.id == id }?.name.orEmpty(),
-            episodes = queue.take(size).map { it.toRow(library, rotation, now) },
+            // Every row is this genre: no chip.
+            episodes = queue.take(size).map { it.toRow(library, rotation, now).copy(genre = null) },
             canLoadMore = queue.size > size,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), GenreQueueUiState())

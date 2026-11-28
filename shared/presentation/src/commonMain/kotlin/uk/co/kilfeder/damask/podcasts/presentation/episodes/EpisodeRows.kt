@@ -16,6 +16,8 @@ data class EpisodeRowUi(
     val id: EpisodeId,
     val title: String,
     val showTitle: String,
+    /** The genre, for the chip above the title; null where every row shares it (a genre's queue). */
+    val genre: String?,
     val artworkUrl: String?,
     val published: Summarised,
     /** Length, or time left once started; null when unknown. */
@@ -34,6 +36,9 @@ internal fun Episode.toRow(library: Library, rotation: Rotation, nowMs: Long): E
         id = EpisodeId(key.showId.value, key.guid),
         title = title,
         showTitle = library.showsById[key.showId]?.title.orEmpty(),
+        genre = library.showsById[key.showId]
+            ?.let(library::effectiveCategory)
+            ?.let { id -> library.categories.firstOrNull { it.id == id }?.name },
         artworkUrl = imageUrl,
         published = Formats.date(publishedAt, nowMs),
         length = Formats.length(total, position),
