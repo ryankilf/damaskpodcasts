@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui
 
+import uk.co.kilfeder.damask.podcasts.ui.components.ArtworkKeyInterceptor
 import coil3.network.DeDupeConcurrentRequestStrategy
 import coil3.annotation.ExperimentalCoilApi
 import uk.co.kilfeder.damask.podcasts.presentation.app.ThemeMode
@@ -69,7 +70,9 @@ fun App(
             // One network request per image, however many rows ask for it at once: the rest wait,
             // then read it from the disk cache. (A show's cover sits behind every episode row on its
             // page while their own art loads, and they all ask at the same moment.)
+            // And one download per picture, however many addresses a host publishes it at.
             .components {
+                add(ArtworkKeyInterceptor)
                 add(KtorNetworkFetcherFactory(graph.imageHttpClient, DeDupeConcurrentRequestStrategy()))
             }
             // Artwork fades in everywhere once it arrives (not for memory-cache hits, which are instant).

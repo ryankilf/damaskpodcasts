@@ -40,6 +40,7 @@ import uk.co.kilfeder.damask.podcasts.core.rules.ListeningRules
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeViewModel
 import uk.co.kilfeder.damask.podcasts.core.directory.AppleDirectory
+import uk.co.kilfeder.damask.podcasts.presentation.discover.AddFeedViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.discover.DiscoverViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.discover.ShowPreviews
 import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreQueueViewModel
@@ -163,6 +164,8 @@ class AppGraph internal constructor(
     fun manageGenresViewModel() = ManageGenresViewModel(this)
 
     fun discoverViewModel() = DiscoverViewModel(this)
+
+    fun addFeedViewModel() = AddFeedViewModel(this)
 
     /** Each platform adds its own `create` (it knows how to open the database). */
     companion object
