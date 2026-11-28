@@ -1,6 +1,9 @@
 package uk.co.kilfeder.damask.podcasts.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Category
@@ -75,7 +78,7 @@ internal fun TopBar(
 
 /**
  * The mini-player (while something's loaded and not already on screen) above the bottom tabs.
- * Rail layouts have no bottom tabs, just the mini-player.
+ * Rail layouts have no bottom tabs, just the mini-player, kept clear of the system's gesture bar.
  */
 @Composable
 internal fun BottomBars(
@@ -87,7 +90,10 @@ internal fun BottomBars(
     onNavigate: (Destination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier) {
+    // The tab bar keeps clear of the system's gesture bar by itself. Without it (rail layouts) this
+    // area does, so the mini-player, or the screen's own bottom edge, isn't drawn under it.
+    val insets = if (showTabs) Modifier else Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+    Column(modifier.then(insets)) {
         if (!playingShown) MiniPlayer(graph = graph, onOpen = { onNavigate(Destination.Episode(it)) })
         if (showTabs) TabBar(tab, onSelectTab)
     }
