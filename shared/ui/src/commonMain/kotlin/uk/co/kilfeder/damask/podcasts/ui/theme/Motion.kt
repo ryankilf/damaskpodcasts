@@ -11,6 +11,12 @@ object Motion {
     /** The new screen fading in, after the old one has gone. */
     const val FADE_IN_MS = 210
 
-    /** Play and pause crossfading into each other on every play button. */
-    const val PLAY_PAUSE_MS = 150
+    /** Play ↔ pause on every play button: the old icon fades out first… */
+    const val PLAY_PAUSE_OUT_MS = 60
+
+    /** …then the new one fades and grows in, so the two never overlap. */
+    const val PLAY_PAUSE_IN_MS = 120
+
+    /** Where the new play/pause icon grows from. */
+    const val PLAY_PAUSE_START_SCALE = 0.85f
 }
