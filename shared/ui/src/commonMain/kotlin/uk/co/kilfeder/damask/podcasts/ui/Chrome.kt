@@ -64,6 +64,8 @@ internal fun TopBar(
 ) {
     TopAppBar(
         modifier = modifier,
+        // It sits inside the shell's content, which already clears the status bar.
+        windowInsets = WindowInsets(0),
         title = { Text(stringResource(title)) },
         navigationIcon = {
             if (showBack) {

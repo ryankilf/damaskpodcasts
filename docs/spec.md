@@ -86,6 +86,10 @@ The home screen leads with what you've started, then the cross-genre rotation.
 
 Design work lives in the [screen flow board](https://claude.ai/artifact/AEBbsBe7TLKUWNa2QKms3Q) and the [Podcast App design system](https://claude.ai/artifact/EZHMHvdS5nqQch8gN5a4SK).
 
+### Motion
+
+Moving between screens fades through: the old screen fades out (90ms), then the new one fades in (210ms), so the two never overlap. On one-pane layouts every screen change fades; on two-pane layouts changing tab fades the whole layout, and the detail pane fades on its own when the selection changes (a genre, a show, the playing episode, its notes). On one-pane layouts the heading is part of the screen and fades with it, so the old screen never jumps when the new one has a different heading (or none). The mini-player and the tabs stay still. Android's animation scale (including "Remove animations") applies, as Compose follows it. Timings are in `theme/Motion.kt`; the helper is `components/FadeThrough.kt`.
+
 ## Ordering rules
 
 Every list is built by round-robin over groups sorted by LRP. Ordering is computed at read time, so listening reorders everything with no state to update.

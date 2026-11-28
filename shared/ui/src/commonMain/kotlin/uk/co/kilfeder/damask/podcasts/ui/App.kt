@@ -143,16 +143,6 @@ private fun ShellLayout(
             // Two-pane layouts have no app bar: each pane has its own heading (TabletGenres artboard).
             val panes = isTwoPaneLayout(state, width)
             Scaffold(
-                topBar = {
-                    if (!panes && !hasOwnHeading(state)) {
-                        TopBar(
-                            title = titleOf(state),
-                            showBack = top != null,
-                            onBack = { intents.onBack() },
-                            action = topLevelAction(state, compact, onSettings) { intents.onSelectTab(Tab.SEARCH) },
-                        )
-                    }
-                },
                 bottomBar = {
                     if (!panes) {
                         BottomBars(
