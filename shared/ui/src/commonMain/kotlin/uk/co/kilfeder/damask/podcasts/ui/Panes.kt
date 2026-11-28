@@ -28,7 +28,7 @@ import uk.co.kilfeder.damask.podcasts.ui.screens.ImportScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.InProgressScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.NowPlayingScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.PlayedScreen
-import uk.co.kilfeder.damask.podcasts.ui.screens.SearchScreen
+import uk.co.kilfeder.damask.podcasts.ui.screens.DiscoverScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.SettingsScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.ShowPageActions
 import uk.co.kilfeder.damask.podcasts.ui.screens.ShowScreen
@@ -229,7 +229,7 @@ private fun TabContent(tab: Tab, graph: AppGraph, actions: ShellActions, modifie
             rowPlayer = actions.rowPlayer,
             modifier = modifier,
         )
-        Tab.SEARCH -> SearchScreen(modifier)
+        Tab.SEARCH -> DiscoverScreen(graph, onOpenShow = actions.onOpenShow, modifier = modifier)
     }
 }
 

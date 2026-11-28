@@ -3,7 +3,6 @@ package uk.co.kilfeder.damask.podcasts.presentation.shows
 import uk.co.kilfeder.damask.podcasts.presentation.genres.toColour
 import uk.co.kilfeder.damask.podcasts.presentation.genres.toHue
 import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreHue
-import uk.co.kilfeder.damask.podcasts.core.model.GenreColour
 import uk.co.kilfeder.damask.podcasts.presentation.genres.hueOf
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.NextUpUi
 import uk.co.kilfeder.damask.podcasts.presentation.app.refreshShows
@@ -14,6 +13,7 @@ import uk.co.kilfeder.damask.podcasts.presentation.episodes.ListOrder
 import kotlinx.coroutines.flow.map
 import uk.co.kilfeder.damask.podcasts.presentation.format.lastPlayed
 import uk.co.kilfeder.damask.podcasts.presentation.genres.categoryOptions
+import uk.co.kilfeder.damask.podcasts.presentation.genres.nextHue
 import uk.co.kilfeder.damask.podcasts.presentation.app.stateInUi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -82,7 +82,7 @@ class ShowViewModel internal constructor(private val graph: AppGraph, showId: St
             },
             startAt = if (order == ListOrder.OLDEST_FIRST) rows.indexOfFirst { !it.played }.takeIf { it > 0 } else null,
             genres = library.categoryOptions(),
-            nextHue = GenreColour.leastUsed(library.categories.mapNotNull { it.colour }).toHue(),
+            nextHue = library.nextHue(),
         )
     }
 

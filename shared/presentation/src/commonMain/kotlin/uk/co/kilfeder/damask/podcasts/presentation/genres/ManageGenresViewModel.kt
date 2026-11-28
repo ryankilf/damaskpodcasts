@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
-import uk.co.kilfeder.damask.podcasts.core.model.GenreColour
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 import uk.co.kilfeder.damask.podcasts.presentation.app.stateInUi
 
@@ -45,7 +44,7 @@ class ManageGenresViewModel internal constructor(
                 .map {
                     ManagedGenreUi(it.id.value, it.name, it.colour.toHue(), library.showsIn(it.id).size, it.isSystem)
                 },
-            nextHue = GenreColour.leastUsed(library.categories.mapNotNull { it.colour }).toHue(),
+            nextHue = library.nextHue(),
         )
     }.stateInUi(viewModelScope, ManageGenresUiState())
 }

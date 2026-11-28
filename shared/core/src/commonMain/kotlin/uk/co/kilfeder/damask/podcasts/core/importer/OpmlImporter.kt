@@ -90,6 +90,15 @@ class OpmlImporter(
             .also { onProgress(index + 1, choices.size) }
     }
 
+    /**
+     * One show, as [prepare] does for each feed in a file: fetches [feedUrl] and prefills its
+     * category. Discover uses it, then [confirm], so subscribing works the same as import.
+     */
+    suspend fun prepareFeed(title: String, feedUrl: String): ImportCandidate {
+        categories.seedAppleCategories()
+        return candidate(OpmlEntry(title, feedUrl))
+    }
+
     private suspend fun candidate(entry: OpmlEntry): ImportCandidate {
         val (feed, problem) = fetch(entry.feedUrl)
         val document = feed?.document

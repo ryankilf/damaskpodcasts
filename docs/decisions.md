@@ -232,3 +232,4 @@ This replaces the earlier sign-in, trial and pricing model and the search backen
 - **No sync for now.** It's mostly for listening at a work computer sometimes. If it comes, Supabase, probably paid. The local HLC and outbox design stays, so it can be added.
 - **Closed source** stays.
 - **Age signals stay on the device.** With no account, a minor signal blocks that device only, and the band is stored locally.
+- **Discover subscribes the way import does** (`OpmlImporter.prepareFeed` then `confirm`): read the feed, suggest its category from the feed, confirm in the same genre sheet (`CategorySheet`, now shared with Discover), subscribe. One path, so a show added either way is the same. The search runs half a second after typing stops, and again when Hide explicit changes; the device's region goes to Apple as `country`.

@@ -96,14 +96,14 @@ internal fun CategoryPicker(
 }
 
 /**
- * Choosing a genre (design hand-off › ShowGenre): a full-height sheet, "Genre for <show>", a
+ * Choosing a genre (design hand-off › ShowGenre; also Discover's Subscribe): a full-height sheet, "Genre for <show>", a
  * search field, then every genre A–Z with a radio, its name and a square in its colour. With
  * [create], typing a name no genre has offers "Create “<name>”" at the top, with its colour
  * (the least used, or one picked from the swatches) beside it; creating moves the show there.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CategorySheet(
+internal fun CategorySheet(
     showTitle: String,
     categories: List<CategoryOptionUi>,
     selectedId: String,

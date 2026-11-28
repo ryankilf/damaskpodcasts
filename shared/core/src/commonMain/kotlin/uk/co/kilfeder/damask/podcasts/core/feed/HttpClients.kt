@@ -16,7 +16,7 @@ private const val RETRY_GROWTH = 3.0
 private const val TOO_MANY_REQUESTS = 429
 private const val FIRST_SERVER_ERROR = 500
 
-/** Sent everywhere: hosts count listeners by app, and Podcast Index asks for an honest one. */
+/** Sent everywhere: hosts count listeners by app. */
 const val DAMASK_USER_AGENT = "Damask/0.1"
 
 /**
@@ -27,7 +27,7 @@ const val DAMASK_USER_AGENT = "Damask/0.1"
  *
  * - [feeds] follows redirects by hand, so a permanent move can update the stored feed URL.
  * - [images] follows redirects itself; the image loader only wants the bytes.
- * - The search API client will be another variation (JSON, its token).
+ * - [directory] is Apple's podcast directory (Discover's search).
  *
  * Caching isn't done here: feeds use the ETag / Last-Modified stored with each show, and artwork
  * uses the image loader's disk cache.
@@ -55,6 +55,8 @@ object HttpClients {
     val feeds: HttpClient by lazy { base.config { followRedirects = false }.upgradeHttpToHttps() }
 
     val images: HttpClient by lazy { base.config { followRedirects = true }.upgradeHttpToHttps() }
+
+    val directory: HttpClient by lazy { base.config { followRedirects = true } }
 }
 
 /**

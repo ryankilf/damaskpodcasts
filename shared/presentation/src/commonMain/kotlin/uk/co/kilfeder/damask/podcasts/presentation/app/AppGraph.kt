@@ -37,6 +37,8 @@ import uk.co.kilfeder.damask.podcasts.core.rotation.Rotation
 import uk.co.kilfeder.damask.podcasts.core.rules.ListeningRules
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeViewModel
+import uk.co.kilfeder.damask.podcasts.core.directory.AppleDirectory
+import uk.co.kilfeder.damask.podcasts.presentation.discover.DiscoverViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreQueueViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.genres.GenresViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.home.HomeViewModel
@@ -66,6 +68,7 @@ class AppGraph internal constructor(
     driverFactory: DriverFactory,
     internal val wallClockMs: () -> Long = { Clock.System.now().toEpochMilliseconds() },
     fetcher: FeedFetcher = FeedFetcher.create(),
+    internal val directory: AppleDirectory = AppleDirectory.create(),
     engineFactory: () -> AudioEngine = { NoAudioEngine },
     mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) {
@@ -147,6 +150,8 @@ class AppGraph internal constructor(
     fun settingsViewModel() = SettingsViewModel(this)
 
     fun manageGenresViewModel() = ManageGenresViewModel(this)
+
+    fun discoverViewModel() = DiscoverViewModel(this)
 
     /** Each platform adds its own `create` (it knows how to open the database). */
     companion object

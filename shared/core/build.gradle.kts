@@ -30,6 +30,7 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.xmlutil.core)
             implementation(libs.okio)
+            implementation(libs.kotlinx.serialization.json)
         }
         androidMain.dependencies {
             implementation(libs.sqldelight.androidDriver)
