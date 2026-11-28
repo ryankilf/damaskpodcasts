@@ -14,8 +14,10 @@
 
 
     <!-- Home -->
-    <string name="home_in_progress">In Progress</string>
-    <string name="home_up_next">Up Next</string>
+    <string name="home_in_progress">In progress</string>
+    <string name="home_up_next">Up next</string>
+    <string name="in_progress_count">%1$d</string>
+    <string name="in_progress_see_all">See all %1$d</string>
     <string name="home_refresh">Check for new episodes</string>
     <string name="home_no_shows_title">No podcasts yet</string>
     <string name="home_no_shows_body">Find shows to follow, or bring across the shows you follow in your old podcast app.</string>

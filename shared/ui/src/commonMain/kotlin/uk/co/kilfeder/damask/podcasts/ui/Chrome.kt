@@ -31,6 +31,7 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.app_name
 import uk.co.kilfeder.damask.podcasts.ui.resources.back
 import uk.co.kilfeder.damask.podcasts.ui.resources.episode_title
+import uk.co.kilfeder.damask.podcasts.ui.resources.home_in_progress
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_screen_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.settings
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_notes
@@ -126,6 +127,7 @@ internal fun TabRail(selected: Tab, onSelectTab: (Tab) -> Unit, modifier: Modifi
 internal fun titleOf(state: AppUiState): StringResource = when (state.nav.top) {
     Destination.Settings -> Res.string.settings
     Destination.Import -> Res.string.import_screen_title
+    Destination.InProgress -> Res.string.home_in_progress
     is Destination.GenreQueue -> Res.string.tab_genres
     is Destination.Episode -> Res.string.episode_title
     is Destination.ShowNotes -> Res.string.show_notes

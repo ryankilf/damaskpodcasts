@@ -94,6 +94,10 @@ Now specified in [spec › Search](spec.md#search) and [spec › Compliance](spe
 - **Links appear twice on purpose:** inline in the text, and listed under Links as full-size rows with their host, as in the NowPlayingNotes artboard. Inline links are small touch targets; the list gives each one 48dp and tells apart links with the same text ("Instagram", "Instagram").
 - **The play button carries the damask diaper** (`damaskFill`), as the design system specifies for filled play and pause buttons only.
 
+## Home
+
+- **In progress is a panel, as in the design's Main artboard:** a primary-container card with the count beside the heading. It shows the three most recently played; "See all N" opens the full list (`Destination.InProgress`). Section headings are sentence case ("In progress", "Up next"), as in the design.
+
 ## Window sizes
 
 - **Built by hand from the window width, not with `NavigationSuiteScaffold` / `ListDetailPaneScaffold`.** The spec allowed this if the Compose Multiplatform port was in doubt. Hand-built panes keep navigation in the shared `NavState`, with no second back stack inside a scaffold.

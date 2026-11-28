@@ -37,6 +37,7 @@ internal fun HomeScreen(
     onSearch: () -> Unit,
     onImport: () -> Unit,
     onOpenEpisode: (EpisodeId, PlaySource) -> Unit,
+    onSeeAllInProgress: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel { graph.homeViewModel() },
 ) {
@@ -49,6 +50,7 @@ internal fun HomeScreen(
         onSearch = onSearch,
         onImport = onImport,
         onOpenEpisode = onOpenEpisode,
+        onSeeAllInProgress = onSeeAllInProgress,
         modifier = modifier,
     )
 }
@@ -63,6 +65,7 @@ private fun HomeContent(
     onSearch: () -> Unit,
     onImport: () -> Unit,
     onOpenEpisode: (EpisodeId, PlaySource) -> Unit,
+    onSeeAllInProgress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (state.loading) {
@@ -86,9 +89,13 @@ private fun HomeContent(
     PullToRefreshBox(isRefreshing = state.refreshing, onRefresh = onRefresh, modifier = modifier) {
         LazyColumn {
             if (state.inProgress.isNotEmpty()) {
-                sectionHeader("in-progress", stringResourceKey = Res.string.home_in_progress)
-                items(state.inProgress, key = { "p-${it.id.showId}-${it.id.guid}" }) { row ->
-                    EpisodeRow(row, onClick = { onOpenEpisode(row.id, PlaySource.Resume) })
+                item(key = "in-progress") {
+                    InProgressPanel(
+                        rows = state.inProgress,
+                        onOpenEpisode = onOpenEpisode,
+                        onSeeAll = onSeeAllInProgress,
+                        modifier = Modifier.padding(top = Spacing.Space4),
+                    )
                 }
             }
             sectionHeader("up-next", stringResourceKey = Res.string.home_up_next)

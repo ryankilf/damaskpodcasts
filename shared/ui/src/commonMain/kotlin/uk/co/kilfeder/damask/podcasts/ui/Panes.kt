@@ -28,6 +28,7 @@ import uk.co.kilfeder.damask.podcasts.ui.screens.GenreQueueScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.GenresScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.HomeScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.ImportScreen
+import uk.co.kilfeder.damask.podcasts.ui.screens.InProgressScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.NowPlayingScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.PlayedScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.SearchScreen
@@ -118,6 +119,8 @@ private fun SinglePane(state: AppUiState, graph: AppGraph, actions: ShellActions
                 modifier = readable,
             )
             is Destination.Episode -> EpisodeScreen(top.id, graph, actions, Modifier.fillMaxSize())
+            Destination.InProgress ->
+                InProgressScreen(graph, onOpenEpisode = actions.onPlayEpisode, modifier = readable)
             is Destination.ShowNotes -> ShowNotesScreen(graph, top.id, onClose = actions.onBack, modifier = readable)
             Destination.Settings ->
                 SettingsScreen(graph, onImport = { actions.onNavigate(Destination.Import) }, modifier = readable)
@@ -150,6 +153,7 @@ private fun TabContent(tab: Tab, graph: AppGraph, actions: ShellActions, modifie
             onSearch = { actions.onSelectTab(Tab.SEARCH) },
             onImport = { actions.onNavigate(Destination.Import) },
             onOpenEpisode = actions.onPlayEpisode,
+            onSeeAllInProgress = { actions.onNavigate(Destination.InProgress) },
             modifier = modifier,
         )
         Tab.GENRES -> GenresScreen(graph, onOpenGenre = actions.onOpenGenre, modifier = modifier)
