@@ -136,7 +136,14 @@ private fun ShowList(
     LazyColumn(state = list, modifier = modifier) {
         item(key = "details") { ShowDetails(show, state.genres, intents.onGenreChange) }
         item(key = "actions") {
-            ShowActions(show, state.nextUp, { actions.onOpenEpisode(it, source) }, intents.onSubscribe)
+            val next = state.nextUp
+            ShowActions(
+                show = show,
+                nextUp = next,
+                playing = next != null && rowPlayer.isPlaying(next.id),
+                onPlayPause = { rowPlayer.playPause(it, source) },
+                onSubscribe = intents.onSubscribe,
+            )
         }
         item(key = "heading") { EpisodesHeading(state.order, intents.onOrderChange) }
         items(state.episodes, key = { it.id.guid }) { row ->

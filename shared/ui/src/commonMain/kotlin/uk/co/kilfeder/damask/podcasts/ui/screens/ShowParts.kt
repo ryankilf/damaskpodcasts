@@ -1,5 +1,8 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.resources.row_pause
+import uk.co.kilfeder.damask.podcasts.ui.resources.pause
+import uk.co.kilfeder.damask.podcasts.ui.components.PlayPauseIcon
 import uk.co.kilfeder.damask.podcasts.ui.components.DropdownChip
 import uk.co.kilfeder.damask.podcasts.ui.components.damaskButton
 import androidx.compose.foundation.background
@@ -175,7 +178,8 @@ private fun GenreMenuChip(
 internal fun ShowActions(
     show: ShowPageUi,
     nextUp: NextUpUi?,
-    onPlay: (EpisodeId) -> Unit,
+    playing: Boolean,
+    onPlayPause: (EpisodeId) -> Unit,
     onSubscribe: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -188,24 +192,36 @@ internal fun ShowActions(
                 Icon(Icons.Rounded.Add, contentDescription = null)
                 Text(stringResource(Res.string.show_subscribe), modifier = Modifier.padding(start = Spacing.Space2))
             }
-            nextUp != null -> PlayNextButton(nextUp, onPlay)
+            nextUp != null -> PlayNextButton(nextUp, playing, onPlayPause)
         }
         if (show.description.isNotBlank()) Description(show.description)
     }
 }
 
 /**
- * "Resume · 32 min left" or "Play · 47 min". Never the episode's name (feed titles aren't
- * reliable enough for a button); that's in the label read out, and on long press.
+ * "Resume · 32 min left" or "Play · 47 min", and "Pause" while it plays. It plays in place; it
+ * doesn't open the episode. Never the episode's name (feed titles aren't reliable enough for a
+ * button); that's in the label read out, and on long press.
  */
 @Composable
-private fun PlayNextButton(next: NextUpUi, onPlay: (EpisodeId) -> Unit, modifier: Modifier = Modifier) {
+private fun PlayNextButton(
+    next: NextUpUi,
+    playing: Boolean,
+    onPlayPause: (EpisodeId) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val colors = MaterialTheme.colorScheme
     val time = next.length
-    val label = if (next.resume) {
-        stringResource(Res.string.row_resume, next.title, time?.exact.orEmpty())
-    } else {
-        stringResource(Res.string.show_play_label, next.title, time?.exact.orEmpty())
+    val exact = time?.exact.orEmpty()
+    val label = when {
+        playing -> stringResource(Res.string.row_pause, next.title, exact)
+        next.resume -> stringResource(Res.string.row_resume, next.title, exact)
+        else -> stringResource(Res.string.show_play_label, next.title, exact)
+    }
+    val word = when {
+        playing -> Res.string.pause
+        next.resume -> Res.string.show_resume
+        else -> Res.string.play
     }
     Row(
         horizontalArrangement = Arrangement.spacedBy(Spacing.Space2, Alignment.CenterHorizontally),
@@ -214,11 +230,11 @@ private fun PlayNextButton(next: NextUpUi, onPlay: (EpisodeId) -> Unit, modifier
             .fillMaxWidth()
             .heightIn(min = Sizes.MinTouchTarget)
             .damaskButton(colors.primary, colors.onPrimary, Sizes.DamaskPitchMedium)
-            .clickable(role = Role.Button, onClickLabel = label) { onPlay(next.id) },
+            .clickable(role = Role.Button, onClickLabel = label) { onPlayPause(next.id) },
     ) {
-        Icon(Icons.Rounded.PlayArrow, contentDescription = null, tint = colors.onPrimary)
+        PlayPauseIcon(playing, tint = colors.onPrimary, description = "")
         Text(
-            text = stringResource(if (next.resume) Res.string.show_resume else Res.string.play),
+            text = stringResource(word),
             style = DamaskTextStyles.Label,
             color = colors.onPrimary,
         )

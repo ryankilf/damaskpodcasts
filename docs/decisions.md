@@ -87,7 +87,7 @@ Now specified in [spec › Search](spec.md#search) and [spec › Compliance](spe
 - **Notes are parsed in presentation, not rendered as HTML** (`ShowNotes` → `NotesBlock`/`NotesSpan`). Compose Multiplatform 1.12 has no common `fromHtml`, and a small structured model works the same on every platform, SwiftUI included. It keeps paragraphs, list items, headings (as bold), bold, italic and links, turns bare URLs into links, and drops images, embeds, scripts and styles. It's a lenient tokenizer, because feed markup is often broken, and nothing in it is executed.
 - **Only http, https and mailto links open**, checked in presentation and again in the UI. `javascript:`, `intent:` and `file:` links show as plain text.
 - **Tapping an episode opens an ordinary screen laid out like Now Playing**, with the top bar, a back arrow and the tabs. Its show notes are a second pushed screen, so back works the same as everywhere else. The design's full-screen player with a collapse arrow only makes sense with the mini-player and playback behind it, and without them it felt broken. Whether tapping an episode should also start playing it, and how the mini-player and expanded player fit around it, is to be decided with playback (the user leans towards playing straight away).
-- **Tapping an episode plays it straight away** and opens its screen (the user's choice). The mini-player above the tabs carries it while you browse; there's no full-screen expanding player for now.
+- ~~Tapping an episode plays it straight away and opens its screen.~~ Superseded 28 Nov, once every row had its own play button: tapping opens, play buttons play (see below). The mini-player above the tabs carries what's playing while you browse.
 - **Where a platform has no engine** (desktop until the FFmpeg spike, iOS), play, skip and speed show but are disabled (`AudioEngine.available`).
 - **On Android, "playing" is playWhenReady**, so buffering isn't a stop (no save, no finish rule). Transient pauses for calls are handled by Media3 and aren't saves either.
 - **Audio over `http://` is upgraded to HTTPS with no fallback yet**; allowing cleartext for audio is an open question.
@@ -101,7 +101,7 @@ Now specified in [spec › Search](spec.md#search) and [spec › Compliance](spe
 ## Window sizes
 
 - **Built by hand from the window width, not with `NavigationSuiteScaffold` / `ListDetailPaneScaffold`.** The spec allowed this if the Compose Multiplatform port was in doubt. Hand-built panes keep navigation in the shared `NavState`, with no second back stack inside a scaffold.
-- **The right-hand pane on Home and Played is the playing episode.** Tapping an episode plays it, so "the episode you tapped" and "the one playing" are the same (the user's call).
+- **The right-hand pane on Home and Played is the playing episode, until you open another.** An opened episode shows there instead; back returns the pane to what's playing.
 - **Wide episode screens put the show notes beside the player** (the user's call), from 720dp.
 
 ## Design pass, 28 Nov (design canvas v1 screens)
@@ -121,3 +121,4 @@ Now specified in [spec › Search](spec.md#search) and [spec › Compliance](spe
 - **The "plays next" highlight runs full width** (the user's call on the canvas), so its row lines up with the others.
 - **ViewModels read one snapshot** (found in the DRY sweep): `Rotation` carries the `Library` it orders, and ViewModels collect `graph.rotation` alone. Combining `library` with `rotation` could briefly map rows from a new snapshot while ordering them by the previous one.
 - **The genre sheet lists genres one way everywhere:** A–Z with Uncategorised last (`Library.categoryOptions()`), where the show page had used storage order.
+- **Opening and playing are separate** (the user's call, 28 Nov): tapping an episode opens its screen and doesn't play; every play button (rows, the show page's Resume / Play, the player, the mini-player) plays or pauses in place and never navigates. The show page's button reads "Pause" while its episode plays. Play on an opened episode uses the context it was opened from.

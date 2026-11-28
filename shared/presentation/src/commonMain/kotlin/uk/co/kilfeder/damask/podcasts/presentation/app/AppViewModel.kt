@@ -73,14 +73,11 @@ class AppViewModel internal constructor(private val graph: AppGraph) : ViewModel
     fun onNavigate(destination: Destination) = nav.update { it.push(destination) }
 
     /**
-     * Tapping an episode plays it, and opens its screen when [open] (narrow layouts). Wide layouts
-     * show the playing episode in a pane beside the list instead.
+     * Tapping an episode opens its screen; it doesn't play (spec › Screens). Play buttons play in
+     * place without opening anything ([onRowPlayPause]). Another episode already open is replaced.
      */
-    fun onPlayEpisode(id: EpisodeId, source: PlaySource, open: Boolean) {
-        graph.playback.play(id, source.toContext())
-        val episode = Destination.Episode(id)
-        if (open && nav.value.top != episode) nav.update { it.push(episode) }
-    }
+    fun onOpenEpisode(id: EpisodeId, source: PlaySource?) =
+        nav.update { it.replaceTop(Destination.Episode(id, source)) }
 
     /** A row's own play button: pauses or resumes the playing episode, or plays this one, in place. */
     fun onRowPlayPause(id: EpisodeId, source: PlaySource) {

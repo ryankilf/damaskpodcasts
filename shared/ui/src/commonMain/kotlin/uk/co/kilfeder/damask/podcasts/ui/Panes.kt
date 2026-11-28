@@ -49,7 +49,7 @@ internal fun isTwoPaneLayout(state: AppUiState, width: WidthClass): Boolean {
         top == null -> tab.pairsWithPlayer() || tab == Tab.GENRES || tab == Tab.SHOWS
         top is Destination.GenreQueue -> tab == Tab.GENRES
         top is Destination.Show -> tab == Tab.SHOWS
-        top is Destination.ShowNotes -> tab.pairsWithPlayer()
+        top is Destination.ShowNotes || top is Destination.Episode -> tab.pairsWithPlayer()
         else -> false
     }
 }
@@ -143,10 +143,13 @@ private fun PanesFor(state: AppUiState, graph: AppGraph, actions: ShellActions, 
         else -> TwoPanes(
             left = { ListPane(title, it) { m -> TabContent(tab, graph, actions, m) } },
             right = { m ->
-                FadeThrough(top as? Destination.ShowNotes ?: state.playing, { it }, m) { shown ->
+                // An opened episode, its notes, or else whatever's playing.
+                val shownTop = top as? Destination.ShowNotes ?: top as? Destination.Episode
+                FadeThrough(shownTop ?: state.playing, { it }, m) { shown ->
                     val fill = Modifier.fillMaxSize()
                     when (shown) {
                         is Destination.ShowNotes -> ShowNotesScreen(graph, shown.id, actions.onBack, fill)
+                        is Destination.Episode -> PlayingPane(shown.id, graph, actions, fill, shown.source)
                         is EpisodeId -> PlayingPane(shown, graph, actions, fill)
                         else -> PlayingPane(null, graph, actions, fill)
                     }
@@ -166,22 +169,22 @@ private fun SinglePane(state: AppUiState, graph: AppGraph, actions: ShellActions
             is Destination.GenreQueue -> GenreQueueScreen(
                 graph = graph,
                 categoryId = top.categoryId,
-                onOpenEpisode = { actions.onPlayEpisode(it, PlaySource.Genre(top.categoryId)) },
+                onOpenEpisode = { actions.onOpenEpisode(it, PlaySource.Genre(top.categoryId)) },
                 rowPlayer = actions.rowPlayer,
                 modifier = readable,
                 showHeader = true,
                 onBack = actions.onBack,
             )
-            is Destination.Episode -> EpisodeScreen(top.id, graph, actions, Modifier.fillMaxSize())
+            is Destination.Episode -> EpisodeScreen(top.id, graph, actions, Modifier.fillMaxSize(), top.source)
             is Destination.Show -> ShowScreen(
                 graph = graph,
                 showId = top.showId,
-                actions = ShowPageActions(actions.onPlayEpisode, actions.onUnsubscribe, onBack = actions.onBack),
+                actions = ShowPageActions(actions.onOpenEpisode, actions.onUnsubscribe, onBack = actions.onBack),
                 rowPlayer = actions.rowPlayer,
                 modifier = readable,
             )
             Destination.InProgress ->
-                InProgressScreen(graph, actions.onPlayEpisode, actions.rowPlayer, modifier = readable)
+                InProgressScreen(graph, actions.onOpenEpisode, actions.rowPlayer, modifier = readable)
             is Destination.ShowNotes -> ShowNotesScreen(graph, top.id, onClose = actions.onBack, modifier = readable)
             Destination.Settings ->
                 SettingsScreen(graph, onImport = { actions.onNavigate(Destination.Import) }, modifier = readable)
@@ -198,7 +201,7 @@ private fun TabContent(tab: Tab, graph: AppGraph, actions: ShellActions, modifie
             graph = graph,
             onSearch = { actions.onSelectTab(Tab.SEARCH) },
             onImport = { actions.onNavigate(Destination.Import) },
-            onOpenEpisode = actions.onPlayEpisode,
+            onOpenEpisode = actions.onOpenEpisode,
             onSeeAllInProgress = { actions.onNavigate(Destination.InProgress) },
             rowPlayer = actions.rowPlayer,
             modifier = modifier,
@@ -212,7 +215,7 @@ private fun TabContent(tab: Tab, graph: AppGraph, actions: ShellActions, modifie
         )
         Tab.PLAYED -> PlayedScreen(
             graph = graph,
-            onOpenEpisode = { actions.onPlayEpisode(it, PlaySource.Played) },
+            onOpenEpisode = { actions.onOpenEpisode(it, PlaySource.Played) },
             rowPlayer = actions.rowPlayer,
             modifier = modifier,
         )
@@ -221,12 +224,19 @@ private fun TabContent(tab: Tab, graph: AppGraph, actions: ShellActions, modifie
 }
 
 @Composable
-internal fun EpisodeScreen(id: EpisodeId, graph: AppGraph, actions: ShellActions, modifier: Modifier = Modifier) {
+internal fun EpisodeScreen(
+    id: EpisodeId,
+    graph: AppGraph,
+    actions: ShellActions,
+    modifier: Modifier = Modifier,
+    source: PlaySource? = null,
+) {
     NowPlayingScreen(
         graph = graph,
         id = id,
         onOpenGenre = actions.onOpenGenre,
         onOpenNotes = { actions.onNavigate(Destination.ShowNotes(id)) },
         modifier = modifier,
+        source = source,
     )
 }

@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
 import uk.co.kilfeder.damask.podcasts.ui.components.sheetSurface
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -95,10 +96,11 @@ internal fun NowPlayingScreen(
     onOpenGenre: (String) -> Unit,
     onOpenNotes: () -> Unit,
     modifier: Modifier = Modifier,
+    source: PlaySource? = null,
     viewModel: EpisodeViewModel = viewModel(key = episodeKey(id)) { graph.episodeViewModel(id) },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val controls = playerActions(viewModel)
+    val controls = playerActions(viewModel, source)
     BoxWithConstraints(modifier) {
         // With room for both, the show notes sit beside the player instead of behind the peek.
         val notesBeside = maxWidth >= Sizes.NotesBesideMinWidth

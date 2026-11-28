@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.presentation.episodes
 
+import uk.co.kilfeder.damask.podcasts.presentation.playback.toContext
+import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
 import uk.co.kilfeder.damask.podcasts.presentation.format.fraction
 import uk.co.kilfeder.damask.podcasts.presentation.app.stateInUi
 import androidx.lifecycle.ViewModel
@@ -77,9 +79,9 @@ class EpisodeViewModel internal constructor(
             }
         }.stateInUi(viewModelScope, EpisodeUiState())
 
-    /** Plays or pauses this episode; starting it keeps the context saved with it. */
-    fun onPlayPause() {
-        graph.playback.playOrToggle(id, null)
+    /** Plays or pauses this episode; starting it uses [source], else the context saved with it. */
+    fun onPlayPause(source: PlaySource? = null) {
+        graph.playback.playOrToggle(id, source?.toContext())
     }
 
     fun onSkipBack() = whenCurrent { graph.playback.skipBack() }

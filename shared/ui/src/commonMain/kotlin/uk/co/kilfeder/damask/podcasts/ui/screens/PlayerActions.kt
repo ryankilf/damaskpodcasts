@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,9 +40,12 @@ internal class PlayerActions(
     val onPlayedChange: (Boolean) -> Unit,
 )
 
-/** The controls' actions on an episode's ViewModel (the player and its show notes share them). */
-internal fun playerActions(viewModel: EpisodeViewModel) = PlayerActions(
-    onPlayPause = viewModel::onPlayPause,
+/**
+ * The controls' actions on an episode's ViewModel (the player and its show notes share them).
+ * Play starts it from [source], where the episode was opened from.
+ */
+internal fun playerActions(viewModel: EpisodeViewModel, source: PlaySource? = null) = PlayerActions(
+    onPlayPause = { viewModel.onPlayPause(source) },
     onSkipBack = viewModel::onSkipBack,
     onSkipForward = viewModel::onSkipForward,
     onCycleSpeed = viewModel::onCycleSpeed,

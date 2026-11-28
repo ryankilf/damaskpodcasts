@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.presentation.navigation
 
+import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 
 /** The five top-level tabs (design hand-off › NavBar). */
@@ -9,7 +10,12 @@ enum class Tab { HOME, GENRES, SHOWS, PLAYED, SEARCH }
 sealed interface Destination {
     data class GenreQueue(val categoryId: String) : Destination
 
-    data class Episode(val id: EpisodeId) : Destination
+    /**
+     * An episode's screen. Opening it doesn't play it; [source] is where it was opened from, so
+     * pressing play there carries on the same way (Up Next, its genre, its show). null = the
+     * context saved with it (the mini-player, In progress).
+     */
+    data class Episode(val id: EpisodeId, val source: PlaySource? = null) : Destination
 
     data class ShowNotes(val id: EpisodeId) : Destination
 

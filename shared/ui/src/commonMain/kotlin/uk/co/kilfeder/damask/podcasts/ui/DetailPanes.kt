@@ -37,7 +37,13 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 
 /** The right-hand pane beside Home and Played: whatever's playing, at most [Sizes.PlayerPaneMaxWidth]. */
 @Composable
-internal fun PlayingPane(playing: EpisodeId?, graph: AppGraph, actions: ShellActions, modifier: Modifier = Modifier) {
+internal fun PlayingPane(
+    playing: EpisodeId?,
+    graph: AppGraph,
+    actions: ShellActions,
+    modifier: Modifier = Modifier,
+    source: PlaySource? = null,
+) {
     if (playing == null) {
         EmptyState(
             icon = Icons.Rounded.PlayCircle,
@@ -48,7 +54,7 @@ internal fun PlayingPane(playing: EpisodeId?, graph: AppGraph, actions: ShellAct
         return
     }
     Box(contentAlignment = Alignment.TopCenter, modifier = modifier) {
-        EpisodeScreen(playing, graph, actions, Modifier.widthIn(max = Sizes.PlayerPaneMaxWidth).fillMaxSize())
+        EpisodeScreen(playing, graph, actions, Modifier.widthIn(max = Sizes.PlayerPaneMaxWidth).fillMaxSize(), source)
     }
 }
 
@@ -68,7 +74,7 @@ internal fun ShowPane(showId: String?, graph: AppGraph, actions: ShellActions, m
         ShowScreen(
             graph = graph,
             showId = showId,
-            actions = ShowPageActions(actions.onPlayEpisode, actions.onUnsubscribe, onBack = null),
+            actions = ShowPageActions(actions.onOpenEpisode, actions.onUnsubscribe, onBack = null),
             rowPlayer = actions.rowPlayer,
             modifier = Modifier.widthIn(max = Sizes.MaxContentWidth).fillMaxSize(),
             background = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -111,7 +117,7 @@ private fun GenreDetail(categoryId: String?, actions: ShellActions, graph: AppGr
         GenreQueueScreen(
             graph = graph,
             categoryId = categoryId,
-            onOpenEpisode = { actions.onPlayEpisode(it, PlaySource.Genre(categoryId)) },
+            onOpenEpisode = { actions.onOpenEpisode(it, PlaySource.Genre(categoryId)) },
             rowPlayer = actions.rowPlayer,
             modifier = Modifier.widthIn(max = Sizes.MaxContentWidth).fillMaxSize(),
             showHeader = true,

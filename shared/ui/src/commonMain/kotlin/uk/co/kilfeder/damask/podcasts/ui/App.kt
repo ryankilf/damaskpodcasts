@@ -73,7 +73,7 @@ fun App(
                     intents = AppIntents(
                         onSelectTab = viewModel::onSelectTab,
                         onNavigate = viewModel::onNavigate,
-                        onPlayEpisode = viewModel::onPlayEpisode,
+                        onOpenEpisode = viewModel::onOpenEpisode,
                         onRowPlayPause = viewModel::onRowPlayPause,
                         onOpenGenre = viewModel::onOpenGenre,
                         onOpenShow = viewModel::onOpenShow,
@@ -93,7 +93,7 @@ fun App(
 private class AppIntents(
     val onSelectTab: (Tab) -> Unit,
     val onNavigate: (Destination) -> Unit,
-    val onPlayEpisode: (EpisodeId, PlaySource, Boolean) -> Unit,
+    val onOpenEpisode: (EpisodeId, PlaySource?) -> Unit,
     val onRowPlayPause: (EpisodeId, PlaySource) -> Unit,
     val onOpenGenre: (String) -> Unit,
     val onOpenShow: (String) -> Unit,
@@ -139,7 +139,7 @@ private fun ShellLayout(
         val actions = ShellActions(
             onSelectTab = intents.onSelectTab,
             onNavigate = intents.onNavigate,
-            onPlayEpisode = { id, source -> intents.onPlayEpisode(id, source, width != WidthClass.EXPANDED) },
+            onOpenEpisode = intents.onOpenEpisode,
             onOpenGenre = intents.onOpenGenre,
             onOpenShow = intents.onOpenShow,
             onUnsubscribe = intents.onUnsubscribe,
@@ -207,7 +207,8 @@ private fun ShowMessages(
 internal class ShellActions(
     val onSelectTab: (Tab) -> Unit,
     val onNavigate: (Destination) -> Unit,
-    val onPlayEpisode: (EpisodeId, PlaySource) -> Unit,
+    /** Opens an episode's screen without playing it. */
+    val onOpenEpisode: (EpisodeId, PlaySource?) -> Unit,
     val onOpenGenre: (String) -> Unit,
     val onOpenShow: (String) -> Unit,
     val onUnsubscribe: (String, String) -> Unit,
