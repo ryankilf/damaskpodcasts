@@ -101,6 +101,10 @@ object Sizes {
     val SkeletonMeta = 12.dp
     val SkeletonGap = 8.dp
     val SkeletonButton = 40.dp
+
+    /** A spinner inside a button's label (Add while a feed is checked): text-sized. */
+    val ButtonSpinner = 18.dp
+    val ButtonSpinnerStroke = 2.dp
     val EmptyStateTile = 144.dp
     val EmptyStateIconCircle = 72.dp
     val EmptyStateIcon = 36.dp

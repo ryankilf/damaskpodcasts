@@ -1,5 +1,10 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -133,20 +138,28 @@ private fun AddFeedContent(
     }
 }
 
-/** Add, or a spinner and "Checking the feed…" while it's read. */
+/**
+ * Add, or a spinner and "Checking the feed…" while it's read. The button keeps its colour while
+ * checking (greyed out read as broken) and ignores presses; screen readers hear it as disabled.
+ */
 @Composable
 private fun AddButton(checking: Boolean, enabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Button(
-        onClick = onClick,
-        enabled = enabled && !checking,
-        modifier = modifier.fillMaxWidth().heightIn(min = Sizes.MinTouchTarget),
+        onClick = { if (!checking) onClick() },
+        enabled = enabled || checking,
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = Sizes.MinTouchTarget)
+            .semantics { if (checking) disabled() },
     ) {
         if (checking) {
             CircularProgressIndicator(
-                strokeWidth = Sizes.ProgressRingStroke,
-                modifier = Modifier.size(Sizes.IconRipple).padding(end = Spacing.Space2),
+                color = LocalContentColor.current,
+                strokeWidth = Sizes.ButtonSpinnerStroke,
+                modifier = Modifier.size(Sizes.ButtonSpinner),
             )
-            Text(stringResource(Res.string.add_feed_checking), modifier = Modifier.padding(start = Spacing.Space2))
+            Spacer(Modifier.width(Spacing.Space2))
+            Text(stringResource(Res.string.add_feed_checking))
         } else {
             Text(stringResource(Res.string.add_feed_confirm))
         }
