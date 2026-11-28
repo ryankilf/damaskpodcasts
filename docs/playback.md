@@ -29,7 +29,7 @@ iOS has no engine yet (`NoAudioEngine`), so its controls show disabled.
 - **Tapping an episode row plays it and opens its screen.** The row decides the context: Up Next rows play as Up Next, In Progress rows keep the context saved with them, genre queue rows play as that genre, Played rows play with no autoplay after. (`AppViewModel.onPlayEpisode`, `PlaySource`.)
 - **The mini-player** sits above the tabs on every screen while something is loaded: artwork, title, show, progress, play/pause. Tapping it opens the episode. It hides on that episode's own screen.
 - **The episode screen** has working controls once the episode is the one loaded: play/pause (the damask play button), back 10 s, forward 30 s, speed (steps through 0.8×, 1×, 1.2×, 1.5×, 1.8×, 2×), and the position bar (tap or drag; screen readers can set it). Play on an episode that isn't loaded starts it with its saved context. Errors show under the controls.
-- **Show notes** open from the peek at the bottom of the episode screen (tap it, its up arrow, or drag its handle up) and close with the down arrow by their heading, by dragging the handle down, or with back. Their compact player at the top has speed, back 10 s, play/pause, forward 30 s and a seekable position bar, so you can control playback while reading.
+- **Show notes** open from the peek at the bottom of the episode screen (tap it, its up arrow, or drag its handle up) and close with the down arrow by their heading, by dragging the heading down, or with back (the open sheet has no handle). Their compact player at the top has speed, back 10 s, play/pause, forward 30 s, mark played and a seekable position bar, so you can control playback while reading.
 
 ## Android
 

@@ -57,7 +57,6 @@ import uk.co.kilfeder.damask.podcasts.presentation.episodes.NotesLink
 import uk.co.kilfeder.damask.podcasts.ui.components.Artwork
 import uk.co.kilfeder.damask.podcasts.ui.components.PlayButton
 import uk.co.kilfeder.damask.podcasts.ui.components.PositionBar
-import uk.co.kilfeder.damask.podcasts.ui.components.SheetHandle
 import uk.co.kilfeder.damask.podcasts.ui.components.SkipButton
 import uk.co.kilfeder.damask.podcasts.ui.components.SpeedButton
 import uk.co.kilfeder.damask.podcasts.ui.components.sheetDrag
@@ -123,7 +122,8 @@ private fun ShowNotesContent(
 /**
  * The show notes on their sheet: heading, notes, then Links. Used by the show notes screen, and
  * beside the player on wide episode screens. With [onClose] (the notes screen), a down arrow by
- * the heading and dragging the handle down close it, mirroring the peek's up arrow.
+ * the heading, or dragging the heading down, closes it, mirroring the peek's up arrow. No handle:
+ * the open sheet isn't dragged around, so a handle would only suggest it could be.
  */
 @Composable
 internal fun NotesSheet(state: EpisodeUiState, onClose: (() -> Unit)?, modifier: Modifier = Modifier) {
@@ -140,7 +140,6 @@ internal fun NotesSheet(state: EpisodeUiState, onClose: (() -> Unit)?, modifier:
             .verticalScroll(rememberScrollState())
             .padding(horizontal = Spacing.Space6, vertical = Spacing.Space3),
     ) {
-        SheetHandle(Modifier.align(Alignment.CenterHorizontally))
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -219,7 +218,7 @@ private fun Header(
     }
 }
 
-/** Speed, back 10, play/pause, forward 30, at the size of the notes' compact player. */
+/** Speed, back 10, play/pause, forward 30 and mark played: the full player's row, smaller. */
 @Composable
 private fun CompactControls(state: EpisodeUiState, controls: PlayerActions, modifier: Modifier = Modifier) {
     val live = state.playbackAvailable && state.isCurrent
@@ -253,6 +252,7 @@ private fun CompactControls(state: EpisodeUiState, controls: PlayerActions, modi
             size = Sizes.MinTouchTarget,
             iconSize = Sizes.Icon,
         )
+        PlayedToggle(state.isPlayed, controls.onPlayedChange)
     }
 }
 

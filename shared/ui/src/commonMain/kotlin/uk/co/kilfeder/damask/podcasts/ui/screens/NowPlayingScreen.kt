@@ -276,7 +276,7 @@ private fun Controls(state: EpisodeUiState, actions: PlayerActions, modifier: Mo
 
 /** Mark played (an outlined tick), or Mark unplayed once played (a filled one). */
 @Composable
-private fun PlayedToggle(isPlayed: Boolean, onPlayedChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+internal fun PlayedToggle(isPlayed: Boolean, onPlayedChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
     IconButton(onClick = { onPlayedChange(!isPlayed) }, modifier = modifier) {
         Icon(
