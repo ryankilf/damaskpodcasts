@@ -29,8 +29,7 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 
 /**
  * A row that opens something (design hand-off › GenreListPane, ShowListPane): [content], then a
- * chevron (unless [chevron] is false: the row acts rather than opens a page). On wide layouts the
- * open one is [selected], tinted secondary-container.
+ * chevron. On wide layouts the open one is [selected], tinted secondary-container.
  */
 @Composable
 internal fun SelectableListRow(
@@ -43,7 +42,6 @@ internal fun SelectableListRow(
     background: Color = MaterialTheme.colorScheme.surface,
     selectedBackground: Color = MaterialTheme.colorScheme.secondaryContainer,
     selectedRing: Color? = null,
-    chevron: Boolean = true,
     content: @Composable RowScope.() -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
@@ -63,12 +61,6 @@ internal fun SelectableListRow(
             .padding(contentPadding),
     ) {
         content()
-        if (chevron) {
-            Icon(
-                Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                contentDescription = null,
-                tint = colors.onSurfaceVariant,
-            )
-        }
+        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = colors.onSurfaceVariant)
     }
 }

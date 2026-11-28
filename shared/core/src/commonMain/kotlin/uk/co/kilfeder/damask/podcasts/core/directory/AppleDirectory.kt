@@ -8,10 +8,12 @@ import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
 import uk.co.kilfeder.damask.podcasts.core.feed.HttpClients
@@ -26,6 +28,11 @@ data class DirectoryShow(
     val artworkUrl: String?,
     val feedUrl: String,
     val explicit: Boolean,
+    /**
+     * Apple's genre names, main one first ("Daily News", then its parent "News", then any
+     * others); "Podcasts" is left out. Used to pick the show's genre when subscribing.
+     */
+    val genres: List<String> = emptyList(),
 )
 
 sealed interface DirectoryResult {
@@ -74,6 +81,9 @@ class AppleDirectory(private val client: HttpClient) {
         private const val TOO_MANY_REQUESTS = 429
         private val REFUSED = setOf(FORBIDDEN, TOO_MANY_REQUESTS)
 
+        /** Every podcast's genre list includes the store section itself. */
+        private const val PODCASTS_GENRE = "Podcasts"
+
         fun create(): AppleDirectory = AppleDirectory(HttpClients.directory)
 
         /** The `results` of a Search API reply, keeping only podcasts with a feed URL, each feed once. */
@@ -91,6 +101,9 @@ class AppleDirectory(private val client: HttpClient) {
                 artworkUrl = text("artworkUrl600") ?: text("artworkUrl100"),
                 feedUrl = feedUrl,
                 explicit = text("collectionExplicitness") == "explicit",
+                genres = (this["genres"] as? JsonArray).orEmpty()
+                    .mapNotNull { (it as? JsonPrimitive)?.contentOrNull }
+                    .filter { it != PODCASTS_GENRE },
             )
         }
 

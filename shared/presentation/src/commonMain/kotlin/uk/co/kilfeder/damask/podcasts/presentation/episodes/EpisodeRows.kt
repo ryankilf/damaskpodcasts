@@ -55,7 +55,7 @@ internal fun Episode.toRow(library: Library, rotation: Rotation, nowMs: Long): E
         genre = show?.let(library::categoryOf)?.name,
         genreHue = hue,
         artworkUrl = imageUrl,
-        fallback = ArtworkFallback.of(showTitle, hue),
+        fallback = ArtworkFallback.of(showTitle, hue, show?.imageUrl),
         published = Formats.date(publishedAt, nowMs),
         length = Formats.length(total, position),
         progress = fraction(position, total),

@@ -38,6 +38,7 @@ class MiniPlayerViewModel internal constructor(private val graph: AppGraph) : Vi
         val library = rotation.library
         MiniPlayerUiState(
             now?.let {
+                val show = library.showsById[ShowId(it.id.showId)]
                 MiniPlayerUi(
                     id = it.id,
                     title = it.title,
@@ -45,7 +46,8 @@ class MiniPlayerViewModel internal constructor(private val graph: AppGraph) : Vi
                     artworkUrl = it.artworkUrl,
                     fallback = ArtworkFallback.of(
                         it.showTitle,
-                        library.showsById[ShowId(it.id.showId)]?.let(library::hueOf) ?: GenreHue.GREY,
+                        show?.let(library::hueOf) ?: GenreHue.GREY,
+                        show?.imageUrl,
                     ),
                     isPlaying = it.isPlaying,
                     buffering = it.buffering,

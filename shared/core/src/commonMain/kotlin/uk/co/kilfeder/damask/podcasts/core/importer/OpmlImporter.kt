@@ -92,21 +92,30 @@ class OpmlImporter(
 
     /**
      * One show, as [prepare] does for each feed in a file: fetches [feedUrl] and prefills its
-     * category. Discover uses it, then [confirm], so subscribing works the same as import.
+     * category, from Apple's [appleGenres] when they map to one, else from the feed's own. Discover
+     * uses it, then [confirm] (Subscribe) or [preview] (opening a show you don't have).
      */
-    suspend fun prepareFeed(title: String, feedUrl: String): ImportCandidate {
+    suspend fun prepareFeed(
+        title: String,
+        feedUrl: String,
+        appleGenres: List<String> = emptyList(),
+    ): ImportCandidate {
         categories.seedAppleCategories()
-        return candidate(OpmlEntry(title, feedUrl))
+        return candidate(OpmlEntry(title, feedUrl), categories.categoryForAppleGenres(appleGenres))
     }
 
-    private suspend fun candidate(entry: OpmlEntry): ImportCandidate {
+    /** Stores [candidate]'s show and episodes without subscribing, so its page can open and play. */
+    fun preview(candidate: ImportCandidate): ShowId =
+        store.subscribe(candidate.entry.feedUrl, candidate.suggestedCategory, candidate.feed, subscribe = false)
+
+    private suspend fun candidate(entry: OpmlEntry, category: CategoryId? = null): ImportCandidate {
         val (feed, problem) = fetch(entry.feedUrl)
         val document = feed?.document
         return ImportCandidate(
             entry = entry,
             title = document?.title?.takeIf { it.isNotBlank() } ?: entry.title,
             imageUrl = document?.imageUrl,
-            suggestedCategory = categories.prefillCategory(document),
+            suggestedCategory = category ?: categories.prefillCategory(document),
             feed = feed,
             problem = problem,
         )

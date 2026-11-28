@@ -29,7 +29,9 @@ private const val INITIALS_SCALE = 0.32f
 /**
  * Show or episode artwork. Decorative: the title next to it says what it is, so screen readers
  * skip it. Behind it sits the show's [fallback] tile (its initials on its genre's colour), which shows
- * while the image loads, and in its place when there's none or it fails.
+ * while the image loads, and in its place when there's none or it fails. For an episode, the
+ * show's cover ([ArtworkFallback.imageUrl]) sits over the initials, so a row shows the show's art
+ * rather than a placeholder while the episode's own art loads.
  *
  * A faint hairline gives it an edge, because a lot of covers are mostly white (or, in dark mode,
  * mostly black) and would otherwise melt into the page. It's `onSurface` at low alpha, so it
@@ -60,6 +62,14 @@ internal fun Artwork(
             fontWeight = FontWeight.Bold,
             maxLines = 1,
         )
+        fallback.imageUrl?.takeIf { it != url }?.let { cover ->
+            AsyncImage(
+                model = cover,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.matchParentSize(),
+            )
+        }
         AsyncImage(
             model = url,
             contentDescription = null,

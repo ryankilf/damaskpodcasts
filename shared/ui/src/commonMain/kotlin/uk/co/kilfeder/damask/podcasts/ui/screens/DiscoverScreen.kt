@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,10 +15,13 @@ import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -52,13 +56,17 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.DamaskTextStyles
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 
-/** What a Discover row can ask for. */
-private class DiscoverActions(val onSubscribe: (key: String) -> Unit, val onOpenShow: (showId: String) -> Unit)
+/** What a Discover row can ask for: subscribe, or open (a show you have, or one to preview). */
+private class DiscoverActions(
+    val onSubscribe: (key: String) -> Unit,
+    val onOpen: (key: String) -> Unit,
+    val onOpenShow: (showId: String) -> Unit,
+)
 
 /**
- * Discover (spec › Search): search Apple's podcast directory as you type. Subscribe reads the
- * show's feed and opens the same genre sheet as everywhere else; shows you already have say so,
- * and open their page.
+ * Discover (spec › Search): search Apple's podcast directory as you type. Subscribe adds the show
+ * in Apple's genre for it, no questions; tapping a show opens its page (unsubscribed, if you
+ * don't have it, to listen first).
  */
 @Composable
 internal fun DiscoverScreen(
@@ -68,6 +76,14 @@ internal fun DiscoverScreen(
     viewModel: DiscoverViewModel = viewModel { graph.discoverViewModel() },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val open by rememberUpdatedState(onOpenShow)
+    // A show you don't have opens once its feed has been read.
+    LaunchedEffect(state.openShowId) {
+        state.openShowId?.let {
+            open(it)
+            viewModel.onShowOpened()
+        }
+    }
     Column(modifier) {
         SearchField(
             query = state.query,
@@ -75,16 +91,10 @@ internal fun DiscoverScreen(
             placeholder = stringResource(Res.string.home_search),
             modifier = Modifier.padding(start = Spacing.Space4, end = Spacing.Space4, bottom = Spacing.Space3),
         )
-        DiscoverBody(state, DiscoverActions(viewModel::onSubscribe, onOpenShow), Modifier.weight(1f))
-    }
-    state.choosing?.let { choice ->
-        CategorySheet(
-            showTitle = choice.showTitle,
-            categories = state.genres,
-            selectedId = choice.suggestedId,
-            onSelect = viewModel::onGenreSelect,
-            create = CreateGenre(state.nextHue, viewModel::onCreateGenre),
-            onDismiss = viewModel::onGenreDismiss,
+        DiscoverBody(
+            state = state,
+            actions = DiscoverActions(viewModel::onSubscribe, viewModel::onOpen, onOpenShow),
+            modifier = Modifier.weight(1f),
         )
     }
 }
@@ -112,15 +122,8 @@ private fun DiscoverBody(state: DiscoverUiState, actions: DiscoverActions, modif
 /** A result: artwork, name and host; Subscribe, a spinner while its feed is read, or Subscribed. */
 @Composable
 private fun DiscoverRow(row: DiscoverRowUi, actions: DiscoverActions, modifier: Modifier = Modifier) {
-    val open = { row.showId?.let(actions.onOpenShow) ?: actions.onSubscribe(row.key) }
-    SelectableListRow(
-        selected = false,
-        onClick = open,
-        minHeight = Sizes.ShowRowMinHeight,
-        modifier = modifier,
-        // Only a show you have opens a page; the others subscribe.
-        chevron = row.state == DiscoverRowState.SUBSCRIBED,
-    ) {
+    val open = { row.showId?.let(actions.onOpenShow) ?: actions.onOpen(row.key) }
+    SelectableListRow(selected = false, onClick = open, minHeight = Sizes.ShowRowMinHeight, modifier = modifier) {
         Artwork(row.artworkUrl, row.fallback, size = Sizes.ShowRowArtwork)
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.Space1 / 2), modifier = Modifier.weight(1f)) {
             Text(
@@ -138,6 +141,10 @@ private fun DiscoverRow(row: DiscoverRowUi, actions: DiscoverActions, modifier: 
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+            // Opening (not subscribing): a thin bar under the name, and Subscribe stays as it is.
+            if (row.state == DiscoverRowState.OPENING) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = Spacing.Space1))
+            }
             row.problem?.let {
                 Text(
                     text = stringResource(Res.string.discover_feed_problem, it),
@@ -153,13 +160,17 @@ private fun DiscoverRow(row: DiscoverRowUi, actions: DiscoverActions, modifier: 
 @Composable
 private fun SubscribeAction(row: DiscoverRowUi, onSubscribe: () -> Unit, modifier: Modifier = Modifier) {
     when (row.state) {
-        DiscoverRowState.NEW -> {
+        DiscoverRowState.NEW, DiscoverRowState.OPENING -> {
             val label = stringResource(Res.string.discover_subscribe_label, row.title)
-            FilledTonalButton(onClick = onSubscribe, modifier = modifier.semantics { contentDescription = label }) {
+            FilledTonalButton(
+                onClick = onSubscribe,
+                enabled = row.state == DiscoverRowState.NEW,
+                modifier = modifier.semantics { contentDescription = label },
+            ) {
                 Text(stringResource(Res.string.discover_subscribe))
             }
         }
-        DiscoverRowState.FETCHING -> {
+        DiscoverRowState.SUBSCRIBING -> {
             val label = stringResource(Res.string.discover_subscribing, row.title)
             Box(
                 contentAlignment = Alignment.Center,

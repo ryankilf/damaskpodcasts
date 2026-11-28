@@ -37,19 +37,24 @@ class FeedStore(
 ) {
     private val retention = Retention(rules)
 
-    /** Subscribes (or resubscribes) to [feedUrl] in [categoryId], storing [feed] if already fetched. */
-    fun subscribe(feedUrl: String, categoryId: CategoryId, feed: FetchedFeed?): ShowId {
+    /**
+     * Subscribes (or resubscribes) to [feedUrl] in [categoryId], storing [feed] if already fetched.
+     *
+     * With [subscribe] false it's a preview (Discover: a show you're looking at): a new show is
+     * stored unsubscribed in [categoryId] with its episodes, so its page opens and plays, and
+     * unsubscribed shows stay out of the rotation, In Progress and feed refresh. A show already
+     * stored keeps its genre and subscription; only its feed is updated.
+     */
+    fun subscribe(feedUrl: String, categoryId: CategoryId, feed: FetchedFeed?, subscribe: Boolean = true): ShowId {
         val id = ShowIds.fromFeedUrl(feedUrl)
         db.transaction {
             val existing = db.showRow(id)
-            writeShow(
-                (existing ?: newShowRow(id, feedUrl)).copy(
-                    feed_url = feedUrl.trim(),
-                    feed_url_norm = FeedUrl.normalise(feedUrl),
-                    category_id = categoryId.value,
-                    subscribed = 1,
-                ),
-            )
+            val fresh = newShowRow(id, feedUrl)
+            val row = when {
+                subscribe -> (existing ?: fresh).copy(category_id = categoryId.value, subscribed = 1)
+                else -> existing ?: fresh.copy(category_id = categoryId.value, subscribed = 0)
+            }
+            writeShow(row.copy(feed_url = feedUrl.trim(), feed_url_norm = FeedUrl.normalise(feedUrl)))
             feed?.let { applyFeed(id, it) }
         }
         return id

@@ -29,6 +29,24 @@ class CategoryPrefill(private val db: DamaskDatabase) {
      * The import prefill: the feed's first `itunes:category` (normalised from legacy or misspelled
      * values) and subcategory, looked up in `apple_category_map`. Uncategorised if nothing maps.
      */
+    /**
+     * The genre for Apple's [genres] (main one first: a category such as "History", or a
+     * subcategory such as "Daily News" followed by its parent "News"), through the same
+     * Apple-category mapping as a feed's own category. null when none of them is one of Apple's.
+     */
+    fun categoryForAppleGenres(genres: List<String>): CategoryId? {
+        val main = genres.firstOrNull() ?: return null
+        val top = AppleCategories.normalise(main)
+        val (apple, subcategory) = if (top != null) {
+            top to ""
+        } else {
+            val parent = genres.drop(1).firstNotNullOfOrNull { AppleCategories.normalise(it) } ?: return null
+            parent to main
+        }
+        val mapped = db.appleCategoryMapQueries.selectPrefill(apple, subcategory).executeAsOneOrNull()
+        return mapped?.let(::CategoryId)
+    }
+
     fun prefillCategory(feed: FeedDocument?): CategoryId {
         val first = feed?.categories?.firstOrNull() ?: return Category.UNCATEGORISED_ID
         val apple = AppleCategories.normalise(first.category) ?: return Category.UNCATEGORISED_ID

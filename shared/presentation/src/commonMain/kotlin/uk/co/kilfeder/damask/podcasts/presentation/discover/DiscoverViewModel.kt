@@ -18,16 +18,12 @@ import uk.co.kilfeder.damask.podcasts.core.directory.DirectoryResult
 import uk.co.kilfeder.damask.podcasts.core.directory.DirectoryShow
 import uk.co.kilfeder.damask.podcasts.core.directory.deviceRegion
 import uk.co.kilfeder.damask.podcasts.core.importer.ImportCandidate
-import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
 import uk.co.kilfeder.damask.podcasts.core.rotation.Library
 import uk.co.kilfeder.damask.podcasts.core.sync.FeedUrl
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 import uk.co.kilfeder.damask.podcasts.presentation.app.stateInUi
 import uk.co.kilfeder.damask.podcasts.presentation.format.ArtworkFallback
 import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreHue
-import uk.co.kilfeder.damask.podcasts.presentation.genres.categoryOptions
-import uk.co.kilfeder.damask.podcasts.presentation.genres.nextHue
-import uk.co.kilfeder.damask.podcasts.presentation.genres.toColour
 
 /** Wait this long after the last keystroke before searching (spec › Search: never per keystroke). */
 private const val TYPING_PAUSE_MS = 500L
@@ -39,26 +35,26 @@ private sealed interface Search {
     data class Done(val result: DirectoryResult) : Search
 }
 
-/** A show whose feed has been read, waiting for its genre. */
-private data class Pending(val candidate: ImportCandidate)
-
-/** Subscribing in progress: feeds being read, feeds that failed, and the show awaiting its genre. */
-private data class Subscribing(
-    val fetching: Set<String>,
+/** Feeds being read, feeds that couldn't be, and a page waiting to open. */
+private data class Progress(
+    val fetching: Map<String, DiscoverRowState>,
     val problems: Map<String, String>,
-    val pending: Pending?,
+    val openShowId: String?,
 )
 
 /**
- * Discover (spec › Search): searches Apple's podcast directory as you type, and subscribes to a
- * result the way import does: read its feed, confirm or change its genre, subscribe.
+ * Discover (spec › Search): searches Apple's podcast directory as you type. Subscribe reads the
+ * feed and subscribes in the genre Apple gives (else the feed's own), with no sheet: you change
+ * it on the show's page. Tapping a show you don't have reads its feed and opens its page
+ * unsubscribed, to listen before subscribing.
  */
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class DiscoverViewModel internal constructor(private val graph: AppGraph) : ViewModel() {
     private val query = MutableStateFlow("")
-    private val fetching = MutableStateFlow<Set<String>>(emptySet())
+    /** Rows whose feed is being read, and why ([DiscoverRowState.OPENING] or SUBSCRIBING). */
+    private val fetching = MutableStateFlow<Map<String, DiscoverRowState>>(emptyMap())
     private val problems = MutableStateFlow<Map<String, String>>(emptyMap())
-    private val pending = MutableStateFlow<Pending?>(null)
+    private val openShowId = MutableStateFlow<String?>(null)
     private var lastShows: List<DirectoryShow> = emptyList()
 
     private val search = combine(
@@ -79,20 +75,16 @@ class DiscoverViewModel internal constructor(private val graph: AppGraph) : View
             }
         }
 
-    private val subscribing = combine(fetching, problems, pending, ::Subscribing)
+    private val progress = combine(fetching, problems, openShowId, ::Progress)
 
     // The typed text is part of the state as it changes (the field shows it back), not only when
     // a search finishes.
     val uiState: StateFlow<DiscoverUiState> =
-        combine(query, search, graph.library, subscribing) { typed, search, library, subscribing ->
+        combine(query, search, graph.library, progress) { typed, search, library, progress ->
             DiscoverUiState(
                 query = typed,
-                results = results(search, library, subscribing.fetching, subscribing.problems),
-                choosing = subscribing.pending?.candidate?.let {
-                    GenreChoiceUi(it.title, it.suggestedCategory.value)
-                },
-                genres = library.categoryOptions(),
-                nextHue = library.nextHue(),
+                results = results(search, library, progress.fetching, progress.problems),
+                openShowId = progress.openShowId,
             )
         }.stateInUi(viewModelScope, DiscoverUiState())
 
@@ -100,55 +92,49 @@ class DiscoverViewModel internal constructor(private val graph: AppGraph) : View
         query.value = text
     }
 
-    /** Subscribe (or tapping a show you don't have): read its feed, then ask for its genre. */
-    fun onSubscribe(key: String) {
-        val show = lastShows.firstOrNull { FeedUrl.normalise(it.feedUrl) == key } ?: return
-        if (key in fetching.value) return
-        fetching.update { it + key }
-        problems.update { it - key }
-        viewModelScope.launch {
-            val candidate = graph.onDbSuspend { graph.importer.prepareFeed(show.title, show.feedUrl) }
-            if (candidate.feed == null) {
-                problems.update { it + (key to (candidate.problem ?: "")) }
-            } else {
-                pending.value = Pending(candidate)
-            }
-            fetching.update { it - key }
-        }
-    }
-
-    /** A genre picked in the sheet: subscribes the show into it. */
-    fun onGenreSelect(genreId: String) = subscribe { CategoryId(genreId) }
-
-    /** "Create “…”" in the sheet: makes the genre and subscribes the show into it. */
-    fun onCreateGenre(name: String, hue: GenreHue) {
-        val colour = hue.toColour() ?: return
-        if (name.isBlank()) return
-        subscribe { graph.genreSettings.create(name, colour) }
-    }
-
-    /** Closing the genre sheet without choosing: nothing is subscribed. */
-    fun onGenreDismiss() {
-        pending.value = null
-    }
-
-    private fun subscribe(genre: () -> CategoryId) {
-        val candidate = pending.value?.candidate ?: return
-        pending.value = null
+    /** Subscribe: in Apple's genre for it (else its feed's), straight away. */
+    fun onSubscribe(key: String) = withFeed(key, DiscoverRowState.SUBSCRIBING) { candidate ->
         // The app's scope: the subscription finishes even if you leave Discover straight away.
         graph.scope.launch {
             graph.onDb {
-                graph.importer.confirm(listOf(candidate to genre()))
+                graph.importer.confirm(listOf(candidate to candidate.suggestedCategory))
                 // A genre gets its colour once it has a show.
                 graph.genreSettings.assignMissingColours()
             }
         }
     }
 
+    /** Tapping a show you don't have: read its feed and open its page, unsubscribed. */
+    fun onOpen(key: String) = withFeed(key, DiscoverRowState.OPENING) { candidate ->
+        openShowId.value = graph.onDb { graph.importer.preview(candidate) }.value
+    }
+
+    /** The screen has opened [DiscoverUiState.openShowId]. */
+    fun onShowOpened() {
+        openShowId.value = null
+    }
+
+    /** Reads the feed for the result [key] (its row shows [why]), then [then]; a failure shows on the row. */
+    private fun withFeed(key: String, why: DiscoverRowState, then: suspend (ImportCandidate) -> Unit) {
+        val show = lastShows.firstOrNull { FeedUrl.normalise(it.feedUrl) == key } ?: return
+        if (key in fetching.value) return
+        fetching.update { it + (key to why) }
+        problems.update { it - key }
+        viewModelScope.launch {
+            val candidate = graph.onDbSuspend { graph.importer.prepareFeed(show.title, show.feedUrl, show.genres) }
+            if (candidate.feed == null) {
+                problems.update { it + (key to (candidate.problem ?: "")) }
+            } else {
+                then(candidate)
+            }
+            fetching.update { it - key }
+        }
+    }
+
     private fun results(
         search: Search,
         library: Library,
-        fetching: Set<String>,
+        fetching: Map<String, DiscoverRowState>,
         problems: Map<String, String>,
     ): DiscoverResults = when (search) {
         Search.Idle -> DiscoverResults.Idle
@@ -170,8 +156,7 @@ class DiscoverViewModel internal constructor(private val graph: AppGraph) : View
                             fallback = ArtworkFallback.of(show.title, GenreHue.GREY),
                             state = when {
                                 mine != null -> DiscoverRowState.SUBSCRIBED
-                                key in fetching -> DiscoverRowState.FETCHING
-                                else -> DiscoverRowState.NEW
+                                else -> fetching[key] ?: DiscoverRowState.NEW
                             },
                             showId = mine?.id?.value,
                             problem = problems[key]?.takeIf { mine == null },

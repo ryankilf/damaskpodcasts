@@ -1,18 +1,19 @@
 package uk.co.kilfeder.damask.podcasts.presentation.discover
 
 import uk.co.kilfeder.damask.podcasts.presentation.format.ArtworkFallback
-import uk.co.kilfeder.damask.podcasts.presentation.genres.CategoryOptionUi
-import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreHue
 
 /** Where a search result stands for you. */
 enum class DiscoverRowState {
     /** Not subscribed: Subscribe. */
     NEW,
 
-    /** Fetching its feed before the genre sheet opens. */
-    FETCHING,
+    /** Reading its feed to open its page (not subscribing). */
+    OPENING,
 
-    /** You subscribe to it: tapping opens its page. */
+    /** Reading its feed to subscribe. */
+    SUBSCRIBING,
+
+    /** You subscribe to it. */
     SUBSCRIBED,
 }
 
@@ -25,9 +26,9 @@ data class DiscoverRowUi(
     val artworkUrl: String?,
     val fallback: ArtworkFallback,
     val state: DiscoverRowState,
-    /** Set when [state] is [DiscoverRowState.SUBSCRIBED]. */
+    /** Set when [state] is [DiscoverRowState.SUBSCRIBED]: its page opens straight away. */
     val showId: String? = null,
-    /** Why its feed couldn't be read, after a Subscribe that failed. */
+    /** Why its feed couldn't be read, after a Subscribe or open that failed. */
     val problem: String? = null,
 )
 
@@ -50,15 +51,9 @@ sealed interface DiscoverResults {
     data object Failed : DiscoverResults
 }
 
-/** The genre sheet for a show being subscribed: its feed has been read. */
-data class GenreChoiceUi(val showTitle: String, val suggestedId: String)
-
 data class DiscoverUiState(
     val query: String = "",
     val results: DiscoverResults = DiscoverResults.Idle,
-    /** Open while you pick a genre for the show you're subscribing to. */
-    val choosing: GenreChoiceUi? = null,
-    val genres: List<CategoryOptionUi> = emptyList(),
-    /** The colour "Create “…”" in the genre sheet would use. */
-    val nextHue: GenreHue = GenreHue.GREY,
+    /** A show whose page should open now (its feed has just been read); see onShowOpened. */
+    val openShowId: String? = null,
 )

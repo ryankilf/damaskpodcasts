@@ -129,8 +129,15 @@ class ShowViewModel internal constructor(private val graph: AppGraph, showId: St
         }
     }
 
-    /** Subscribe again (a show you've just unsubscribed from), in the genre it had. */
-    fun onSubscribe() = write { graph.showSettings.setSubscribed(id, true) }
+    /**
+     * Subscribe: a show you've just unsubscribed from, or one opened from Discover. It keeps the
+     * genre it has (for Discover, Apple's genre for it).
+     */
+    fun onSubscribe() = write {
+        graph.showSettings.setSubscribed(id, true)
+        // A genre gets its colour once it has a show.
+        graph.genreSettings.assignMissingColours()
+    }
 
     private fun write(block: () -> Unit) {
         viewModelScope.launch { graph.onDb(block) }
