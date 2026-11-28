@@ -1,0 +1,176 @@
+package uk.co.kilfeder.damask.podcasts.api
+
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+
+/**
+ * Golden-JSON contract tests for `/v1`. If one of these fails, the change is breaking: add a new
+ * field with a default instead, or start `/v2`. Never "fix" a golden string to match new output.
+ */
+class ContractTest {
+
+    private fun json(text: String): JsonElement = Json.parseToJsonElement(text)
+
+    private val hit = ShowHit(
+        podcastIndexId = 920_666,
+        podcastGuid = "917393e3-1b1e-5cef-ace4-edaa54e1f810",
+        title = "Podcasting 2.0",
+        author = "Podcast Index LLC",
+        imageUrl = "https://example.com/art.jpg",
+        feedUrl = "https://example.com/feed.xml",
+        language = "en-us",
+        categories = listOf("Technology", "News"),
+        itunesType = "episodic",
+        explicit = false,
+        episodeCount = 250,
+        newestItemPubdate = 1_795_780_800,
+        topCategories = listOf("technology", "news"),
+    )
+
+    private val hitGolden = """
+        {
+          "podcastIndexId": 920666,
+          "podcastGuid": "917393e3-1b1e-5cef-ace4-edaa54e1f810",
+          "title": "Podcasting 2.0",
+          "author": "Podcast Index LLC",
+          "imageUrl": "https://example.com/art.jpg",
+          "feedUrl": "https://example.com/feed.xml",
+          "language": "en-us",
+          "categories": ["Technology", "News"],
+          "itunesType": "episodic",
+          "explicit": false,
+          "episodeCount": 250,
+          "newestItemPubdate": 1795780800,
+          "topCategories": ["technology", "news"]
+        }
+    """
+
+    @Test
+    fun showHitMatchesGolden() {
+        assertEquals(json(hitGolden), json(ApiJson.encodeToString(ShowHit.serializer(), hit)))
+        assertEquals(hit, ApiJson.decodeFromString(ShowHit.serializer(), hitGolden))
+    }
+
+    @Test
+    fun searchResponseMatchesGolden() {
+        val golden = """{ "hits": [$hitGolden], "estimatedTotal": 1 }"""
+        val response = SearchResponse(hits = listOf(hit), estimatedTotal = 1)
+        assertEquals(json(golden), json(ApiJson.encodeToString(SearchResponse.serializer(), response)))
+        assertEquals(response, ApiJson.decodeFromString(SearchResponse.serializer(), golden))
+    }
+
+    @Test
+    fun nullsAreExplicitOnTheWire() {
+        val sparse = hit.copy(podcastGuid = null, imageUrl = null, newestItemPubdate = null)
+        val encoded = json(ApiJson.encodeToString(ShowHit.serializer(), sparse)).toString()
+        listOf("\"podcastGuid\":null", "\"imageUrl\":null", "\"newestItemPubdate\":null").forEach {
+            kotlin.test.assertTrue(it in encoded, "expected $it in $encoded")
+        }
+    }
+
+    @Test
+    fun clientsIgnoreFieldsAddedLater() {
+        val future = """{ "hits": [], "estimatedTotal": 0, "facets": { "language": {} }, "took": 3 }"""
+        assertEquals(SearchResponse(), ApiJson.decodeFromString(SearchResponse.serializer(), future))
+    }
+
+    @Test
+    fun hitsFromBeforeTopCategoriesStillDecode() {
+        // The first /v1 shape had no topCategories; it must decode, defaulting to empty.
+        val first = hitGolden.replace(",\n          \"topCategories\": [\"technology\", \"news\"]", "")
+        kotlin.test.assertFalse("topCategories" in first)
+        assertEquals(hit.copy(topCategories = emptyList()), ApiJson.decodeFromString(ShowHit.serializer(), first))
+    }
+
+    @Test
+    fun minimalHitDecodesWithDefaults() {
+        // Only the fields without defaults: anything else may be absent and must not break decoding.
+        val minimal = """{ "podcastIndexId": 1, "title": "T", "feedUrl": "https://e.com/f" }"""
+        val decoded = ApiJson.decodeFromString(ShowHit.serializer(), minimal)
+        assertEquals(ShowHit(podcastIndexId = 1, title = "T", feedUrl = "https://e.com/f"), decoded)
+    }
+
+    @Test
+    fun errorAndHealthMatchGolden() {
+        val error = ApiError(error = ApiErrorCode.RATE_LIMITED, message = "Too many requests")
+        assertEquals(
+            json("""{ "error": "rate_limited", "message": "Too many requests" }"""),
+            json(ApiJson.encodeToString(ApiError.serializer(), error)),
+        )
+    }
+
+    @Test
+    fun categoryKeysAreStable() {
+        // The app stores these as "apple:<key>" category IDs: never rename or remove one.
+        assertEquals(
+            listOf(
+                "arts", "business", "comedy", "education", "fiction", "government", "healthandfitness",
+                "history", "kidsandfamily", "leisure", "music", "news", "religionandspirituality", "science",
+                "societyandculture", "sports", "technology", "truecrime", "tvandfilm",
+            ),
+            SearchCategories.KEYS,
+        )
+    }
+
+    @Test
+    fun langPatternAcceptsLanguageOrLanguageAndRegion() {
+        val pattern = Regex(SearchApi.LANG_PATTERN)
+        val valid = listOf("en", "EN", "eng", "en-GB", "en-gb", "es-419", "pt-BR")
+        val invalid = listOf("e", "english", "en_GB", "en-", "en-GBR", "en-1", "en-GB-x")
+        valid.forEach { assertTrue(pattern.matches(it), it) }
+        invalid.forEach { assertFalse(pattern.matches(it), it) }
+    }
+
+    @Test
+    fun healthMatchesGolden() {
+        val cases = mapOf(
+            HealthResponse(HealthStatus.OK, db = true, cert = CertStatus.OK) to
+                """{ "status": "ok", "db": true, "cert": "ok" }""",
+            HealthResponse(HealthStatus.WARNING, db = true, cert = CertStatus.WARNING) to
+                """{ "status": "warning", "db": true, "cert": "warning" }""",
+            HealthResponse(HealthStatus.DOWN, db = false, cert = CertStatus.UNKNOWN) to
+                """{ "status": "down", "db": false, "cert": "unknown" }""",
+        )
+        cases.forEach { (health, golden) ->
+            assertEquals(json(golden), json(ApiJson.encodeToString(HealthResponse.serializer(), health)))
+            assertEquals(health, ApiJson.decodeFromString(HealthResponse.serializer(), golden))
+        }
+        assertEquals(listOf("ok", "warning", "down"), listOf(HealthStatus.OK, HealthStatus.WARNING, HealthStatus.DOWN))
+        assertEquals(
+            listOf("ok", "warning", "expired", "unknown"),
+            listOf(CertStatus.OK, CertStatus.WARNING, CertStatus.EXPIRED, CertStatus.UNKNOWN),
+        )
+    }
+
+    @Test
+    fun pathsAndParametersAreStable() {
+        assertEquals("/v1/search", SearchApi.SEARCH_PATH)
+        assertEquals("/health", SearchApi.HEALTH_PATH)
+        assertEquals(
+            listOf("q", "lang", "hideExplicit", "limit", "offset", "category"),
+            listOf(
+                SearchApi.PARAM_QUERY,
+                SearchApi.PARAM_LANG,
+                SearchApi.PARAM_HIDE_EXPLICIT,
+                SearchApi.PARAM_LIMIT,
+                SearchApi.PARAM_OFFSET,
+                SearchApi.PARAM_CATEGORY,
+            ),
+        )
+        assertEquals(
+            listOf("bad_request", "unauthorized", "rate_limited", "unavailable", "not_found", "internal"),
+            listOf(
+                ApiErrorCode.BAD_REQUEST,
+                ApiErrorCode.UNAUTHORIZED,
+                ApiErrorCode.RATE_LIMITED,
+                ApiErrorCode.UNAVAILABLE,
+                ApiErrorCode.NOT_FOUND,
+                ApiErrorCode.INTERNAL,
+            ),
+        )
+    }
+}

@@ -1,0 +1,16 @@
+# Rebuilds the search index from the latest Podcast Index dump. Run by damask-import.timer.
+# Install: see deploy/README.md › Weekly import.
+[Unit]
+Description=Damask search index import
+Wants=network-online.target
+After=network-online.target docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/damask/deploy
+ExecStart=/usr/bin/docker compose --env-file .env --profile import run --rm importer
+# A failed import leaves the live index untouched; the non-zero exit marks this unit failed.
+TimeoutStartSec=6h
+Nice=10
+IOSchedulingClass=idle

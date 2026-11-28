@@ -1,0 +1,20 @@
+# Secret scanning (CI: .github/workflows/security.yml; locally: sh .github/scripts/secret-scan.sh).
+# Starts from the scanner's default rules. Every allow-list entry says why it isn't a secret.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known non-secrets"
+paths = [
+  # Build output, Gradle caches and local-only files.
+  '''(^|/)build/''',
+  '''(^|/)\.gradle/''',
+  '''(^|/)\.kotlin/''',
+  '''(^|/)\.idea/''',
+  '''(^|/)local\.properties$''',
+  '''(^|/)llm-scrapbook/''',
+  # Throwaway values for the local docker compose stack only (documented as never for servers).
+  '''(^|/)deploy/local\.env$''',
+]
+# The local stack's private token, quoted in curl examples. Not valid anywhere but localhost.
+regexes = ['''local-dev-private-token''']

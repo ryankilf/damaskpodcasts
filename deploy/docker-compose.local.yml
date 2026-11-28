@@ -1,0 +1,38 @@
+# Local override: the fixture index, the gateway on localhost:8080, no Caddy, no TLS.
+#   docker compose --env-file local.env -f docker-compose.yml -f docker-compose.local.yml up
+#   curl -H 'Authorization: Bearer local-dev-private-token' 'http://localhost:8080/v1/search?q=hardcore'
+services:
+  meilisearch:
+    environment:
+      MEILI_ENV: development
+
+  # Loads deploy/fixtures/podcasts.sql instead of downloading the real dump, then exits. Skipped
+  # when the index already has documents, so a real import survives `docker compose up`.
+  seed:
+    build:
+      context: ..
+      dockerfile: deploy/importer.Dockerfile
+    image: damask-importer:local
+    environment:
+      MEILI_URL: http://meilisearch:7700
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      MEILI_SEARCH_KEY_UID: ${MEILI_SEARCH_KEY_UID}
+      DUMP_FILE: /fixtures/podcasts.sql
+      ONLY_IF_EMPTY: "true"
+    volumes:
+      - ./fixtures:/fixtures:ro
+    depends_on:
+      meilisearch:
+        condition: service_healthy
+    networks: [backend]
+
+  gateway:
+    environment:
+      SUPABASE_URL: ""
+      # No public hostname locally: /health reports cert "unknown".
+      PUBLIC_HOSTNAME: ""
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      seed:
+        condition: service_completed_successfully
