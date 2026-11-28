@@ -1,5 +1,16 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.resources.shows_no_match
+import uk.co.kilfeder.damask.podcasts.ui.resources.shows_filter_clear
+import uk.co.kilfeder.damask.podcasts.ui.resources.shows_filter
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TextField
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -63,7 +74,7 @@ internal fun ShowsScreen(
     viewModel: ShowsViewModel = viewModel { graph.showsViewModel() },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    ShowsContent(state, onOpenShow, onSearch, selectedId, modifier)
+    ShowsContent(state, onOpenShow, onSearch, viewModel::onQueryChange, selectedId, modifier)
 }
 
 @Composable
@@ -71,6 +82,7 @@ private fun ShowsContent(
     state: ShowsUiState,
     onOpenShow: (String) -> Unit,
     onSearch: () -> Unit,
+    onQueryChange: (String) -> Unit,
     selectedId: String?,
     modifier: Modifier = Modifier,
 ) {
@@ -78,7 +90,7 @@ private fun ShowsContent(
         Loading(modifier)
         return
     }
-    if (state.shows.isEmpty()) {
+    if (state.total == 0) {
         EmptyState(
             icon = Icons.Rounded.Podcasts,
             title = stringResource(Res.string.home_no_shows_title),
@@ -90,9 +102,15 @@ private fun ShowsContent(
         return
     }
     LazyColumn(modifier) {
+        item(key = "filter") { ShowsFilter(state.query, onQueryChange) }
         item(key = "count") {
+            val text = if (state.shows.isEmpty()) {
+                stringResource(Res.string.shows_no_match, state.query.trim())
+            } else {
+                pluralStringResource(Res.plurals.shows_count, state.shows.size, state.shows.size)
+            }
             Text(
-                text = pluralStringResource(Res.plurals.shows_count, state.shows.size, state.shows.size),
+                text = text,
                 style = DamaskTextStyles.BodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = Spacing.Space4, vertical = Spacing.Space1),
@@ -152,4 +170,38 @@ internal fun ShowMeta(show: ShowRowUi, modifier: Modifier = Modifier) {
     } else {
         ExactValueText(value = last, display = text, style = style, color = color, modifier = modifier)
     }
+}
+
+/** "Search your shows" (design hand-off › ShowListPane): filters your own shows; Discover finds new ones. */
+@Composable
+private fun ShowsFilter(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
+    val label = stringResource(Res.string.shows_filter)
+    TextField(
+        value = query,
+        onValueChange = onQueryChange,
+        singleLine = true,
+        placeholder = { Text(label) },
+        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+        trailingIcon = if (query.isEmpty()) {
+            null
+        } else {
+            {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(Icons.Rounded.Close, contentDescription = stringResource(Res.string.shows_filter_clear))
+                }
+            }
+        },
+        shape = CircleShape,
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = colors.surfaceContainerHighest,
+            unfocusedContainerColor = colors.surfaceContainerHighest,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+        ),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = Spacing.Space4, end = Spacing.Space4, bottom = Spacing.Space3)
+            .semantics { contentDescription = label },
+    )
 }

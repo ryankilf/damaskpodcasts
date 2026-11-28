@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import uk.co.kilfeder.damask.podcasts.core.model.ShowId
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.navigation.Destination
 import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
@@ -26,6 +28,9 @@ enum class Stage {
 /** One-off messages the UI shows once (as a snackbar) and then reports shown. */
 sealed interface AppMessage {
     data class ShowsAdded(val count: Int) : AppMessage
+
+    /** Offers Undo ([AppViewModel.onUndoUnsubscribe]). [title] is blank for a show never read. */
+    data class Unsubscribed(val showId: String, val title: String) : AppMessage
 }
 
 data class AppUiState(
@@ -94,6 +99,20 @@ class AppViewModel internal constructor(private val graph: AppGraph) : ViewModel
     fun onOpenGenre(categoryId: String) = nav.update { state ->
         val queue = Destination.GenreQueue(categoryId)
         if (state.top is Destination.GenreQueue) state.pop()?.push(queue) ?: state.push(queue) else state.push(queue)
+    }
+
+    /**
+     * From the show page's menu: unsubscribes, leaves the page, and offers Undo. The show stays
+     * in Played; its episodes leave every queue.
+     */
+    fun onUnsubscribe(showId: String, title: String) {
+        viewModelScope.launch { graph.onDb { graph.showSettings.setSubscribed(ShowId(showId), false) } }
+        if (nav.value.top == Destination.Show(showId)) onBack()
+        message.value = AppMessage.Unsubscribed(showId, title)
+    }
+
+    fun onUndoUnsubscribe(showId: String) {
+        viewModelScope.launch { graph.onDb { graph.showSettings.setSubscribed(ShowId(showId), true) } }
     }
 
     /** Returns false when there was nothing to go back to, so the platform can handle back. */

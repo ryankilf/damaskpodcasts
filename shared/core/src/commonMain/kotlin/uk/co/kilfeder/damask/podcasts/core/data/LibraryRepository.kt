@@ -28,7 +28,12 @@ class LibraryRepository(private val db: DamaskDatabase) {
             .map { row ->
                 val feed = feeds[row.id]
                 row.toModel(ShowType.fromItunesType(feed?.itunes_type))
-                    .copy(title = feed?.title.orEmpty(), imageUrl = feed?.image_url)
+                    .copy(
+                        title = feed?.title.orEmpty(),
+                        imageUrl = feed?.image_url,
+                        author = feed?.author.orEmpty(),
+                        description = feed?.description.orEmpty(),
+                    )
             }
         val episodes = db.libraryQueries.selectEpisodes(::episodeRow).executeAsList()
             .map { it.canonical(aliases) }

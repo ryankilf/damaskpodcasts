@@ -32,6 +32,12 @@ data class Show(
     /** Display only, from the feed cache; empty until the feed has been fetched. */
     val title: String = "",
     val imageUrl: String? = null,
+    /** Display only, from the feed cache: `itunes:author`. */
+    val author: String = "",
+    /** Display only, from the feed cache: the channel description, as the feed wrote it. */
+    val description: String = "",
+    /** The current feed URL (a secret for private feeds: shown only when asked for). */
+    val feedUrl: String = "",
 ) {
     /** Serial shows play oldest-first; everything else newest-first. */
     val episodeOrder: EpisodeOrder

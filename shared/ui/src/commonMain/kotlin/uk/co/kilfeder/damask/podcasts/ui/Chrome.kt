@@ -8,12 +8,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Podcasts
-import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,9 +43,8 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.show_notes
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_genres
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_home
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_played
-import uk.co.kilfeder.damask.podcasts.ui.resources.tab_search
+import uk.co.kilfeder.damask.podcasts.ui.resources.tab_discover
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_shows
-import uk.co.kilfeder.damask.podcasts.ui.resources.shows_add
 import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 
 /**
@@ -165,7 +163,7 @@ internal val Tab.label: StringResource
         Tab.GENRES -> Res.string.tab_genres
         Tab.SHOWS -> Res.string.tab_shows
         Tab.PLAYED -> Res.string.tab_played
-        Tab.SEARCH -> Res.string.tab_search
+        Tab.SEARCH -> Res.string.tab_discover
     }
 
 private val Tab.icon: ImageVector
@@ -174,18 +172,21 @@ private val Tab.icon: ImageVector
         Tab.GENRES -> Icons.Rounded.Category
         Tab.SHOWS -> Icons.Rounded.Podcasts
         Tab.PLAYED -> Icons.Rounded.History
-        Tab.SEARCH -> Icons.Rounded.Search
+        Tab.SEARCH -> Icons.Rounded.Explore
     }
 
-/** Screens that draw their own heading with a back arrow (a genre's queue: its name and when it was last played). */
-internal fun hasOwnHeading(state: AppUiState): Boolean = state.nav.top is Destination.GenreQueue
+/**
+ * Screens that draw their own heading with a back arrow: a genre's queue (its name and when it
+ * was last played) and a show's page (back and its ⋮ menu).
+ */
+internal fun hasOwnHeading(state: AppUiState): Boolean =
+    state.nav.top is Destination.GenreQueue || state.nav.top is Destination.Show
 
-/** The one action in a top-level screen's heading: the cog on Home (phones; the rail has it otherwise), + on Shows. */
+/** The one action in a top-level screen's heading: the cog on Home (phones; the rail has it otherwise). */
 internal fun topLevelAction(
     state: AppUiState,
     compact: Boolean,
     onSettings: () -> Unit,
-    onAddShow: () -> Unit,
 ): (@Composable () -> Unit)? {
     if (state.nav.top != null) return null
     return when {
@@ -193,13 +194,6 @@ internal fun topLevelAction(
             {
                 IconButton(onClick = onSettings) {
                     Icon(imageVector = Icons.Rounded.Settings, contentDescription = stringResource(Res.string.settings))
-                }
-            }
-        }
-        state.nav.tab == Tab.SHOWS -> {
-            {
-                IconButton(onClick = onAddShow) {
-                    Icon(imageVector = Icons.Rounded.Add, contentDescription = stringResource(Res.string.shows_add))
                 }
             }
         }

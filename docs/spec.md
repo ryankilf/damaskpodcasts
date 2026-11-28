@@ -79,10 +79,12 @@ The home screen leads with what you've started, then the cross-genre rotation.
 | Home: Up Next | One episode per category, repeated to fill; excludes in-progress episodes | Categories by LRP |
 | Genres | List of categories, each opening its queue | LRP first |
 | Genre queue | That category's in-progress episodes, then one episode per show, interleaved | In-progress first, then shows by LRP |
+| Shows | Every subscribed show, with its genre and when it was last played; "Search your shows" filters by name as you type. Each opens its page | A–Z, ignoring a leading "The" |
+| Show | Artwork, name, author, how often it publishes ("Weekly · 86 episodes · Last played today", exact values on long press) and a genre chip that moves it to another genre. A patterned button resumes the episode in progress ("Resume · 32 min left") or plays the next unplayed one ("Play · 47 min"); it never names the episode, and that episode is highlighted in the list. The description shows three lines, and More opens the rest in place. Episodes carry an order chip (Newest first / Oldest first), which is also the order the show plays in; oldest first, the list opens at the first unplayed episode. Played episodes are dimmed, read "Played · 52 min" and have a replay button. The ⋮ menu has Copy feed URL and Unsubscribe | The show's order |
 | Now Playing | The current episode, held until it is played. Starting another episode leaves this one in In Progress at its saved position. Tapping any episode row plays it and opens it, as an ordinary screen with the top bar and tabs; while something is loaded, a mini-player sits above the tabs. Show notes open from the peek at the bottom as their own screen, with every link also listed under Links | — |
 | Played | Log of every play session, finished episodes included; supports re-listening and undoing an accidental mark-played | Newest first |
 | Import | OPML file, then a confirm-or-change category list, one row per show | Alphabetical |
-| Search | Results from our index of the Podcast Index catalogue, with their artwork; "Hide explicit" applies. Subscribing sends the show through the same category confirmation step | Index relevance, then popularity |
+| Discover | Search: results from our index of the Podcast Index catalogue, with their artwork; "Hide explicit" applies. Subscribing sends the show through the same category confirmation step | Index relevance, then popularity |
 
 Design work lives in the [screen flow board](https://claude.ai/artifact/AEBbsBe7TLKUWNa2QKms3Q) and the [Podcast App design system](https://claude.ai/artifact/EZHMHvdS5nqQch8gN5a4SK).
 
@@ -217,7 +219,9 @@ CREATE TABLE show_feed (
   show_id      TEXT PRIMARY KEY REFERENCES show(id),
   title        TEXT NOT NULL,
   image_url    TEXT,                     -- channel itunes:image
-  itunes_type  TEXT                      -- episodic | serial; drives the auto defaults
+  itunes_type  TEXT,                     -- episodic | serial; drives the auto defaults
+  author       TEXT,                     -- channel itunes:author, for the show page
+  description  TEXT                      -- channel description (or itunes:summary), for the show page
 );
 
 -- Every category the feed declares, as written. Input for the prefill and any future tags.

@@ -14,6 +14,8 @@ object SampleFeeds {
           <channel>
             <title><![CDATA[History & Friends]]></title>
             <language>en-gb</language>
+            <itunes:author>Friends &amp; Co</itunes:author>
+            <description>Old things, told well.</description>
             <itunes:type>serial</itunes:type>
             <itunes:new-feed-url>https://new.example.com/feed</itunes:new-feed-url>
             <image><url>https://example.com/rss-art.jpg</url></image>
@@ -70,6 +72,8 @@ class FeedParserTest {
         assertEquals("https://example.com/art.jpg", feed.imageUrl, "itunes:image beats <image><url>")
         assertEquals("serial", feed.itunesType)
         assertEquals("en-gb", feed.language)
+        assertEquals("Friends & Co", feed.author)
+        assertEquals("Old things, told well.", feed.description, "the channel's own, not an item's")
         assertEquals("https://new.example.com/feed", feed.newFeedUrl)
         assertEquals(listOf(FeedCategory("Society & Culture", "History"), FeedCategory("Education")), feed.categories)
     }

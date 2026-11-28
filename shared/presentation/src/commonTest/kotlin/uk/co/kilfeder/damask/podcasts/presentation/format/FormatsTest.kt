@@ -1,8 +1,8 @@
 package uk.co.kilfeder.damask.podcasts.presentation.format
 
 import kotlinx.datetime.TimeZone
-import uk.co.kilfeder.damask.podcasts.presentation.importer.CategoryOptionUi
-import uk.co.kilfeder.damask.podcasts.presentation.importer.matching
+import uk.co.kilfeder.damask.podcasts.presentation.genres.CategoryOptionUi
+import uk.co.kilfeder.damask.podcasts.presentation.genres.matching
 import uk.co.kilfeder.damask.podcasts.presentation.navigation.Destination
 import uk.co.kilfeder.damask.podcasts.presentation.navigation.NavState
 import uk.co.kilfeder.damask.podcasts.presentation.navigation.Tab

@@ -89,6 +89,9 @@ object Sizes {
     val DamaskPitchLarge = 14.dp
     val DamaskPitchSmall = 9.dp
 
+    /** The show page's Resume / Play button (design hand-off › Show). */
+    val DamaskPitchMedium = 12.dp
+
     /** The empty state's damask tile, its icon circle and icon, and its text width (EmptyState artboard). */
     val DamaskPitchPanel = 16.dp
     val EmptyStateTile = 144.dp
@@ -134,7 +137,7 @@ object Sizes {
     val ShowRowArtwork = 48.dp
 
     /** The artwork at the top of a show's page. */
-    val ShowHeaderArtwork = 96.dp
+    val ShowHeaderArtwork = 112.dp
 
     /** A genre row in the list (GenreListPane artboard). */
     val GenreRowMinHeight = 80.dp

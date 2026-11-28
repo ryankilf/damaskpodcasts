@@ -27,7 +27,13 @@ import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.crossfade
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarResult
 import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
+import uk.co.kilfeder.damask.podcasts.ui.resources.show_unsubscribed
+import uk.co.kilfeder.damask.podcasts.ui.resources.show_unsubscribed_untitled
+import uk.co.kilfeder.damask.podcasts.ui.resources.undo
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppMessage
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppUiState
@@ -71,6 +77,8 @@ fun App(
                         onRowPlayPause = viewModel::onRowPlayPause,
                         onOpenGenre = viewModel::onOpenGenre,
                         onOpenShow = viewModel::onOpenShow,
+                        onUnsubscribe = viewModel::onUnsubscribe,
+                        onUndoUnsubscribe = viewModel::onUndoUnsubscribe,
                         onBack = viewModel::onBack,
                         onImportFinish = viewModel::onImportFinished,
                         onMessageShow = viewModel::onMessageShown,
@@ -89,6 +97,8 @@ private class AppIntents(
     val onRowPlayPause: (EpisodeId, PlaySource) -> Unit,
     val onOpenGenre: (String) -> Unit,
     val onOpenShow: (String) -> Unit,
+    val onUnsubscribe: (String, String) -> Unit,
+    val onUndoUnsubscribe: (String) -> Unit,
     val onBack: () -> Boolean,
     val onImportFinish: (Int) -> Unit,
     val onMessageShow: () -> Unit,
@@ -103,7 +113,7 @@ private class AppIntents(
 private fun Shell(state: AppUiState, graph: AppGraph, intents: AppIntents, modifier: Modifier = Modifier) {
     val top = state.nav.top
     val snackbars = remember { SnackbarHostState() }
-    ShowMessages(state.message, snackbars, intents.onMessageShow)
+    ShowMessages(state.message, snackbars, intents.onMessageShow, intents.onUndoUnsubscribe)
     BackHandler(enabled = top != null) { intents.onBack() }
     val scope = rememberCoroutineScope()
     val showMessage: (String) -> Unit = remember(snackbars, scope) {
@@ -132,6 +142,7 @@ private fun ShellLayout(
             onPlayEpisode = { id, source -> intents.onPlayEpisode(id, source, width != WidthClass.EXPANDED) },
             onOpenGenre = intents.onOpenGenre,
             onOpenShow = intents.onOpenShow,
+            onUnsubscribe = intents.onUnsubscribe,
             onImportFinish = intents.onImportFinish,
             onBack = { intents.onBack() },
             rowPlayer = RowPlayer(state.playing, state.playingNow, intents.onRowPlayPause),
@@ -162,15 +173,33 @@ private fun ShellLayout(
 }
 
 @Composable
-private fun ShowMessages(message: AppMessage?, snackbars: SnackbarHostState, onMessageShow: () -> Unit) {
+private fun ShowMessages(
+    message: AppMessage?,
+    snackbars: SnackbarHostState,
+    onMessageShow: () -> Unit,
+    onUndoUnsubscribe: (String) -> Unit,
+) {
     val messageShown by rememberUpdatedState(onMessageShow)
+    val undoUnsubscribe by rememberUpdatedState(onUndoUnsubscribe)
     message ?: return
     val text = when (message) {
         is AppMessage.ShowsAdded -> pluralStringResource(Res.plurals.shows_added, message.count, message.count)
+        is AppMessage.Unsubscribed -> if (message.title.isBlank()) {
+            stringResource(Res.string.show_unsubscribed_untitled)
+        } else {
+            stringResource(Res.string.show_unsubscribed, message.title)
+        }
     }
+    val undo = stringResource(Res.string.undo)
     LaunchedEffect(message) {
         messageShown()
-        snackbars.showSnackbar(text)
+        when (message) {
+            is AppMessage.ShowsAdded -> snackbars.showSnackbar(text)
+            is AppMessage.Unsubscribed -> {
+                val result = snackbars.showSnackbar(text, actionLabel = undo, duration = SnackbarDuration.Long)
+                if (result == SnackbarResult.ActionPerformed) undoUnsubscribe(message.showId)
+            }
+        }
     }
 }
 
@@ -181,6 +210,7 @@ internal class ShellActions(
     val onPlayEpisode: (EpisodeId, PlaySource) -> Unit,
     val onOpenGenre: (String) -> Unit,
     val onOpenShow: (String) -> Unit,
+    val onUnsubscribe: (String, String) -> Unit,
     val onImportFinish: (Int) -> Unit,
     val onBack: () -> Unit,
     val rowPlayer: RowPlayer,

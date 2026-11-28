@@ -10,7 +10,7 @@
     <string name="tab_home">Home</string>
     <string name="tab_genres">Genres</string>
     <string name="tab_played">Played</string>
-    <string name="tab_search">Search</string>
+    <string name="tab_discover">Discover</string>
 
 
     <!-- Home -->
@@ -32,7 +32,9 @@
         <item quantity="other">%1$d shows, A–Z</item>
     </plurals>
     <string name="shows_untitled">Untitled show</string>
-    <string name="shows_add">Add a show</string>
+    <string name="shows_filter">Search your shows</string>
+    <string name="shows_filter_clear">Clear search</string>
+    <string name="shows_no_match">No shows match “%1$s”.</string>
     <string name="show_pick_title">Pick a show</string>
     <string name="show_pick_body">Its episodes show here, in the show’s own order.</string>
     <plurals name="show_episodes">
@@ -67,6 +69,42 @@
     <!-- Episode rows -->
     <string name="row_meta">%1$s · %2$s</string>
     <string name="row_show_prefix">%1$s · </string>
+    <string name="row_played">Played</string>
+    <string name="row_replay">Play again: %1$s</string>
+
+    <!-- Show page -->
+    <string name="show_options">Show options</string>
+    <string name="show_copy_feed">Copy feed URL</string>
+    <string name="show_feed_copied">Feed URL copied</string>
+    <string name="show_unsubscribe">Unsubscribe</string>
+    <string name="show_unsubscribed">Unsubscribed from %1$s</string>
+    <string name="show_unsubscribed_untitled">Unsubscribed</string>
+    <string name="undo">Undo</string>
+    <string name="show_subscribe">Subscribe</string>
+    <string name="show_resume">Resume</string>
+    <string name="show_play">Play</string>
+    <string name="show_button_time">· %1$s</string>
+    <string name="show_resume_label">Resume %1$s, %2$s</string>
+    <string name="show_play_label">Play %1$s, %2$s</string>
+    <string name="show_more">More</string>
+    <string name="show_more_label">Show description, tap to read all of it</string>
+    <string name="show_episodes_heading">Episodes</string>
+    <string name="show_order_newest">Newest first</string>
+    <string name="show_order_oldest">Oldest first</string>
+    <string name="show_order_label">Order: %1$s. This is also the order episodes play in. Change order</string>
+    <string name="show_genre_label">Genre: %1$s. Change genre</string>
+    <string name="show_plays_next">Plays next</string>
+    <string name="show_cadence_daily">Daily</string>
+    <string name="show_cadence_weekly">Weekly</string>
+    <string name="show_cadence_fortnightly">Every two weeks</string>
+    <string name="show_cadence_monthly">Monthly</string>
+    <string name="show_usual_day">Usually publishes %1$s</string>
+    <plurals name="show_episodes_since">
+        <item quantity="one">%1$d episode since %2$s</item>
+        <item quantity="other">%1$d episodes since %2$s</item>
+    </plurals>
+    <string name="show_last_exact">last played %1$s</string>
+    <string name="show_meta_sep"> · </string>
     <string name="row_progress">%1$s, %2$s</string>
     <string name="artwork_of">Artwork for %1$s</string>
 

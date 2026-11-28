@@ -21,6 +21,9 @@ object FeedParser {
             title = channel.childText("title").orEmpty(),
             imageUrl = channel.child("image", Namespace.ITUNES)?.attr("href")
                 ?: channel.child("image")?.childText("url"),
+            author = channel.childText("author", Namespace.ITUNES),
+            description = (channel.childText("description") ?: channel.childText("summary", Namespace.ITUNES))
+                ?.take(MAX_NOTES_CHARS),
             itunesType = channel.childText("type", Namespace.ITUNES),
             categories = channel.children("category", Namespace.ITUNES).mapNotNull { it.toCategory() },
             language = channel.childText("language"),

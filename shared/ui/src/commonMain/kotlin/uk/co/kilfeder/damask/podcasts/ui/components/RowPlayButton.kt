@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
+import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -20,6 +21,7 @@ import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeRowUi
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.row_pause
 import uk.co.kilfeder.damask.podcasts.ui.resources.row_play
+import uk.co.kilfeder.damask.podcasts.ui.resources.row_replay
 import uk.co.kilfeder.damask.podcasts.ui.resources.row_resume
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 
@@ -59,5 +61,17 @@ internal fun RowPlayButton(row: EpisodeRowUi, playing: Boolean, onClick: () -> U
                 Icon(Icons.Rounded.PlayArrow, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface)
             }
         }
+    }
+}
+
+/** A played episode on a show page: play it again (design hand-off › Show). */
+@Composable
+internal fun ReplayButton(row: EpisodeRowUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    IconButton(onClick = onClick, modifier = modifier.size(Sizes.MinTouchTarget)) {
+        Icon(
+            Icons.Rounded.Replay,
+            contentDescription = stringResource(Res.string.row_replay, row.title),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }

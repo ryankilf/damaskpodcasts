@@ -28,6 +28,7 @@ import uk.co.kilfeder.damask.podcasts.ui.screens.NowPlayingScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.PlayedScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.SearchScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.SettingsScreen
+import uk.co.kilfeder.damask.podcasts.ui.screens.ShowPageActions
 import uk.co.kilfeder.damask.podcasts.ui.screens.ShowScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.ShowsScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.ShowNotesScreen
@@ -98,7 +99,6 @@ internal fun ShellContent(
                             state = shown,
                             compact = width == WidthClass.COMPACT,
                             onSettings = { actions.onNavigate(Destination.Settings) },
-                            onAddShow = { actions.onSelectTab(Tab.SEARCH) },
                         ),
                     )
                 }
@@ -176,7 +176,7 @@ private fun SinglePane(state: AppUiState, graph: AppGraph, actions: ShellActions
             is Destination.Show -> ShowScreen(
                 graph = graph,
                 showId = top.showId,
-                onOpenEpisode = actions.onPlayEpisode,
+                actions = ShowPageActions(actions.onPlayEpisode, actions.onUnsubscribe, onBack = actions.onBack),
                 rowPlayer = actions.rowPlayer,
                 modifier = readable,
             )

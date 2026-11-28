@@ -31,6 +31,7 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.show_pick_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_pick_title
 import uk.co.kilfeder.damask.podcasts.ui.screens.EmptyState
 import uk.co.kilfeder.damask.podcasts.ui.screens.GenreQueueScreen
+import uk.co.kilfeder.damask.podcasts.ui.screens.ShowPageActions
 import uk.co.kilfeder.damask.podcasts.ui.screens.ShowScreen
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 
@@ -67,7 +68,7 @@ internal fun ShowPane(showId: String?, graph: AppGraph, actions: ShellActions, m
         ShowScreen(
             graph = graph,
             showId = showId,
-            onOpenEpisode = actions.onPlayEpisode,
+            actions = ShowPageActions(actions.onPlayEpisode, actions.onUnsubscribe, onBack = null),
             rowPlayer = actions.rowPlayer,
             modifier = Modifier.widthIn(max = Sizes.MaxContentWidth).fillMaxSize(),
             background = MaterialTheme.colorScheme.surfaceContainerLow,

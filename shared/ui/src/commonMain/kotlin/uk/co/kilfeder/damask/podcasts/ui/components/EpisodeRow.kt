@@ -27,14 +27,19 @@ import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextOverflow
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeRowUi
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
+import uk.co.kilfeder.damask.podcasts.ui.resources.row_played
 import uk.co.kilfeder.damask.podcasts.ui.resources.row_show_prefix
 import uk.co.kilfeder.damask.podcasts.ui.theme.DamaskTextStyles
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
+
+/** A played episode's artwork on a show page (design hand-off › Show). */
+private const val DIMMED_ART_ALPHA = 0.5f
 
 /**
  * One episode (design hand-off › EpisodeRow): artwork, two-line title, "show · time" with the
@@ -44,6 +49,9 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
  * it in place ([onPlayPause], [RowPlayButton]). With [swipeLabel] set, swiping the row
  * away (or the matching accessibility action) calls [onSwipe]: Mark played in queues, Mark
  * unplayed in Played.
+ *
+ * With [dimPlayed] (a show's page), played episodes are dimmed, read "Played · 52 min", and get a
+ * replay button instead of the ring.
  */
 @Composable
 internal fun EpisodeRow(
@@ -55,9 +63,10 @@ internal fun EpisodeRow(
     swipeLabel: String? = null,
     onSwipe: () -> Unit = {},
     background: Color = MaterialTheme.colorScheme.surface,
+    dimPlayed: Boolean = false,
 ) {
     if (swipeLabel == null) {
-        RowContent(row, playing, onClick, onPlayPause, modifier)
+        RowContent(row, playing, onClick, onPlayPause, modifier, dimPlayed && row.played)
         return
     }
     val state = rememberSwipeToDismissBoxState()
@@ -82,6 +91,7 @@ private fun RowContent(
     onClick: () -> Unit,
     onPlayPause: () -> Unit,
     modifier: Modifier = Modifier,
+    dimmed: Boolean = false,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -91,7 +101,7 @@ private fun RowContent(
             .heightIn(min = Sizes.RowMinHeight)
             .padding(horizontal = Spacing.Space4, vertical = Spacing.Space2),
     ) {
-        Artwork(row.artworkUrl, row.fallback)
+        Artwork(row.artworkUrl, row.fallback, Modifier.alpha(if (dimmed) DIMMED_ART_ALPHA else 1f))
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.Space1),
             modifier = Modifier.weight(1f),
@@ -100,24 +110,25 @@ private fun RowContent(
             Text(
                 text = row.title,
                 style = DamaskTextStyles.Title,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = if (dimmed) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            MetaLine(row)
+            MetaLine(row, played = dimmed)
         }
-        RowPlayButton(row, playing, onPlayPause)
+        if (dimmed) ReplayButton(row, onPlayPause) else RowPlayButton(row, playing, onPlayPause)
     }
 }
 
 /** "Show · 32 min left": the show name truncates first, so the time always stays visible. */
 @Composable
-private fun MetaLine(row: EpisodeRowUi, modifier: Modifier = Modifier) {
+private fun MetaLine(row: EpisodeRowUi, modifier: Modifier = Modifier, played: Boolean = false) {
     val time = row.length ?: row.published
     val color = MaterialTheme.colorScheme.onSurfaceVariant
+    val first = if (played) stringResource(Res.string.row_played) else row.showTitle
     Row(modifier) {
         Text(
-            text = stringResource(Res.string.row_show_prefix, row.showTitle),
+            text = stringResource(Res.string.row_show_prefix, first),
             style = DamaskTextStyles.BodySmall,
             color = color,
             maxLines = 1,

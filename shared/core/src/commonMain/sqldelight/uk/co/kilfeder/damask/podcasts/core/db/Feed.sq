@@ -4,7 +4,9 @@ CREATE TABLE show_feed (
   show_id      TEXT NOT NULL PRIMARY KEY REFERENCES show(id),
   title        TEXT NOT NULL,
   image_url    TEXT,                     -- channel itunes:image
-  itunes_type  TEXT                      -- episodic | serial; drives the auto defaults
+  itunes_type  TEXT,                     -- episodic | serial; drives the auto defaults
+  author       TEXT,                     -- channel itunes:author
+  description  TEXT                      -- channel description (HTML or plain), for the show page
 );
 
 -- Every category the feed declares, as written. Input for the prefill and any future tags.
@@ -32,8 +34,8 @@ CREATE TABLE episode (
 CREATE INDEX episode_show_published ON episode (show_id, published_at);
 
 upsertShowFeed:
-INSERT OR REPLACE INTO show_feed (show_id, title, image_url, itunes_type)
-VALUES (:show_id, :title, :image_url, :itunes_type);
+INSERT OR REPLACE INTO show_feed (show_id, title, image_url, itunes_type, author, description)
+VALUES (:show_id, :title, :image_url, :itunes_type, :author, :description);
 
 deleteShowFeedCategories:
 DELETE FROM show_feed_category WHERE show_id = :show_id;

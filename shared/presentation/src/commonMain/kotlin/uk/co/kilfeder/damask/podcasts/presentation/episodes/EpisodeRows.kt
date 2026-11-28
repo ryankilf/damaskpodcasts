@@ -27,6 +27,8 @@ data class EpisodeRowUi(
     val length: Summarised?,
     /** 0..1 while in progress, else null. */
     val progress: Float?,
+    /** Played and not being re-listened: shown dimmed, with a replay button. */
+    val played: Boolean = false,
 )
 
 internal fun EpisodeId.toKey() = EpisodeKey(ShowId(showId), guid)
@@ -47,6 +49,7 @@ internal fun Episode.toRow(library: Library, rotation: Rotation, nowMs: Long): E
         published = Formats.date(publishedAt, nowMs),
         length = Formats.length(total, position),
         progress = progress(position, total),
+        played = isPlayed && !inProgress,
     )
 }
 

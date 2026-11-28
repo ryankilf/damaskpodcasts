@@ -64,7 +64,7 @@ class FeedStore(
      */
     fun applyFeed(id: ShowId, fetched: FetchedFeed) = db.transaction {
         val doc = fetched.document
-        db.feedQueries.upsertShowFeed(id.value, doc.title, doc.imageUrl, doc.itunesType)
+        db.feedQueries.upsertShowFeed(id.value, doc.title, doc.imageUrl, doc.itunesType, doc.author, doc.description)
         db.feedQueries.deleteShowFeedCategories(id.value)
         doc.categories.forEachIndexed { index, category ->
             db.feedQueries.insertShowFeedCategory(id.value, index.toLong(), category.category, category.subcategory)

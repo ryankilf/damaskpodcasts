@@ -15,20 +15,7 @@ import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
 import uk.co.kilfeder.damask.podcasts.core.sync.ShowIds
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 import uk.co.kilfeder.damask.podcasts.presentation.format.ArtworkFallback
-
-data class CategoryOptionUi(val id: String, val name: String)
-
-/**
- * The categories matching a search: case-insensitive, and "&" matches "and" both ways, so
- * "health and" finds "Health & Fitness". An empty query matches everything.
- */
-fun List<CategoryOptionUi>.matching(query: String): List<CategoryOptionUi> {
-    val wanted = searchKey(query)
-    return if (wanted.isEmpty()) this else filter { searchKey(it.name).contains(wanted) }
-}
-
-private fun searchKey(text: String): String =
-    text.lowercase().replace("&", " and ").split(Regex("\\s+")).filter { it.isNotEmpty() }.joinToString(" ")
+import uk.co.kilfeder.damask.podcasts.presentation.genres.CategoryOptionUi
 
 data class ImportRowUi(
     val index: Int,

@@ -2,6 +2,7 @@ package uk.co.kilfeder.damask.podcasts.presentation.shows
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -30,21 +31,36 @@ data class ShowRowUi(
 
 data class ShowsUiState(
     val loading: Boolean = true,
-    /** Every subscribed show, A–Z. */
+    /** Subscribed shows matching [query], A–Z. */
     val shows: List<ShowRowUi> = emptyList(),
+    /** How many shows you subscribe to, matching or not. */
+    val total: Int = 0,
+    /** What's typed in "Search your shows"; blank = every show. */
+    val query: String = "",
 )
 
 /** Shows: every subscribed show A–Z, to go straight to one (spec › Screens). */
 class ShowsViewModel internal constructor(graph: AppGraph) : ViewModel() {
-    val uiState: StateFlow<ShowsUiState> = combine(graph.library, graph.rotation) { library, rotation ->
+    private val query = MutableStateFlow("")
+
+    val uiState: StateFlow<ShowsUiState> = combine(graph.library, graph.rotation, query) { library, rotation, q ->
         val now = graph.wallClockMs()
+        val needle = q.trim()
         ShowsUiState(
             loading = false,
             shows = library.subscribedShows
+                .filter { needle.isEmpty() || it.title.contains(needle, ignoreCase = true) }
                 .sortedWith(compareBy({ it.sortKey() }, { it.id.value }))
                 .map { it.toRow(library, rotation, now) },
+            total = library.subscribedShows.size,
+            query = q,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), ShowsUiState())
+
+    /** "Search your shows": filters by name as you type. */
+    fun onQueryChange(text: String) {
+        query.value = text
+    }
 }
 
 /** A–Z ignoring case and a leading "The "; shows with no name yet (unread feeds) go last. */

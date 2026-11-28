@@ -191,7 +191,7 @@ class DatabaseTest {
     fun loadsShowsWithSettingsAndFeedType() {
         category("drama")
         show("saga", "drama")
-        db.feedQueries.upsertShowFeed("saga", "Saga", null, itunes_type = "serial")
+        db.feedQueries.upsertShowFeed("saga", "Saga", null, itunes_type = "serial", author = null, description = null)
         val show = repository.load().showsById.getValue(ShowId("saga"))
         assertEquals(ShowType.SERIAL, show.type)
         assertEquals(CategoryId("drama"), show.categoryId)

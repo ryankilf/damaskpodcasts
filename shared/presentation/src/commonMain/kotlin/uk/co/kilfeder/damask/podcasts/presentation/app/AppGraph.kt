@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
+import uk.co.kilfeder.damask.podcasts.core.data.ShowSettings
 import uk.co.kilfeder.damask.podcasts.core.data.CategoryPrefill
 import uk.co.kilfeder.damask.podcasts.core.data.DeviceClock
 import uk.co.kilfeder.damask.podcasts.core.data.DriverFactory
@@ -72,6 +73,7 @@ class AppGraph internal constructor(
     private val clock = DeviceClock(db, wallClockMs)
     internal val userState = UserStateStore(db, clock)
     internal val feeds = FeedStore(db, clock, rules)
+    internal val showSettings = ShowSettings(db, clock)
     internal val settings = Settings(db)
     internal val lookup = EpisodeLookup(db)
     internal val repository = LibraryRepository(db)
