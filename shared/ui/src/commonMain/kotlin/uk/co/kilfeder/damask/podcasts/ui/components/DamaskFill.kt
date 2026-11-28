@@ -10,18 +10,22 @@ import androidx.compose.ui.unit.Dp
 /** The diaper pattern's opacity on filled play buttons (design-system README › Damask). */
 private const val DIAPER_ALPHA = 0.16f
 
-/** A diamond's half-width and half-height as fractions of the pitch (4 and 7 on a 9-unit grid). */
+/**
+ * A diamond's half-width and half-height as fractions of the grid step (4 and 7 on a 9-unit step).
+ * The design's tile is 18 units square, scaled to the pitch, so the step is half the pitch.
+ */
 private const val HALF_WIDTH = 4f / 9f
 private const val HALF_HEIGHT = 7f / 9f
 
 /**
  * The damask diaper drawn behind a filled play or pause button: tone-on-tone diamonds in [color]
- * at 16% (or [alpha]), every [pitch] (about 9dp on 36–48dp buttons, 14dp on the 80dp Now Playing button).
+ * at 16% (or [alpha]). [pitch] is the design's `--damask-pitch`: the repeat of its 18-unit tile, so
+ * diamonds in a row are one pitch apart (9dp on 36–48dp buttons, 14dp on the 80dp Now Playing button).
  * Only filled play/pause buttons get it, so the pattern means "press here to listen". Clip the
  * button to its shape before this, so the pattern stays inside it.
  */
 internal fun Modifier.damaskFill(color: Color, pitch: Dp, alpha: Float = DIAPER_ALPHA): Modifier = drawBehind {
-    val step = pitch.toPx()
+    val step = pitch.toPx() / 2
     val halfWidth = step * HALF_WIDTH
     val halfHeight = step * HALF_HEIGHT
     val path = Path()
