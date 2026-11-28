@@ -12,10 +12,6 @@ import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -102,10 +98,7 @@ private fun MiniPlayerBar(
             Progress(player, Modifier.padding(top = Spacing.Space1))
         }
         IconButton(onClick = onPlayPause) {
-            Icon(
-                imageVector = if (player.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                contentDescription = stringResource(if (player.isPlaying) Res.string.pause else Res.string.play),
-            )
+            PlayPauseIcon(player.isPlaying)
         }
     }
 }

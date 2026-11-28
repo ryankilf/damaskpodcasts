@@ -31,7 +31,9 @@ internal fun <S> FadeThrough(
         transitionSpec = {
             val enter = tween<Float>(Motion.FADE_IN_MS, Motion.FADE_OUT_MS, LinearOutSlowInEasing)
             val exit = tween<Float>(Motion.FADE_OUT_MS, easing = FastOutLinearInEasing)
-            fadeIn(enter) togetherWith fadeOut(exit)
+            // No size animation: screens fill the space, and animating it made the page jump when
+            // the mini-player appeared under it.
+            (fadeIn(enter) togetherWith fadeOut(exit)).using(null)
         },
         modifier = modifier,
         label = "screen",

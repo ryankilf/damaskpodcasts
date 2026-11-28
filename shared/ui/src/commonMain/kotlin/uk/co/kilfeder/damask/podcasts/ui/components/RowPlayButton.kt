@@ -46,21 +46,23 @@ internal fun RowPlayButton(row: EpisodeRowUi, playing: Boolean, onClick: () -> U
             modifier = Modifier.size(Sizes.MinTouchTarget),
         )
         IconButton(onClick = onClick, modifier = Modifier.size(Sizes.MinTouchTarget)) {
-            if (playing) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .size(Sizes.RowPauseButton)
-                        .damaskButton(
-                            MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.onPrimary,
-                            Sizes.DamaskPitchSmall,
-                        ),
-                ) {
-                    Icon(Icons.Rounded.Pause, contentDescription = label, tint = MaterialTheme.colorScheme.onPrimary)
+            PlayPauseCrossfade(playing) { now ->
+                if (now) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(Sizes.RowPauseButton)
+                            .damaskButton(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.onPrimary,
+                                Sizes.DamaskPitchSmall,
+                            ),
+                    ) {
+                        PlayPauseIcon(playing = true, tint = MaterialTheme.colorScheme.onPrimary, description = label)
+                    }
+                } else {
+                    PlayPauseIcon(playing = false, tint = MaterialTheme.colorScheme.onSurface, description = label)
                 }
-            } else {
-                Icon(Icons.Rounded.PlayArrow, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface)
             }
         }
     }

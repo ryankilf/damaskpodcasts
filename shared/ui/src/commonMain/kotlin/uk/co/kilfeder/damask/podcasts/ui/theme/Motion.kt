@@ -10,4 +10,7 @@ object Motion {
 
     /** The new screen fading in, after the old one has gone. */
     const val FADE_IN_MS = 210
+
+    /** Play and pause crossfading into each other on every play button. */
+    const val PLAY_PAUSE_MS = 150
 }

@@ -13,9 +13,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.TextButton
@@ -110,11 +107,7 @@ internal fun PlayButton(
         // Drawn inside the button, over its fill and under the icon; not on the grey disabled fill.
         val pattern = if (enabled) Modifier.damaskFill(MaterialTheme.colorScheme.onPrimary, pitch) else Modifier
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().clip(CircleShape).then(pattern)) {
-            Icon(
-                imageVector = if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                contentDescription = stringResource(if (playing) Res.string.pause else Res.string.play),
-                modifier = Modifier.size(iconSize),
-            )
+            PlayPauseIcon(playing, Modifier.size(iconSize))
         }
     }
 }
