@@ -52,6 +52,9 @@ private data class Progress(
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class DiscoverViewModel internal constructor(private val graph: AppGraph) : ViewModel() {
     private val query = MutableStateFlow("")
+
+    /** Bumped by Try again, to run the same search again. */
+    private val attempt = MutableStateFlow(0)
     /** Rows whose feed is being read to subscribe. */
     private val fetching = MutableStateFlow<Map<String, DiscoverRowState>>(emptyMap())
     private val problems = MutableStateFlow<Map<String, String>>(emptyMap())
@@ -61,7 +64,8 @@ class DiscoverViewModel internal constructor(private val graph: AppGraph) : View
     private val search = combine(
         query.debounce { if (it.isBlank()) 0 else TYPING_PAUSE_MS }.map { it.trim() }.distinctUntilChanged(),
         graph.settings.values.map { it.hideExplicit }.distinctUntilChanged(),
-    ) { q, hideExplicit -> q to hideExplicit }
+        attempt,
+    ) { q, hideExplicit, _ -> q to hideExplicit }
         .flatMapLatest { (q, hideExplicit) ->
             flow {
                 if (q.isEmpty()) {
@@ -90,9 +94,24 @@ class DiscoverViewModel internal constructor(private val graph: AppGraph) : View
             )
         }.stateInUi(viewModelScope, DiscoverUiState())
 
+    init {
+        // Opened with search text from elsewhere ("Find more comedy"): take it once.
+        viewModelScope.launch {
+            graph.discoverSeed.collect { seed ->
+                if (seed != null) {
+                    query.value = seed
+                    graph.discoverSeed.value = null
+                }
+            }
+        }
+    }
+
     fun onQueryChange(text: String) {
         query.value = text
     }
+
+    /** Try again, after the directory couldn't be reached or was busy. */
+    fun onRetry() = attempt.update { it + 1 }
 
     /** Subscribe: in Apple's genre for it (else its feed's), straight away. */
     fun onSubscribe(key: String) = withFeed(key, DiscoverRowState.SUBSCRIBING) { candidate ->

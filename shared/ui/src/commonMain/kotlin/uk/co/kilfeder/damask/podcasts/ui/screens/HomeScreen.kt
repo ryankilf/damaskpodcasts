@@ -1,5 +1,10 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.resources.home_checked
+import androidx.compose.material3.MaterialTheme
+import uk.co.kilfeder.damask.podcasts.ui.theme.DamaskTextStyles
+import uk.co.kilfeder.damask.podcasts.ui.components.ExactValueText
+import uk.co.kilfeder.damask.podcasts.presentation.format.Summarised
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -73,6 +78,7 @@ internal fun HomeScreen(
 @Composable
 private fun HomeEmpty(
     hasShows: Boolean,
+    lastChecked: Summarised?,
     onSearch: () -> Unit,
     onImport: () -> Unit,
     onRefresh: () -> Unit,
@@ -84,6 +90,17 @@ private fun HomeEmpty(
             title = stringResource(Res.string.home_caught_up_title),
             body = stringResource(Res.string.home_caught_up_body),
             modifier = modifier,
+            // "Checked 12 minutes ago", the exact time on long press.
+            meta = lastChecked?.let { checked ->
+                {
+                    ExactValueText(
+                        value = checked,
+                        display = stringResource(Res.string.home_checked, checked.summary),
+                        style = DamaskTextStyles.BodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
         ) {
             TextButton(onClick = onRefresh) { Text(stringResource(Res.string.home_check_now)) }
         }
@@ -116,7 +133,7 @@ private fun HomeContent(
 ) {
     Loadable(state.loading, modifier) {
         if (!state.hasSubscriptions || (state.inProgress.isEmpty() && state.upNext.isEmpty())) {
-            HomeEmpty(state.hasSubscriptions, onSearch, onImport, onRefresh, Modifier.fillMaxSize())
+            HomeEmpty(state.hasSubscriptions, state.lastChecked, onSearch, onImport, onRefresh, Modifier.fillMaxSize())
             return@Loadable
         }
         val markPlayed = stringResource(Res.string.mark_played)

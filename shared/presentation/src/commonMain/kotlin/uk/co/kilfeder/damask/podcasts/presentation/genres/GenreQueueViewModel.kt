@@ -95,6 +95,11 @@ class GenreQueueViewModel internal constructor(
         }
     }
 
+    /** "Find more comedy" on an empty genre: Discover opens searching for the genre's name. */
+    fun onFindMore() {
+        graph.discoverSeed.value = uiState.value.name
+    }
+
     private suspend fun currentShows() = graph.rotation.first().library.showsIn(id).map { it.id }
 
     fun onMarkPlayed(id: EpisodeId) {

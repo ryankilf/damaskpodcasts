@@ -1,5 +1,13 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.resources.discover_try_again
+import uk.co.kilfeder.damask.podcasts.ui.resources.discover_failed_body
+import uk.co.kilfeder.damask.podcasts.ui.resources.discover_busy_body
+import uk.co.kilfeder.damask.podcasts.ui.resources.discover_no_match_body
+import androidx.compose.material3.Button
+import androidx.compose.material.icons.rounded.CloudOff
+import androidx.compose.material.icons.rounded.HourglassEmpty
+import androidx.compose.material.icons.rounded.SearchOff
 import uk.co.kilfeder.damask.podcasts.ui.resources.discover_searching
 import uk.co.kilfeder.damask.podcasts.ui.resources.discover_updating
 import uk.co.kilfeder.damask.podcasts.ui.theme.Motion
@@ -76,6 +84,7 @@ private class DiscoverActions(
     val onSubscribe: (key: String) -> Unit,
     val onOpen: (key: String) -> Unit,
     val onOpenShow: (showId: String) -> Unit,
+    val onRetry: () -> Unit,
 )
 
 /**
@@ -121,7 +130,7 @@ internal fun DiscoverScreen(
         }
         DiscoverBody(
             state = state,
-            actions = DiscoverActions(viewModel::onSubscribe, viewModel::onOpen, onOpenShow),
+            actions = DiscoverActions(viewModel::onSubscribe, viewModel::onOpen, onOpenShow, viewModel::onRetry),
             modifier = Modifier.weight(1f),
         )
     }
@@ -146,10 +155,24 @@ private fun DiscoverBody(state: DiscoverUiState, actions: DiscoverActions, modif
                 label = stringResource(Res.string.discover_searching),
                 modifier = fill,
             )
-            DiscoverResults.NoMatch ->
-                EmptyMessage(stringResource(Res.string.discover_no_match, state.query.trim()), fill)
-            DiscoverResults.Busy -> EmptyMessage(stringResource(Res.string.discover_busy), fill)
-            DiscoverResults.Failed -> EmptyMessage(stringResource(Res.string.discover_failed), fill)
+            DiscoverResults.NoMatch -> EmptyState(
+                icon = Icons.Rounded.SearchOff,
+                title = stringResource(Res.string.discover_no_match),
+                body = stringResource(Res.string.discover_no_match_body),
+                modifier = fill,
+            )
+            DiscoverResults.Busy -> EmptyState(
+                icon = Icons.Rounded.HourglassEmpty,
+                title = stringResource(Res.string.discover_busy),
+                body = stringResource(Res.string.discover_busy_body),
+                modifier = fill,
+            ) { Button(onClick = actions.onRetry) { Text(stringResource(Res.string.discover_try_again)) } }
+            DiscoverResults.Failed -> EmptyState(
+                icon = Icons.Rounded.CloudOff,
+                title = stringResource(Res.string.discover_failed),
+                body = stringResource(Res.string.discover_failed_body),
+                modifier = fill,
+            ) { Button(onClick = actions.onRetry) { Text(stringResource(Res.string.discover_try_again)) } }
             is DiscoverResults.Found -> {
                 // Refining: the previous results stay, dimmed, until the new ones arrive.
                 val alpha by animateFloatAsState(

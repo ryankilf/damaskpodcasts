@@ -71,4 +71,15 @@ class FormatsTest {
         assertEquals("yesterday", Formats.lastPlayed(now - day, now, utc).summary)
         assertEquals("3 days ago", Formats.lastPlayed(now - 3 * day, now, utc).summary)
     }
+
+    @Test
+    fun agoIsToTheMinuteWhenRecent() {
+        val minute = 60_000L
+        assertEquals("just now", Formats.ago(now - 20_000L, now, utc).summary)
+        assertEquals("1 minute ago", Formats.ago(now - minute, now, utc).summary)
+        assertEquals("12 minutes ago", Formats.ago(now - 12 * minute, now, utc).summary)
+        assertEquals("3 hours ago", Formats.ago(now - 3 * 60 * minute, now, utc).summary)
+        assertEquals("2 weeks ago", Formats.ago(now - 14 * day, now, utc).summary)
+        assertEquals("Fri 27 Nov 2026, 11:48", Formats.ago(now - 12 * minute, now, utc).exact)
+    }
 }

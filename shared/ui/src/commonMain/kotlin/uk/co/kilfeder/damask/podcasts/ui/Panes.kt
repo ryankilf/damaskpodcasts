@@ -184,6 +184,7 @@ private fun SinglePane(state: AppUiState, graph: AppGraph, actions: ShellActions
                 showHeader = true,
                 onBack = actions.onBack,
                 onLeave = actions.onBack,
+                onFindShows = { actions.onSelectTab(Tab.SEARCH) },
             )
             is Destination.Episode -> EpisodeScreen(top.id, graph, actions, Modifier.fillMaxSize(), top.source)
             is Destination.Show -> ShowScreen(

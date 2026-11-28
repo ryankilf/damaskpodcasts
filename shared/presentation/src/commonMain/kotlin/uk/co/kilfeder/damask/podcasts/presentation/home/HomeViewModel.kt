@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.presentation.home
 
+import uk.co.kilfeder.damask.podcasts.presentation.format.Summarised
+import uk.co.kilfeder.damask.podcasts.presentation.format.Formats
 import uk.co.kilfeder.damask.podcasts.presentation.app.PAGE_SIZE
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.markPlayed
 import uk.co.kilfeder.damask.podcasts.presentation.app.page
@@ -26,6 +28,8 @@ data class HomeUiState(
     /** True when Up Next may have more to show. */
     val canLoadMore: Boolean = false,
     val refreshing: Boolean = false,
+    /** When feeds were last checked for new episodes ("Checked 12 minutes ago"); null: never. */
+    val lastChecked: Summarised? = null,
 )
 
 /** Home: In Progress, then Up Next (spec › Screens). */
@@ -37,7 +41,8 @@ class HomeViewModel internal constructor(private val graph: AppGraph) : ViewMode
         graph.rotation,
         upNextSize,
         refreshing,
-    ) { rotation, size, refreshing ->
+        graph.lastChecked,
+    ) { rotation, size, refreshing, checked ->
         val library = rotation.library
         val now = graph.wallClockMs()
         val (upNext, more) = rotation.upNext().page(size)
@@ -48,6 +53,7 @@ class HomeViewModel internal constructor(private val graph: AppGraph) : ViewMode
             upNext = upNext.map { it.toRow(library, rotation, now) },
             canLoadMore = more,
             refreshing = refreshing,
+            lastChecked = checked?.let { Formats.ago(it, now) },
         )
     }.stateInUi(viewModelScope, HomeUiState())
 

@@ -21,6 +21,7 @@ object Formats {
     private const val SECOND_MS = 1_000L
     private const val HOUR_MINUTES = 60L
     private const val MINUTE_SECONDS = 60L
+    private const val DAY_MINUTES = 24 * 60L
     private const val WEEK_DAYS = 7
     private const val MONTH_DAYS = 30
     private const val YEAR_DAYS = 365
@@ -56,6 +57,21 @@ object Formats {
     fun lastPlayed(epochMs: Long, nowMs: Long, zone: TimeZone = TimeZone.currentSystemDefault()): Summarised {
         val date = date(epochMs, nowMs, zone)
         return date.copy(summary = date.summary.replaceFirstChar { it.lowercase() })
+    }
+
+    /**
+     * How long ago, to the minute when it's recent ("just now", "12 minutes ago", "3 hours ago"),
+     * else as [relativeDate] mid-sentence ("yesterday", "2 weeks ago"). For "Checked …".
+     */
+    fun ago(epochMs: Long, nowMs: Long, zone: TimeZone = TimeZone.currentSystemDefault()): Summarised {
+        val minutes = (nowMs - epochMs) / MINUTE_MS
+        val summary = when {
+            minutes < 1 -> "just now"
+            minutes < HOUR_MINUTES -> plural(minutes.toInt(), "minute") + " ago"
+            minutes < DAY_MINUTES -> plural((minutes / HOUR_MINUTES).toInt(), "hour") + " ago"
+            else -> relativeDate(epochMs, nowMs, zone).replaceFirstChar { it.lowercase() }
+        }
+        return Summarised(summary, exactDateTime(epochMs, zone))
     }
 
     /** "Thu 6 Nov 2026, 21:14". */

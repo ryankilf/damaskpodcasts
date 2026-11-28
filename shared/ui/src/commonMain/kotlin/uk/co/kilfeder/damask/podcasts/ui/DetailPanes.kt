@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui
 
+import uk.co.kilfeder.damask.podcasts.presentation.navigation.Tab
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -122,6 +123,7 @@ private fun GenreDetail(categoryId: String?, actions: ShellActions, graph: AppGr
             modifier = Modifier.widthIn(max = Sizes.MaxContentWidth).fillMaxSize(),
             showHeader = true,
             onLeave = actions.onBack,
+            onFindShows = { actions.onSelectTab(Tab.SEARCH) },
         )
     }
 }

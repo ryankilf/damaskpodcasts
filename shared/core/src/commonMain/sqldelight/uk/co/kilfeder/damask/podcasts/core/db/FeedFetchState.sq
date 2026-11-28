@@ -40,3 +40,9 @@ UPDATE feed_fetch_state SET etag = NULL, last_modified = NULL WHERE show_id = :s
 forgetValidatorsInCategory:
 UPDATE feed_fetch_state SET etag = NULL, last_modified = NULL
 WHERE show_id IN (SELECT id FROM show WHERE category_id = :category_id);
+
+-- When the app last checked for new episodes: the latest fetch of any subscribed show's feed.
+selectLastChecked:
+SELECT MAX(f.last_fetched_at) AS last_checked
+FROM feed_fetch_state f JOIN show s ON s.id = f.show_id
+WHERE s.subscribed = 1;

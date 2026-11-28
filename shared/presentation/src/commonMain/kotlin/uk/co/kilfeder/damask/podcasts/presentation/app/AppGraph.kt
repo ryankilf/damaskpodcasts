@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.presentation.app
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import uk.co.kilfeder.damask.podcasts.presentation.genres.ManageGenresViewModel
 import kotlinx.coroutines.launch
 import uk.co.kilfeder.damask.podcasts.core.model.ShowId
@@ -117,6 +119,13 @@ class AppGraph internal constructor(
     ) { _, _, _, _, _ -> }
         .mapLatest { onDb { repository.load() } }
         .shareIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), replay = 1)
+
+    /** When the app last checked feeds for new episodes (null: never), for Home's "Checked …". */
+    internal val lastChecked: Flow<Long?> = db.feedFetchStateQueries.selectLastChecked().asFlow()
+        .map { query -> onDb { query.executeAsOneOrNull()?.last_checked } }
+
+    /** Search text for Discover to open with ("Find more comedy" on an empty genre); taken once. */
+    internal val discoverSeed = MutableStateFlow<String?>(null)
 
     /** The one playback controller; the engine is created on first use, on the main thread. */
     val playback: PlaybackController by lazy {

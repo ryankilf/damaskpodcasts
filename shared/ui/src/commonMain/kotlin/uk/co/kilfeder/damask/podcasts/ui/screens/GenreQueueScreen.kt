@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.resources.genre_queue_find_more
+import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.fillMaxSize
 import uk.co.kilfeder.damask.podcasts.presentation.genres.ManagedGenreUi
 import uk.co.kilfeder.damask.podcasts.ui.components.rememberGenreEditState
@@ -78,6 +80,7 @@ internal fun GenreQueueScreen(
     showHeader: Boolean = false,
     onBack: (() -> Unit)? = null,
     onLeave: () -> Unit = {},
+    onFindShows: () -> Unit = {},
     viewModel: GenreQueueViewModel = viewModel(key = "genre-$categoryId") { graph.genreQueueViewModel(categoryId) },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -104,6 +107,11 @@ internal fun GenreQueueScreen(
         showHeader = showHeader,
         onBack = onBack,
         editing = editing,
+        // "Find more comedy": Discover, searching for this genre's name.
+        onFindMore = {
+            viewModel.onFindMore()
+            onFindShows()
+        },
         modifier = modifier,
     )
 }
@@ -124,6 +132,7 @@ private fun GenreQueueContent(
     showHeader: Boolean,
     onBack: (() -> Unit)?,
     editing: GenreEditState,
+    onFindMore: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Loadable(state.loading, modifier) {
@@ -161,6 +170,7 @@ private fun GenreQueueContent(
                 showHeader = showHeader,
                 titleState = titleState,
                 listBackground = listBackground,
+                onFindMore = onFindMore,
                 modifier = Modifier.weight(1f).collapsingListTop(titleState),
             )
         }
@@ -179,6 +189,7 @@ private fun GenreQueueList(
     showHeader: Boolean,
     titleState: CollapsingTitleState,
     listBackground: Color,
+    onFindMore: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val markPlayed = stringResource(Res.string.mark_played)
@@ -209,7 +220,7 @@ private fun GenreQueueList(
             }
         }
         if (state.upNext.isEmpty() && state.inProgress.isEmpty()) {
-            item(key = "empty") { EmptyQueue(state, Modifier.fillParentMaxHeight(EMPTY_HEIGHT_SHARE)) }
+            item(key = "empty") { EmptyQueue(state, onFindMore, Modifier.fillParentMaxHeight(EMPTY_HEIGHT_SHARE)) }
         }
         if (state.upNext.isNotEmpty()) {
             item(key = "up-next") {
@@ -232,7 +243,7 @@ private const val EMPTY_HEIGHT_SHARE = 0.8f
 
 /** Nothing left to play in this genre (design hand-off › Empty · genre queue). */
 @Composable
-private fun EmptyQueue(state: GenreQueueUiState, modifier: Modifier = Modifier) {
+private fun EmptyQueue(state: GenreQueueUiState, onFindMore: () -> Unit, modifier: Modifier = Modifier) {
     val last = state.lastListened
     EmptyState(
         icon = Icons.Rounded.Category,
@@ -240,7 +251,9 @@ private fun EmptyQueue(state: GenreQueueUiState, modifier: Modifier = Modifier) 
         body = stringResource(Res.string.genre_queue_empty_body, state.name),
         modifier = modifier,
         meta = last?.let { { LastPlayedText(it) } },
-    )
+    ) {
+        TextButton(onClick = onFindMore) { Text(stringResource(Res.string.genre_queue_find_more, state.name)) }
+    }
 }
 
 /** Back; once scrolled, the genre's front cover, its name and a round play button join it. */
