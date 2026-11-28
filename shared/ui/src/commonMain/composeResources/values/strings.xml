@@ -25,10 +25,15 @@
     <string name="home_check_now">Check now</string>
     <string name="import_subscriptions">Import subscriptions</string>
     <plurals name="shows_count">
-        <item quantity="one">%1$d show, A–Z</item>
-        <item quantity="other">%1$d shows, A–Z</item>
+        <item quantity="one">%1$d show</item>
+        <item quantity="other">%1$d shows</item>
     </plurals>
     <string name="shows_untitled">Untitled show</string>
+    <string name="shows_order_az">A–Z</string>
+    <string name="shows_order_za">Z–A</string>
+    <string name="shows_order_recent">Recently played</string>
+    <string name="shows_order_least_recent">Least recently played</string>
+    <string name="shows_order_label">Sort: %1$s. Change sort</string>
     <string name="shows_filter">Search your shows</string>
     <string name="search_clear">Clear search</string>
     <string name="shows_no_match">No shows match “%1$s”.</string>

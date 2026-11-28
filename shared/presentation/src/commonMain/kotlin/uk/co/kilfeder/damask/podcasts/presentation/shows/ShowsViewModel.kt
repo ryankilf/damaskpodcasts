@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import uk.co.kilfeder.damask.podcasts.core.model.Show
 import uk.co.kilfeder.damask.podcasts.core.rotation.Library
 import uk.co.kilfeder.damask.podcasts.core.rotation.Rotation
@@ -36,24 +38,31 @@ data class ShowsUiState(
     val total: Int = 0,
     /** What's typed in "Search your shows"; blank = every show. */
     val query: String = "",
+    val order: ShowsOrder = ShowsOrder.A_TO_Z,
 )
 
-/** Shows: every subscribed show A–Z, to go straight to one (spec › Screens). */
-class ShowsViewModel internal constructor(graph: AppGraph) : ViewModel() {
+/** Shows: every subscribed show, sorted as you choose, to go straight to one (spec › Screens). */
+class ShowsViewModel internal constructor(private val graph: AppGraph) : ViewModel() {
     private val query = MutableStateFlow("")
 
-    val uiState: StateFlow<ShowsUiState> = combine(graph.rotation, query) { rotation, q ->
+    val uiState: StateFlow<ShowsUiState> = combine(
+        graph.rotation,
+        query,
+        graph.settings.values.map { it.showsOrder },
+    ) { rotation, q, order ->
         val library = rotation.library
         val now = graph.wallClockMs()
         val needle = q.trim()
         ShowsUiState(
             loading = false,
-            shows = library.subscribedShows
-                .filter { needle.isEmpty() || it.title.contains(needle, ignoreCase = true) }
-                .sortedWith(compareBy({ it.sortKey() }, { it.id.value }))
-                .map { it.toRow(library, rotation, now) },
+            shows = sortShows(
+                library.subscribedShows.filter { needle.isEmpty() || it.title.contains(needle, ignoreCase = true) },
+                order,
+                rotation,
+            ).map { it.toRow(library, rotation, now) },
             total = library.subscribedShows.size,
             query = q,
+            order = order,
         )
     }.stateInUi(viewModelScope, ShowsUiState())
 
@@ -61,13 +70,11 @@ class ShowsViewModel internal constructor(graph: AppGraph) : ViewModel() {
     fun onQueryChange(text: String) {
         query.value = text
     }
+
+    fun onOrderChange(order: ShowsOrder) {
+        viewModelScope.launch { graph.onDb { graph.settings.setShowsOrder(order) } }
+    }
 }
-
-/** A–Z ignoring case and a leading "The "; shows with no name yet (unread feeds) go last. */
-private fun Show.sortKey(): String = title.lowercase().removePrefix("the ").trim().ifEmpty { LAST }
-
-/** Sorts after any name. */
-private const val LAST = "\uFFFF"
 
 internal fun Show.toRow(library: Library, rotation: Rotation, nowMs: Long) = ShowRowUi(
     showId = id.value,

@@ -1,5 +1,15 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.resources.shows_order_label
+import uk.co.kilfeder.damask.podcasts.ui.resources.shows_order_least_recent
+import uk.co.kilfeder.damask.podcasts.ui.resources.shows_order_recent
+import uk.co.kilfeder.damask.podcasts.ui.resources.shows_order_za
+import uk.co.kilfeder.damask.podcasts.ui.resources.shows_order_az
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Row
+import uk.co.kilfeder.damask.podcasts.ui.components.OrderChip
+import uk.co.kilfeder.damask.podcasts.presentation.shows.ShowsOrder
 import uk.co.kilfeder.damask.podcasts.ui.components.SearchField
 import uk.co.kilfeder.damask.podcasts.ui.components.SelectableListRow
 import uk.co.kilfeder.damask.podcasts.ui.resources.shows_no_match
@@ -54,15 +64,26 @@ internal fun ShowsScreen(
     viewModel: ShowsViewModel = viewModel { graph.showsViewModel() },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    ShowsContent(state, onOpenShow, onSearch, viewModel::onQueryChange, selectedId, modifier)
+    ShowsContent(
+        state = state,
+        intents = ShowsIntents(onOpenShow, onSearch, viewModel::onQueryChange, viewModel::onOrderChange),
+        selectedId = selectedId,
+        modifier = modifier,
+    )
 }
+
+/** What Shows can ask for. */
+private class ShowsIntents(
+    val onOpenShow: (String) -> Unit,
+    val onSearch: () -> Unit,
+    val onQueryChange: (String) -> Unit,
+    val onOrderChange: (ShowsOrder) -> Unit,
+)
 
 @Composable
 private fun ShowsContent(
     state: ShowsUiState,
-    onOpenShow: (String) -> Unit,
-    onSearch: () -> Unit,
-    onQueryChange: (String) -> Unit,
+    intents: ShowsIntents,
     selectedId: String?,
     modifier: Modifier = Modifier,
 ) {
@@ -77,27 +98,15 @@ private fun ShowsContent(
             body = stringResource(Res.string.home_no_shows_body),
             modifier = modifier,
         ) {
-            Button(onClick = onSearch) { Text(stringResource(Res.string.home_search)) }
+            Button(onClick = intents.onSearch) { Text(stringResource(Res.string.home_search)) }
         }
         return
     }
     LazyColumn(modifier) {
-        item(key = "filter") { ShowsFilter(state.query, onQueryChange) }
-        item(key = "count") {
-            val text = if (state.shows.isEmpty()) {
-                stringResource(Res.string.shows_no_match, state.query.trim())
-            } else {
-                pluralStringResource(Res.plurals.shows_count, state.shows.size, state.shows.size)
-            }
-            Text(
-                text = text,
-                style = DamaskTextStyles.BodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = Spacing.Space4, vertical = Spacing.Space1),
-            )
-        }
+        item(key = "filter") { ShowsFilter(state.query, intents.onQueryChange) }
+        item(key = "count") { ShowsCountAndOrder(state, intents.onOrderChange) }
         items(state.shows, key = { it.showId }) { show ->
-            ShowRow(show, selected = show.showId == selectedId, onClick = { onOpenShow(show.showId) })
+            ShowRow(show, selected = show.showId == selectedId, onClick = { intents.onOpenShow(show.showId) })
         }
     }
 }
@@ -134,3 +143,45 @@ private fun ShowsFilter(query: String, onQueryChange: (String) -> Unit, modifier
         modifier = modifier.padding(start = Spacing.Space4, end = Spacing.Space4, bottom = Spacing.Space3),
     )
 }
+
+/** "54 shows" (or "No shows match …") and the sort chip beside it. */
+@Composable
+private fun ShowsCountAndOrder(
+    state: ShowsUiState,
+    onOrderChange: (ShowsOrder) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val text = if (state.shows.isEmpty()) {
+        stringResource(Res.string.shows_no_match, state.query.trim())
+    } else {
+        pluralStringResource(Res.plurals.shows_count, state.shows.size, state.shows.size)
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.fillMaxWidth().padding(horizontal = Spacing.Space4, vertical = Spacing.Space1),
+    ) {
+        Text(
+            text = text,
+            style = DamaskTextStyles.BodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        OrderChip(
+            selected = state.order,
+            options = ShowsOrder.entries,
+            nameOf = { showsOrderName(it) },
+            label = stringResource(Res.string.shows_order_label, showsOrderName(state.order)),
+            onSelect = onOrderChange,
+        )
+    }
+}
+
+@Composable
+private fun showsOrderName(order: ShowsOrder): String = stringResource(
+    when (order) {
+        ShowsOrder.A_TO_Z -> Res.string.shows_order_az
+        ShowsOrder.Z_TO_A -> Res.string.shows_order_za
+        ShowsOrder.RECENTLY_PLAYED -> Res.string.shows_order_recent
+        ShowsOrder.LEAST_RECENTLY_PLAYED -> Res.string.shows_order_least_recent
+    },
+)
