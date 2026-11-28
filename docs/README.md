@@ -29,13 +29,12 @@ The docs don't repeat either. They describe the implementation and record every 
 | Database (schema 4, data layer) | Done, tested |
 | Playback | Shared controller done and tested; Android (Media3, background service, mini-player, controls) working on the emulator; desktop plays through FFmpeg (media keys, loopback proxy and packaging to come); iOS not started; downloads, Android Auto and "stop after this episode" to come |
 | OPML import, feed fetch / parse / refresh | Done, tested; a real 78-feed Pocket Casts export imports cleanly (2 feeds are dead upstream) |
-| Presentation and screens | Import, Home, Genres, genre queue, Played, Settings done and tested; Search is a placeholder until the gateway merges; Now Playing waits on playback; phone, rail and two-pane layouts done (see Architecture › Window sizes) |
+| Presentation and screens | Import, Home, Genres, genre queue, Played, Settings done and tested; Discover search (Apple's directory) not built yet; Now Playing waits on playback; phone, rail and two-pane layouts done (see Architecture › Window sizes) |
 | Playback (Android Media3, desktop FFmpeg), Android Auto | Not started |
 | Downloads, background refresh scheduling | Not started |
-| Search backend (`shared/api`, `server/search`, `server/importer`, `deploy/`) | Specified ([spec › Search](spec.md#search)); not started |
 | `podcast_guid` aliasing | Specified; not started |
 | 18+ age gate, "Hide explicit" | Specified ([spec › Compliance](spec.md#compliance)); not started |
-| Sync, sign-in, billing | v1, not started |
+| Sync, sign-in | Not planned for now (spec › Sync); no billing: the app is free |
 
 ## Keeping these docs current
 

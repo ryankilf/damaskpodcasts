@@ -13,7 +13,8 @@ paths = [
   '''(^|/)\.idea/''',
   '''(^|/)local\.properties$''',
   '''(^|/)llm-scrapbook/''',
-  # Throwaway values for the local docker compose stack only (documented as never for servers).
+  # Throwaway values for the old local docker compose stack (search backend, now only in history
+  # and on the backend branch). Never valid for any server.
   '''(^|/)deploy/local\.env$''',
 ]
 # The local stack's private token, quoted in curl examples. Not valid anywhere but localhost.

@@ -1,6 +1,6 @@
 # Feeds
 
-Feeds are fetched on the device; the server never touches them. Our search gateway is for discovery only: import never sends feed URLs to it. Code is in `core/feed`, `core/importer` and `core/data/FeedStore`.
+Feeds are fetched on the device; nothing of ours sits in between. Search (Apple's directory) is for discovery only: import never sends feed URLs to it. Code is in `core/feed`, `core/importer` and `core/data/FeedStore`.
 
 ## Import (Settings › Import from OPML)
 

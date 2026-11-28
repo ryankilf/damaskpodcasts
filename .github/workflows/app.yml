@@ -4,21 +4,15 @@ name: App
 
 on:
   push:
-    branches: [main, backend]
+    branches: [main]
     paths-ignore:
-      - "server/**"
-      - "deploy/**"
       - "docs/**"
       - "**/*.md"
-      - ".github/workflows/server.yml"
       - ".github/workflows/security.yml"
   pull_request:
     paths-ignore:
-      - "server/**"
-      - "deploy/**"
       - "docs/**"
       - "**/*.md"
-      - ".github/workflows/server.yml"
       - ".github/workflows/security.yml"
 
 permissions:
@@ -41,11 +35,10 @@ jobs:
           java-version: "21"
       - uses: gradle/actions/setup-gradle@v6
       - name: Gradle check
-        # Everything except the server modules (their own workflow), with iOS targets disabled on Linux.
+        # Everything, with iOS targets disabled on Linux.
         run: >
           ./gradlew --continue -Pkotlin.native.ignoreDisabledTargets=true
           check
-          -x :server:meili:check -x :server:search:check -x :server:importer:check
       - name: Upload reports
         if: failure()
         uses: actions/upload-artifact@v7

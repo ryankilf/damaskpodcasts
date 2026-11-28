@@ -23,12 +23,7 @@ graph TD
 | `iosApp` | Swift entry point hosting Compose | |
 | `detekt-rules` | Project lint rules (see [guardrails](guardrails.md)) | |
 | `architecture-tests` | Konsist tests for the layering | |
-| `shared/api` *(planned)* | Search API DTOs, shared by app and server | Anything but kotlinx-serialization |
-| `server/search` *(planned)* | Ktor search gateway (JVM) | Any `shared/` module except `shared/api` |
-| `server/importer` *(planned)* | Weekly Podcast Index dump to Meilisearch CLI (JVM) | Any `shared/` module except `shared/api` |
-| `deploy/` *(planned)* | docker-compose, Dockerfiles, Meilisearch settings, importer schedule | |
-
-The server side is specified in [spec › Search](spec.md#search) and the layout in [spec › Architecture](spec.md#architecture).
+There's no server: search calls Apple's directory from the device ([spec › Search](spec.md#search)). The search backend that was built and dropped is on the `backend` branch.
 
 Packages follow the modules: `uk.co.kilfeder.damask.podcasts.core`, `.presentation`, `.ui`.
 

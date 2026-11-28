@@ -21,9 +21,5 @@ node_modules/
 # Local scratch files shared with the coding assistant (may contain private feed URLs)
 llm-scrapbook/
 
-# Server secrets: the real deploy/.env lives only on the VPS. (.env.example and the dev-only
-# local.env are committed on purpose.)
-deploy/.env
-deploy/.env.ci
 # Agent git worktrees
 .claude/worktrees/

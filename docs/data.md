@@ -33,7 +33,7 @@ Every synced row carries an `hlc`. Each synced table's `upsert` only replaces a 
 INSERT ... ON CONFLICT (...) DO UPDATE SET ... WHERE excluded.hlc > episode_position.hlc;
 ```
 
-That is the same rule the server will use, so pulled changes merge locally the same way. Position and played state are separate tables so each needs only a row-level rule. The exception is `listen_stats.addLocal`, which adds this device's time to its own row. Only the owning device writes a row.
+That is the same rule a sync server would use (if sync comes; spec › Sync), so pulled changes would merge locally the same way. Position and played state are separate tables so each needs only a row-level rule. The exception is `listen_stats.addLocal`, which adds this device's time to its own row. Only the owning device writes a row.
 
 ## HLC timestamps
 

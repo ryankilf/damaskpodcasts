@@ -221,3 +221,14 @@ The search backend (`shared/api`, `server/*`, `deploy/`; see [server.md](server.
 - **Not a capped free tier (e.g. 100 free searches).** Users can't see a search count, setup uses most searches on day one (the worst moment to hit a wall), and light users would never run out. Time is a fairer, clearer unit.
 - **No ads.** A screen-off audio app earns pennies per user from ads, ad SDKs bring tracking and consent prompts, there's nothing good for desktop, and ads around the shows' own ads drive people away.
 - **RevenueCat and Supabase share the user ID** (`logIn` with the Supabase ID); RevenueCat's webhook writes `entitlement` through a Supabase Edge Function; the access date goes into the token so the gateway never queries the database.
+
+## No money, no servers (28 Nov, later)
+
+This replaces the earlier sign-in, trial and pricing model and the search backend.
+
+- **Free, with nothing to run.** Damask isn't going to make money, so it mustn't cost any. No account, no ads, no purchases, no sync, no servers. The sign-in, trial, RevenueCat and access model written earlier today is dropped.
+- **Search is Apple's podcast directory, called from the device**, as AntennaPod does (it also searches Podcast Index and fyyd). No key and no account; Apple's rate limit is per IP, so per user. Our Meilisearch index and Ktor gateway, built and merged, would have needed a VPS and could have cost money; they're removed from main and kept on the `backend` branch and the `backend-archive` tag. Apple's terms describe the API as being for promoting their stores; if Apple objects, we change source or shut the app down.
+- **Only Apple, not three sources.** Searching more than one directory would make the app a regulated search service under the UK Online Safety Act (spec › Compliance), so fyyd and Podcast Index aren't added without a legal review. Podcast Index from the device is out anyway: its terms forbid API credentials in apps.
+- **No sync for now.** It's mostly for listening at a work computer sometimes. If it comes, Supabase, probably paid. The local HLC and outbox design stays, so it can be added.
+- **Closed source** stays.
+- **Age signals stay on the device.** With no account, a minor signal blocks that device only, and the band is stored locally.

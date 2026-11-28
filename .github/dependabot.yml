@@ -9,19 +9,6 @@ updates:
       gradle:
         patterns: ["*"]
 
-  # Base images in deploy/*Dockerfile.
-  - package-ecosystem: docker
-    directory: /deploy
-    schedule:
-      interval: weekly
-
-  # Images in deploy/docker-compose*.yml (Meilisearch, Caddy). Bumping Meilisearch also needs
-  # gradle/libs.versions.toml's `meilisearch` changed to match; CI fails until it is.
-  - package-ecosystem: docker-compose
-    directory: /deploy
-    schedule:
-      interval: weekly
-
   - package-ecosystem: github-actions
     directory: /
     schedule:
