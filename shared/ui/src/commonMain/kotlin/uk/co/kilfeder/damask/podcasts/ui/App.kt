@@ -134,26 +134,34 @@ private fun ShellLayout(
             rowPlayer = RowPlayer(state.playing, state.playingNow, intents.onRowPlayPause),
         )
         Row(Modifier.fillMaxSize()) {
-            if (width != WidthClass.COMPACT) TabRail(state.nav.tab, intents.onSelectTab)
+            val compact = width == WidthClass.COMPACT
+            val onSettings = { intents.onNavigate(Destination.Settings) }
+            if (!compact) TabRail(state.nav.tab, intents.onSelectTab, onSettings)
+            // Two-pane layouts have no app bar: each pane has its own heading (TabletGenres artboard).
+            val panes = isTwoPaneLayout(state, width)
             Scaffold(
                 topBar = {
-                    TopBar(
-                        title = titleOf(state),
-                        showBack = top != null,
-                        showSettings = top == null,
-                        onBack = { intents.onBack() },
-                        onSettings = { intents.onNavigate(Destination.Settings) },
-                    )
+                    if (!panes) {
+                        TopBar(
+                            title = titleOf(state),
+                            showBack = top != null,
+                            showSettings = compact && top == null,
+                            onBack = { intents.onBack() },
+                            onSettings = onSettings,
+                        )
+                    }
                 },
                 bottomBar = {
-                    BottomBars(
-                        graph = graph,
-                        tab = state.nav.tab,
-                        showTabs = width == WidthClass.COMPACT,
-                        playingShown = playingIsOnScreen(state, width),
-                        onSelectTab = intents.onSelectTab,
-                        onNavigate = intents.onNavigate,
-                    )
+                    if (!panes) {
+                        BottomBars(
+                            graph = graph,
+                            tab = state.nav.tab,
+                            showTabs = compact,
+                            playingShown = playingIsOnScreen(state, width),
+                            onSelectTab = intents.onSelectTab,
+                            onNavigate = intents.onNavigate,
+                        )
+                    }
                 },
                 snackbarHost = { SnackbarHost(snackbars) },
             ) { padding -> ShellContent(state, graph, width, actions, padding) }
@@ -173,3 +181,14 @@ private fun ShowMessages(message: AppMessage?, snackbars: SnackbarHostState, onM
         snackbars.showSnackbar(text)
     }
 }
+
+/** What the shell's screens can ask for. */
+internal class ShellActions(
+    val onSelectTab: (Tab) -> Unit,
+    val onNavigate: (Destination) -> Unit,
+    val onPlayEpisode: (EpisodeId, PlaySource) -> Unit,
+    val onOpenGenre: (String) -> Unit,
+    val onImportFinish: (Int) -> Unit,
+    val onBack: () -> Unit,
+    val rowPlayer: RowPlayer,
+)

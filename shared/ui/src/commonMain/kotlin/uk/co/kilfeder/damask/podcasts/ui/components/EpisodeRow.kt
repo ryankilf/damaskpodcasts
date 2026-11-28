@@ -22,6 +22,7 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.customActions
@@ -53,6 +54,7 @@ internal fun EpisodeRow(
     modifier: Modifier = Modifier,
     swipeLabel: String? = null,
     onSwipe: () -> Unit = {},
+    background: Color = MaterialTheme.colorScheme.surface,
 ) {
     if (swipeLabel == null) {
         RowContent(row, playing, onClick, onPlayPause, modifier)
@@ -68,7 +70,8 @@ internal fun EpisodeRow(
             customActions = listOf(CustomAccessibilityAction(swipeLabel) { onSwipe(); true })
         },
     ) {
-        RowContent(row, playing, onClick, onPlayPause, Modifier.background(MaterialTheme.colorScheme.surface))
+        // Opaque over the swipe background; [background] matches what the row sits on.
+        RowContent(row, playing, onClick, onPlayPause, Modifier.background(background))
     }
 }
 

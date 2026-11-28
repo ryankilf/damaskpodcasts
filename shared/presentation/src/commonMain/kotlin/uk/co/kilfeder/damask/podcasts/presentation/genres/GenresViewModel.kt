@@ -17,6 +17,8 @@ data class GenreRowUi(
     val showCount: Int,
     /** null = never listened (these sort first). */
     val lastListened: Summarised?,
+    /** The genre heard least recently, flagged "Longest unplayed" (only when there's a choice). */
+    val stalest: Boolean = false,
     /** Up to [COVER_COUNT] covers, front first: the shows that come next in this genre's queue. */
     val coverUrls: List<String>,
 )
@@ -33,19 +35,19 @@ data class GenresUiState(
 class GenresViewModel internal constructor(graph: AppGraph) : ViewModel() {
     val uiState: StateFlow<GenresUiState> = combine(graph.library, graph.rotation) { library, rotation ->
         val now = graph.wallClockMs()
-        GenresUiState(
-            loading = false,
-            genres = rotation.genres().mapNotNull { category ->
-                val shows = library.showsByCategory[category.id].orEmpty()
-                if (shows.isEmpty()) return@mapNotNull null
-                GenreRowUi(
-                    categoryId = category.id.value,
-                    name = category.name,
-                    showCount = shows.size,
-                    lastListened = rotation.history.lastListened(category.id)?.let { Formats.date(it.wallMs, now) },
-                    coverUrls = rotation.coverShows(category.id, COVER_COUNT).mapNotNull { it.imageUrl },
-                )
-            },
-        )
+        val rows = rotation.genres().mapNotNull { category ->
+            val shows = library.showsByCategory[category.id].orEmpty()
+            if (shows.isEmpty()) return@mapNotNull null
+            GenreRowUi(
+                categoryId = category.id.value,
+                name = category.name,
+                showCount = shows.size,
+                lastListened = rotation.history.lastListened(category.id)?.let { Formats.date(it.wallMs, now) },
+                coverUrls = rotation.coverShows(category.id, COVER_COUNT).mapNotNull { it.imageUrl },
+            )
+        }
+        // Genres come least recently played first, so the first is the one to flag.
+        val flagged = rows.mapIndexed { i, row -> row.copy(stalest = i == 0 && rows.size > 1) }
+        GenresUiState(loading = false, genres = flagged)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), GenresUiState())
 }

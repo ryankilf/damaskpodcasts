@@ -76,7 +76,8 @@ internal fun LazyListScope.sectionHeader(key: String, stringResourceKey: StringR
     item(key = "header-$key") {
         Text(
             text = stringResource(stringResourceKey),
-            style = DamaskTextStyles.TitleLarge,
+            // The design's section headings ("Up next") use the title style, like the panel's.
+            style = DamaskTextStyles.Title,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
                 .padding(start = Spacing.Space4, end = Spacing.Space4, top = Spacing.Space6, bottom = Spacing.Space2)

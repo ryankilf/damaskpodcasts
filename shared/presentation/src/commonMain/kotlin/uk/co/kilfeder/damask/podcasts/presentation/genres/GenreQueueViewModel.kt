@@ -17,11 +17,19 @@ import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeRowUi
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.toKey
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.toRow
+import uk.co.kilfeder.damask.podcasts.presentation.format.Formats
+import uk.co.kilfeder.damask.podcasts.presentation.format.Summarised
 
 data class GenreQueueUiState(
     val loading: Boolean = true,
     val name: String = "",
-    val episodes: List<EpisodeRowUi> = emptyList(),
+    val showCount: Int = 0,
+    /** null = never listened. */
+    val lastListened: Summarised? = null,
+    /** The queue's in-progress episodes (it starts with them), shown in their own panel. */
+    val inProgress: List<EpisodeRowUi> = emptyList(),
+    /** The rest of the queue: one episode per show, round-robin. */
+    val upNext: List<EpisodeRowUi> = emptyList(),
     val canLoadMore: Boolean = false,
 )
 
@@ -40,11 +48,16 @@ class GenreQueueViewModel internal constructor(
     ) { library, rotation, size ->
         val now = graph.wallClockMs()
         val queue = rotation.genreQueue(id).take(size + 1).toList()
+        // Every row is this genre: no chip.
+        val rows = queue.take(size).map { it.toRow(library, rotation, now).copy(genre = null) }
+        val (inProgress, upNext) = rows.partition { it.progress != null }
         GenreQueueUiState(
             loading = false,
             name = library.categories.firstOrNull { it.id == id }?.name.orEmpty(),
-            // Every row is this genre: no chip.
-            episodes = queue.take(size).map { it.toRow(library, rotation, now).copy(genre = null) },
+            showCount = library.showsByCategory[id].orEmpty().size,
+            lastListened = rotation.history.lastListened(id)?.let { Formats.date(it.wallMs, now) },
+            inProgress = inProgress,
+            upNext = upNext,
             canLoadMore = queue.size > size,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), GenreQueueUiState())

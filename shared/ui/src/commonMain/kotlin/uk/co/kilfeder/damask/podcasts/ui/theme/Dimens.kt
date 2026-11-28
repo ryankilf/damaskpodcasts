@@ -115,6 +115,16 @@ object Sizes {
     /** An episode screen this wide shows its notes beside the player. */
     val NotesBesideMinWidth = 720.dp
 
+    /** The list pane on wide layouts (TabletHome, TabletGenres artboards), and a pane's heading. */
+    val ListPaneWidth = 440.dp
+    val PaneHeaderHeight = 64.dp
+
+    /** A genre row in the list (GenreListPane artboard). */
+    val GenreRowMinHeight = 80.dp
+
+    /** The playing episode's width in the right-hand pane (TabletHome artboard). */
+    val PlayerPaneMaxWidth = 520.dp
+
     /** Readable content width on wide windows. */
     val MaxContentWidth = 640.dp
 

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -43,6 +44,7 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.tab_genres
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_home
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_played
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_search
+import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -124,9 +126,9 @@ private fun TabBar(selected: Tab, onSelectTab: (Tab) -> Unit, modifier: Modifier
     }
 }
 
-/** The tabs down the side, from medium width (design hand-off › NavRail). */
+/** The tabs down the side from medium width, with Settings at the foot (design hand-off › NavRail). */
 @Composable
-internal fun TabRail(selected: Tab, onSelectTab: (Tab) -> Unit, modifier: Modifier = Modifier) {
+internal fun TabRail(selected: Tab, onSelectTab: (Tab) -> Unit, onSettings: () -> Unit, modifier: Modifier = Modifier) {
     NavigationRail(modifier) {
         Tab.entries.forEach { tab ->
             val label = stringResource(tab.label)
@@ -136,6 +138,10 @@ internal fun TabRail(selected: Tab, onSelectTab: (Tab) -> Unit, modifier: Modifi
                 icon = { Icon(imageVector = tab.icon, contentDescription = null) },
                 label = { Text(label) },
             )
+        }
+        Spacer(Modifier.weight(1f))
+        IconButton(onClick = onSettings, modifier = Modifier.padding(bottom = Spacing.Space4)) {
+            Icon(imageVector = Icons.Rounded.Settings, contentDescription = stringResource(Res.string.settings))
         }
     }
 }
@@ -150,7 +156,7 @@ internal fun titleOf(state: AppUiState): StringResource = when (state.nav.top) {
     null -> if (state.nav.tab == Tab.HOME) Res.string.app_name else state.nav.tab.label
 }
 
-private val Tab.label: StringResource
+internal val Tab.label: StringResource
     get() = when (this) {
         Tab.HOME -> Res.string.tab_home
         Tab.GENRES -> Res.string.tab_genres

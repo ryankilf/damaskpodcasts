@@ -1,15 +1,21 @@
 package uk.co.kilfeder.damask.podcasts.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
@@ -18,6 +24,8 @@ import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.navigation.Destination
 import uk.co.kilfeder.damask.podcasts.presentation.navigation.Tab
 import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
+import uk.co.kilfeder.damask.podcasts.ui.components.MiniPlayer
+import uk.co.kilfeder.damask.podcasts.ui.components.PaneHeader
 import uk.co.kilfeder.damask.podcasts.ui.components.RowPlayer
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.genre_pick_body
@@ -36,36 +44,34 @@ import uk.co.kilfeder.damask.podcasts.ui.screens.SearchScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.SettingsScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.ShowNotesScreen
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
-
-/** Material's window size classes, by width. */
-internal enum class WidthClass { COMPACT, MEDIUM, EXPANDED }
-
-internal fun widthClassOf(width: Dp): WidthClass = when {
-    width >= Sizes.ExpandedWidth -> WidthClass.EXPANDED
-    width >= Sizes.MediumWidth -> WidthClass.MEDIUM
-    else -> WidthClass.COMPACT
-}
-
-/** What the shell's screens can ask for. */
-internal class ShellActions(
-    val onSelectTab: (Tab) -> Unit,
-    val onNavigate: (Destination) -> Unit,
-    val onPlayEpisode: (EpisodeId, PlaySource) -> Unit,
-    val onOpenGenre: (String) -> Unit,
-    val onImportFinish: (Int) -> Unit,
-    val onBack: () -> Unit,
-    val rowPlayer: RowPlayer,
-)
+import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 
 /** On wide layouts Home and Played show the playing episode beside the list. */
 private fun Tab.pairsWithPlayer() = this == Tab.HOME || this == Tab.PLAYED
+
+/**
+ * Wide layouts with a list and a detail pane (TabletHome, TabletGenres artboards). These have no
+ * app bar: each pane has its own heading, and Settings is at the bottom of the rail.
+ */
+internal fun isTwoPaneLayout(state: AppUiState, width: WidthClass): Boolean {
+    if (width != WidthClass.EXPANDED) return false
+    val top = state.nav.top
+    val tab = state.nav.tab
+    return when {
+        top == null -> tab.pairsWithPlayer() || tab == Tab.GENRES
+        top is Destination.GenreQueue -> tab == Tab.GENRES
+        top is Destination.ShowNotes -> tab.pairsWithPlayer()
+        else -> false
+    }
+}
 
 /** Whether the playing episode is already on screen (so the mini-player would only repeat it). */
 internal fun playingIsOnScreen(state: AppUiState, width: WidthClass): Boolean {
     val top = state.nav.top
     return (top is Destination.Episode && top.id == state.playing) ||
         (top is Destination.ShowNotes && top.id == state.playing) ||
-        (width == WidthClass.EXPANDED && top == null && state.nav.tab.pairsWithPlayer())
+        // Two-pane layouts show it in a pane, or (Genres) put the mini-player in the detail card.
+        isTwoPaneLayout(state, width)
 }
 
 /**
@@ -86,25 +92,31 @@ internal fun ShellContent(
     val top = state.nav.top
     val tab = state.nav.tab
     val modifier = Modifier.padding(padding).fillMaxSize()
-    val wide = width == WidthClass.EXPANDED
+    if (!isTwoPaneLayout(state, width)) {
+        SinglePane(state, graph, actions, modifier)
+        return
+    }
+    val title = stringResource(tab.label)
     when {
-        wide && top == null && tab.pairsWithPlayer() -> TwoPanes(
-            left = { TabContent(tab, graph, actions, it) },
-            right = { PlayingPane(state.playing, graph, actions, it) },
-            modifier = modifier,
-        )
-        // The notes peek in that pane opens the notes in the same pane; back returns to the player.
-        wide && top is Destination.ShowNotes && tab.pairsWithPlayer() -> TwoPanes(
-            left = { TabContent(tab, graph, actions, it) },
+        tab == Tab.GENRES -> {
+            val genre = (top as? Destination.GenreQueue)?.categoryId
+            TwoPanes(
+                left = { ListPane(title, it) { m -> GenresScreen(graph, actions.onOpenGenre, m, selectedId = genre) } },
+                right = { GenrePane(genre, state, graph, actions, it) },
+                modifier = modifier,
+            )
+        }
+        // The notes peek in the player pane opens the notes in the same pane; back returns to it.
+        top is Destination.ShowNotes -> TwoPanes(
+            left = { ListPane(title, it) { m -> TabContent(tab, graph, actions, m) } },
             right = { ShowNotesScreen(graph, top.id, onClose = actions.onBack, modifier = it) },
             modifier = modifier,
         )
-        wide && tab == Tab.GENRES && (top == null || top is Destination.GenreQueue) -> TwoPanes(
-            left = { GenresScreen(graph, onOpenGenre = actions.onOpenGenre, modifier = it) },
-            right = { GenrePane((top as? Destination.GenreQueue)?.categoryId, graph, actions, it) },
+        else -> TwoPanes(
+            left = { ListPane(title, it) { m -> TabContent(tab, graph, actions, m) } },
+            right = { PlayingPane(state.playing, graph, actions, it) },
             modifier = modifier,
         )
-        else -> SinglePane(state, graph, actions, modifier)
     }
 }
 
@@ -130,21 +142,6 @@ private fun SinglePane(state: AppUiState, graph: AppGraph, actions: ShellActions
             Destination.Import -> ImportScreen(graph, onFinish = actions.onImportFinish, modifier = readable)
             null -> TabContent(state.nav.tab, graph, actions, readable)
         }
-    }
-}
-
-@Composable
-private fun TwoPanes(
-    left: @Composable (Modifier) -> Unit,
-    right: @Composable (Modifier) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(modifier) {
-        Box(contentAlignment = Alignment.TopCenter, modifier = Modifier.weight(1f).fillMaxSize()) {
-            left(Modifier.widthIn(max = Sizes.MaxContentWidth).fillMaxSize())
-        }
-        VerticalDivider()
-        Box(Modifier.weight(1f).fillMaxSize()) { right(Modifier.fillMaxSize()) }
     }
 }
 
@@ -182,7 +179,7 @@ private fun EpisodeScreen(id: EpisodeId, graph: AppGraph, actions: ShellActions,
     )
 }
 
-/** The right-hand pane beside Home and Played: whatever's playing. */
+/** The right-hand pane beside Home and Played: whatever's playing, at most [Sizes.PlayerPaneMaxWidth]. */
 @Composable
 private fun PlayingPane(playing: EpisodeId?, graph: AppGraph, actions: ShellActions, modifier: Modifier = Modifier) {
     if (playing == null) {
@@ -191,27 +188,44 @@ private fun PlayingPane(playing: EpisodeId?, graph: AppGraph, actions: ShellActi
             body = stringResource(Res.string.now_playing_empty_body),
             modifier = modifier,
         )
-    } else {
-        EpisodeScreen(playing, graph, actions, modifier)
+        return
+    }
+    Box(contentAlignment = Alignment.TopCenter, modifier = modifier) {
+        EpisodeScreen(playing, graph, actions, Modifier.widthIn(max = Sizes.PlayerPaneMaxWidth).fillMaxSize())
     }
 }
 
-/** The right-hand pane beside Genres: the selected genre's queue. */
+/** The right-hand pane beside Genres: the selected genre's queue, with the mini-player at its foot. */
 @Composable
-private fun GenrePane(categoryId: String?, graph: AppGraph, actions: ShellActions, modifier: Modifier = Modifier) {
-    if (categoryId == null) {
-        EmptyState(
-            title = stringResource(Res.string.genre_pick_title),
-            body = stringResource(Res.string.genre_pick_body),
-            modifier = modifier,
-        )
-    } else {
-        GenreQueueScreen(
-            graph = graph,
-            categoryId = categoryId,
-            onOpenEpisode = { actions.onPlayEpisode(it, PlaySource.Genre(categoryId)) },
-            rowPlayer = actions.rowPlayer,
-            modifier = modifier,
-        )
+private fun GenrePane(
+    categoryId: String?,
+    state: AppUiState,
+    graph: AppGraph,
+    actions: ShellActions,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier) {
+        val content = Modifier.weight(1f).fillMaxWidth()
+        if (categoryId == null) {
+            EmptyState(
+                title = stringResource(Res.string.genre_pick_title),
+                body = stringResource(Res.string.genre_pick_body),
+                modifier = content,
+            )
+        } else {
+            Box(contentAlignment = Alignment.TopStart, modifier = content) {
+                GenreQueueScreen(
+                    graph = graph,
+                    categoryId = categoryId,
+                    onOpenEpisode = { actions.onPlayEpisode(it, PlaySource.Genre(categoryId)) },
+                    rowPlayer = actions.rowPlayer,
+                    modifier = Modifier.widthIn(max = Sizes.MaxContentWidth).fillMaxSize(),
+                    showHeader = true,
+                )
+            }
+        }
+        if (state.playing != null) {
+            MiniPlayer(graph, extendUnderGestureBar = false, onOpen = { actions.onNavigate(Destination.Episode(it)) })
+        }
     }
 }

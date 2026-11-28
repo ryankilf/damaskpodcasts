@@ -29,6 +29,7 @@ import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeRowUi
 import uk.co.kilfeder.damask.podcasts.presentation.home.HomeViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
 import uk.co.kilfeder.damask.podcasts.ui.components.EpisodeRow
+import uk.co.kilfeder.damask.podcasts.ui.components.PrimaryPanel
 import uk.co.kilfeder.damask.podcasts.ui.components.RowPlayer
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.home_in_progress
@@ -54,30 +55,11 @@ internal fun InProgressPanel(
     modifier: Modifier = Modifier,
 ) {
     val onPanel = MaterialTheme.colorScheme.onPrimaryContainer
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = Spacing.Space3)
-            .background(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.shapes.medium)
-            .padding(vertical = Spacing.Space2),
+    PrimaryPanel(
+        title = stringResource(Res.string.home_in_progress),
+        count = stringResource(Res.string.in_progress_count, rows.size),
+        modifier = modifier,
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(Spacing.Space2),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(start = Spacing.Space4, end = Spacing.Space1),
-        ) {
-            Text(
-                text = stringResource(Res.string.home_in_progress),
-                style = DamaskTextStyles.Title,
-                color = onPanel,
-                modifier = Modifier.semantics { heading() },
-            )
-            Text(
-                text = stringResource(Res.string.in_progress_count, rows.size),
-                style = DamaskTextStyles.BodySmall,
-                color = onPanel,
-            )
-        }
         rows.take(IN_PROGRESS_PREVIEW).forEach { row -> ResumeRow(row, onOpenEpisode, rowPlayer) }
         if (rows.size > IN_PROGRESS_PREVIEW) {
             TextButton(onClick = onSeeAll, modifier = Modifier.align(Alignment.End).padding(end = Spacing.Space1)) {
