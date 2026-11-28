@@ -35,7 +35,10 @@ data class ImportRowUi(
     val categoryId: String,
     /** Why the feed couldn't be read; it can still be subscribed and is retried on refresh. */
     val problem: String?,
-    /** Ticked by default; unticked shows aren't subscribed. */
+    /**
+     * Unticked shows aren't subscribed. Ticked by default, except shows whose feed couldn't be
+     * read: those start unticked with the reason beside them, and can still be ticked.
+     */
     val selected: Boolean = true,
 )
 
@@ -167,7 +170,7 @@ class ImportViewModel internal constructor(private val graph: AppGraph) : ViewMo
             .sortedWith(compareBy({ it.isSystem }, { it.name.lowercase() }))
             .map { CategoryOptionUi(it.id.value, it.name) }
         val rows = candidates.mapIndexed { index, c ->
-            ImportRowUi(index, c.title, c.imageUrl, categoryIds[index], c.problem)
+            ImportRowUi(index, c.title, c.imageUrl, categoryIds[index], c.problem, selected = c.problem == null)
         }
         return ImportUiState.Review(rows, categories)
     }
