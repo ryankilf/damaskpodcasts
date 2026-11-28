@@ -23,6 +23,17 @@ class ColorContrastTest {
     @Test
     fun darkSchemeMeetsWcagAa() = assertContrast("dark", brandColorScheme(darkTheme = true))
 
+    @Test
+    fun genreChipsAreReadableInBothThemes() {
+        // Chip text, and initials on placeholder tiles, sit on the container tone.
+        listOf("light" to GenreTonesLight, "dark" to GenreTonesDark).forEach { (theme, tones) ->
+            tones.forEach { (hue, t) ->
+                val ratio = contrastRatio(t.onContainer, t.container)
+                if (ratio < TEXT) fail("$theme $hue: ${ratio.format()}:1")
+            }
+        }
+    }
+
     private fun assertContrast(name: String, scheme: ColorScheme) {
         val failures = scheme.pairs().mapNotNull { pair ->
             val ratio = contrastRatio(pair.foreground, pair.background)

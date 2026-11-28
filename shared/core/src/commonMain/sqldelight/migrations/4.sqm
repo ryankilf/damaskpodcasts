@@ -1,0 +1,7 @@
+-- Schema 4 -> 5: each show's author and description, for the show page.
+ALTER TABLE show_feed ADD COLUMN author TEXT;
+ALTER TABLE show_feed ADD COLUMN description TEXT;
+
+-- Forget the HTTP validators, so the next refresh downloads every feed in full and stores them
+-- (an unchanged feed would otherwise answer 304 Not Modified).
+UPDATE feed_fetch_state SET etag = NULL, last_modified = NULL;

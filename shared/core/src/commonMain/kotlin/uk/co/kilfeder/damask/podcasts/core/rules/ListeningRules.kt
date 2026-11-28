@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.core.rules
 
+import uk.co.kilfeder.damask.podcasts.core.model.DAY_MS
+import uk.co.kilfeder.damask.podcasts.core.model.MINUTE_MS
 import uk.co.kilfeder.damask.podcasts.core.model.Episode
 import uk.co.kilfeder.damask.podcasts.core.model.Hlc
 import uk.co.kilfeder.damask.podcasts.core.model.PlayedBy
@@ -26,9 +28,6 @@ data class ListeningSettings(
         const val DEFAULT_IN_PROGRESS_EXPIRY_MS = 183 * DAY_MS // about 6 months
     }
 }
-
-const val MINUTE_MS: Long = 60_000
-const val DAY_MS: Long = 24 * 60 * MINUTE_MS
 
 /** The derived values from spec › Data model › Derived values. Pure; nothing here is ever written. */
 class ListeningRules(val settings: ListeningSettings = ListeningSettings()) {

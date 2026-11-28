@@ -31,3 +31,12 @@ ON CONFLICT (show_id) DO UPDATE SET
   status = excluded.status,
   last_fetched_at = excluded.last_fetched_at,
   failure = excluded.failure;
+
+-- Forget the HTTP validators, so the next fetch downloads the feed in full (after switching a
+-- show to oldest first, it brings back the older episodes retention had dropped).
+forgetValidators:
+UPDATE feed_fetch_state SET etag = NULL, last_modified = NULL WHERE show_id = :show_id;
+
+forgetValidatorsInCategory:
+UPDATE feed_fetch_state SET etag = NULL, last_modified = NULL
+WHERE show_id IN (SELECT id FROM show WHERE category_id = :category_id);

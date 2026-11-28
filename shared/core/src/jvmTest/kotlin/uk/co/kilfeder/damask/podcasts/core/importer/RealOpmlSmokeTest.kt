@@ -29,7 +29,7 @@ class RealOpmlSmokeTest {
         val db = DamaskDatabase(inMemoryDriver())
         val clock = DeviceClock(db) { System.currentTimeMillis() }
         val store = FeedStore(db, clock)
-        val importer = OpmlImporter(FeedFetcher(FeedFetcher.createClient()), store, CategoryPrefill(db))
+        val importer = OpmlImporter(FeedFetcher.create(), store, CategoryPrefill(db))
 
         val started = System.currentTimeMillis()
         val candidates = importer.prepare(opml.readText())

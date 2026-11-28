@@ -19,6 +19,13 @@ internal fun KtCallExpression.namedArgument(name: String): KtValueArgument? =
 
 internal fun KtExpression?.isNullLiteral(): Boolean = this?.text == "null"
 
+/** Modifier functions that make something tappable; the defaults for the a11y rules' config. */
+internal val INTERACTIVE_MODIFIERS =
+    listOf("clickable", "combinedClickable", "selectable", "toggleable", "triStateToggleable")
+
+/** A Kotlin number literal's value (`24`, `24f`, `1_000`, `24.0`), or null if it isn't one. */
+internal fun String.numericLiteral(): Double? = removeSuffix("f").removeSuffix("F").replace("_", "").toDoubleOrNull()
+
 /**
  * Returns the numeric value of a `24.dp` / `24f.dp` / `24.0.dp` literal, or null for anything else
  * (variables, theme tokens, arithmetic) which can't be checked statically.
@@ -27,7 +34,7 @@ internal fun KtExpression?.dpLiteralValue(): Double? {
     val qualified = this as? KtDotQualifiedExpression ?: return null
     if (qualified.selectorExpression?.text != "dp") return null
     val constant = qualified.receiverExpression as? KtConstantExpression ?: return null
-    return constant.text.removeSuffix("f").removeSuffix("F").replace("_", "").toDoubleOrNull()
+    return constant.text.numericLiteral()
 }
 
 /** The outermost expression of a `Modifier.a().b().c()` chain containing [this]. */

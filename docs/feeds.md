@@ -30,6 +30,30 @@ sequenceDiagram
 
 `ShowIds.fromFeedUrl` is the UUIDv5 (URL namespace) of the *normalised* feed URL (see [decisions](decisions.md)). `FeedUrl.normalise` lowercases the scheme and host, drops default ports, treats `http` as `https` and removes a trailing slash. It never touches the query string, because private feed tokens live there.
 
+## HTTP clients: `HttpClients`
+
+One base Ktor client for the whole app (one platform engine and connection pool: OkHttp on Android and desktop, Apple's networking on iOS), with the shared rules: 30-second timeouts, an honest `Damask` User-Agent, no exceptions for error statuses, and retries. Each use is a thin variation on it (`HttpClient.config` shares the engine), plus the http → https upgrade:
+
+- `HttpClients.feeds` follows redirects by hand (below), so a permanent move can update the stored URL.
+- `HttpClients.images` follows redirects itself; Coil only wants the bytes.
+- The search API client will be another variation.
+
+Caching isn't done in the clients: feeds use the ETag / Last-Modified stored with each show, and artwork uses Coil's disk cache.
+
+**Retries** use Ktor's built-in `HttpRequestRetry` (`retryTransientFailures`). Server errors (5xx) and 429 are retried, honouring Retry-After, and so are network failures such as timeouts, dropped connections and DNS hiccups. There are two retries, about 1 s then 3 s apart. Other 4xx responses aren't retried, and neither are certificate or TLS failures, which fail the same way every time. OkHttp's own `retryOnConnectionFailure` (on by default) only covers a stale pooled connection or trying the host's next address, so it doesn't replace this.
+
+### Request log (debug builds)
+
+Every request and response is logged when `HttpClients.logRequests` is on: debug Android builds (Logcat, tag `DamaskHttp`) and `./gradlew :desktopApp:run` (stderr, `[http]`). Release builds never log, because a private feed's URL is its password.
+
+```
+→ #12 GET https://example.com/feed.xml at 2026-11-28T13:55:01.123Z
+← #12 200 https://example.com/feed.xml 48213 B in 230 ms
+✗ #13 https://example.com/other.xml failed after 10358 ms: ClosedByteChannelException
+```
+
+The number pairs a response with its request; every attempt gets its own (retries, redirects). The size is the body as received, counted from a copy (Ktor's `ResponseObserver`), so it's right without a Content-Length; the time runs from sending to the last byte. URLs are logged whole apart from any `user:password@`.
+
 ## Fetching: `FeedFetcher`
 
 - Sends `If-None-Match` / `If-Modified-Since` from `feed_fetch_state`, so an unchanged feed costs a 304.

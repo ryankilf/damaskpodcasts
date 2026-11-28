@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.lint
 
+import org.jetbrains.kotlin.psi.KtExpression
 import dev.detekt.api.Config
 import dev.detekt.api.Entity
 import dev.detekt.api.Finding
@@ -32,10 +33,7 @@ class NoHardcodedColors(config: Config) : Rule(
         super.visitCallExpression(expression)
         if (expression.calleeName != COLOR) return
         report(
-            Finding(
-                Entity.from(expression),
-                "Literal colour `${expression.text}`. Use a `MaterialTheme.colorScheme` role.",
-            ),
+            finding(expression),
         )
     }
 
@@ -48,10 +46,7 @@ class NoHardcodedColors(config: Config) : Rule(
         val isConstant = !isFactory && selector.text.first().isUpperCase() && selector.text !in allowedConstants
         if (isFactory || isConstant) {
             report(
-                Finding(
-                    Entity.from(expression),
-                    "Literal colour `${expression.text}`. Use a `MaterialTheme.colorScheme` role.",
-                ),
+                finding(expression),
             )
         }
     }
@@ -59,4 +54,7 @@ class NoHardcodedColors(config: Config) : Rule(
     private companion object {
         const val COLOR = "Color"
     }
+
+    private fun finding(expression: KtExpression) =
+        Finding(Entity.from(expression), "Literal colour `${expression.text}`. Use a `MaterialTheme.colorScheme` role.")
 }

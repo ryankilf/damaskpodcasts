@@ -1,6 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.core.data
 
 import uk.co.kilfeder.damask.podcasts.core.db.DamaskDatabase
+import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
 import uk.co.kilfeder.damask.podcasts.core.model.EpisodeKey
 import uk.co.kilfeder.damask.podcasts.core.model.Hlc
 import uk.co.kilfeder.damask.podcasts.core.model.PlayContext
@@ -26,14 +27,7 @@ class UserStateStore(
         db.transaction {
             val hlc = issue()
             ensureMeta(key, hlc)
-            db.episodeStateQueries.upsertPosition(
-                show_id = key.showId.value,
-                guid = key.guid,
-                position_ms = positionMs,
-                duration_at_save_ms = durationAtSaveMs,
-                play_context = context.encode(),
-                hlc = hlc.value,
-            )
+            writePosition(key, positionMs, durationAtSaveMs, context, hlc)
         }
 
     fun markPlayed(key: EpisodeKey, by: PlayedBy) = db.transaction {
@@ -47,14 +41,7 @@ class UserStateStore(
         val hlc = issue()
         ensureMeta(key, hlc)
         writePlayed(key, played = false, by = null, hlc = hlc)
-        db.episodeStateQueries.upsertPosition(
-            show_id = key.showId.value,
-            guid = key.guid,
-            position_ms = 0,
-            duration_at_save_ms = null,
-            play_context = PlayContext.None.encode(),
-            hlc = issue().value,
-        )
+        writePosition(key, positionMs = 0, durationAtSaveMs = null, context = PlayContext.None, hlc = issue())
     }
 
     /** The player's duration replaces the feed's as soon as media is prepared. */
@@ -73,6 +60,37 @@ class UserStateStore(
             hlc = issue().value,
         )
     }
+
+    /**
+     * Adds listening time to today's `listen_stats` row for [categoryId]: [wallMs] of real time,
+     * [contentMs] of audio (more than wall time when sped up). Time skipped by seeking isn't added.
+     */
+    fun addListenTime(categoryId: CategoryId, day: String, wallMs: Long, contentMs: Long) {
+        if (wallMs <= 0 && contentMs <= 0) return
+        db.listenStatsQueries.addLocal(
+            device_id = clock.deviceId,
+            day = day,
+            category_id = categoryId.value,
+            wall_ms = wallMs,
+            content_ms = contentMs,
+            hlc = issue().value,
+        )
+    }
+
+    private fun writePosition(
+        key: EpisodeKey,
+        positionMs: Long,
+        durationAtSaveMs: Long?,
+        context: PlayContext,
+        hlc: Hlc,
+    ) = db.episodeStateQueries.upsertPosition(
+        show_id = key.showId.value,
+        guid = key.guid,
+        position_ms = positionMs,
+        duration_at_save_ms = durationAtSaveMs,
+        play_context = context.encode(),
+        hlc = hlc.value,
+    )
 
     private fun writePlayed(key: EpisodeKey, played: Boolean, by: PlayedBy?, hlc: Hlc) {
         db.episodeStateQueries.upsertPlayed(

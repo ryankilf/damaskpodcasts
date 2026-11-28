@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.core.data
 
+import uk.co.kilfeder.damask.podcasts.core.model.GenreColour
 import uk.co.kilfeder.damask.podcasts.core.db.DamaskDatabase
 import uk.co.kilfeder.damask.podcasts.core.model.Category
 import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
@@ -28,7 +29,12 @@ class LibraryRepository(private val db: DamaskDatabase) {
             .map { row ->
                 val feed = feeds[row.id]
                 row.toModel(ShowType.fromItunesType(feed?.itunes_type))
-                    .copy(title = feed?.title.orEmpty(), imageUrl = feed?.image_url)
+                    .copy(
+                        title = feed?.title.orEmpty(),
+                        imageUrl = feed?.image_url,
+                        author = feed?.author.orEmpty(),
+                        description = feed?.description.orEmpty(),
+                    )
             }
         val episodes = db.libraryQueries.selectEpisodes(::episodeRow).executeAsList()
             .map { it.canonical(aliases) }
@@ -52,5 +58,12 @@ class LibraryRepository(private val db: DamaskDatabase) {
         played = listOfNotNull(a.played, b.played).maxByOrNull { it.hlc },
     )
 
-    private fun CategoryRow.toModel() = Category(CategoryId(id), name, isSystem = Columns.bool(is_system))
+    private fun CategoryRow.toModel() =
+        Category(
+            id = CategoryId(id),
+            name = name,
+            isSystem = Columns.bool(is_system),
+            order = Columns.genreOrder(episode_order),
+            colour = GenreColour.fromStored(colour),
+        )
 }

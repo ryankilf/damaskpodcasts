@@ -50,3 +50,9 @@ DamaskA11y:
     active: true
     textFunctions: ['Text', 'BasicText']
     accessibilityArguments: ['contentDescription', 'onClickLabel', 'onLongClickLabel', 'stateDescription']
+DamaskSafety:
+  active: true
+  UnsafeIntentLaunch:
+    active: true
+    launchFunctions: ['startActivity', 'startActivities', 'startActivityForResult', 'startActivityIfNeeded', 'startIntentSender', 'openUri']
+    handlers: ['LocalUriHandler']

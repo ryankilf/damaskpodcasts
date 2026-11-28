@@ -12,8 +12,8 @@ import uk.co.kilfeder.damask.podcasts.core.model.PositionState
 import uk.co.kilfeder.damask.podcasts.core.model.Show
 import uk.co.kilfeder.damask.podcasts.core.model.ShowId
 import uk.co.kilfeder.damask.podcasts.core.model.ShowType
-import uk.co.kilfeder.damask.podcasts.core.rules.DAY_MS
-import uk.co.kilfeder.damask.podcasts.core.rules.MINUTE_MS
+import uk.co.kilfeder.damask.podcasts.core.model.DAY_MS
+import uk.co.kilfeder.damask.podcasts.core.model.MINUTE_MS
 
 /** Fixed "now" for every test: 2026-11-27T12:00:00Z. */
 const val NOW_MS: Long = 1_795_780_800_000

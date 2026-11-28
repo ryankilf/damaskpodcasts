@@ -1,7 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.core.feed
 
 import io.ktor.client.HttpClient
-import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.HttpResponse
@@ -84,27 +83,13 @@ class FeedFetcher(private val client: HttpClient) {
     }
 
     companion object {
-        const val USER_AGENT = "Damask/0.1"
+        const val USER_AGENT = DAMASK_USER_AGENT
         private const val ACCEPT = "application/rss+xml, application/xml;q=0.9, text/xml;q=0.8, */*;q=0.5"
         private const val MAX_REDIRECTS = 5
         private val REDIRECTS = setOf(301, 302, 303, 307, 308)
         private val PERMANENT_REDIRECTS = setOf(301, 308)
-        private const val TIMEOUT_MS = 30_000L
 
-        /** The fetcher the app uses, on [createClient]. */
-        fun create(): FeedFetcher = FeedFetcher(createClient())
-
-        /** The client the app uses: platform engine, no automatic redirects, sane timeouts. */
-        fun createClient(): HttpClient = HttpClient {
-            followRedirects = false
-            expectSuccess = false
-            install(HttpTimeout) {
-                requestTimeoutMillis = TIMEOUT_MS
-                connectTimeoutMillis = TIMEOUT_MS
-            }
-        }.upgradeHttpToHttps()
-
-        /** For artwork: the platform engine with the same http -> https upgrade. */
-        fun createImageClient(): HttpClient = HttpClient().upgradeHttpToHttps()
+        /** The fetcher the app uses, on the shared feed client ([HttpClients.feeds]). */
+        fun create(): FeedFetcher = FeedFetcher(HttpClients.feeds)
     }
 }

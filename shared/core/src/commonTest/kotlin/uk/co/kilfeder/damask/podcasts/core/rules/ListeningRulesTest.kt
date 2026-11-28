@@ -9,6 +9,7 @@ import uk.co.kilfeder.damask.podcasts.core.finished
 import uk.co.kilfeder.damask.podcasts.core.hoursAgo
 import uk.co.kilfeder.damask.podcasts.core.markedPlayed
 import uk.co.kilfeder.damask.podcasts.core.minutesAgo
+import uk.co.kilfeder.damask.podcasts.core.model.MINUTE_MS
 import uk.co.kilfeder.damask.podcasts.core.model.PlayedState
 import uk.co.kilfeder.damask.podcasts.core.model.ShowType
 import uk.co.kilfeder.damask.podcasts.core.show

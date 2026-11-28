@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.core.data
 
+import uk.co.kilfeder.damask.podcasts.core.model.GenreOrder
 import uk.co.kilfeder.damask.podcasts.core.model.EpisodeOrder
 import uk.co.kilfeder.damask.podcasts.core.model.KeepMode
 import uk.co.kilfeder.damask.podcasts.core.model.PlayedBy
@@ -16,6 +17,18 @@ internal object Columns {
         EpisodeOrder.NEWEST_FIRST -> "NEWEST"
         EpisodeOrder.OLDEST_FIRST -> "OLDEST"
         null -> null
+    }
+
+    fun genreOrder(raw: String?): GenreOrder = when (raw) {
+        "NEWEST" -> GenreOrder.NEWEST_FIRST
+        "OLDEST" -> GenreOrder.OLDEST_FIRST
+        else -> GenreOrder.VARIETY
+    }
+
+    fun genreOrder(value: GenreOrder): String? = when (value) {
+        GenreOrder.NEWEST_FIRST -> "NEWEST"
+        GenreOrder.OLDEST_FIRST -> "OLDEST"
+        GenreOrder.VARIETY -> null
     }
 
     fun keepMode(raw: String?): KeepMode? = KeepMode.entries.firstOrNull { it.name == raw }

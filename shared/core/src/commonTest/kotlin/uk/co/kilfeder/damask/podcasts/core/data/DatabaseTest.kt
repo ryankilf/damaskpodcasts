@@ -11,9 +11,9 @@ import uk.co.kilfeder.damask.podcasts.core.model.PlayedBy
 import uk.co.kilfeder.damask.podcasts.core.model.ShowId
 import uk.co.kilfeder.damask.podcasts.core.model.ShowType
 import uk.co.kilfeder.damask.podcasts.core.rotation.Rotation
-import uk.co.kilfeder.damask.podcasts.core.rules.DAY_MS
+import uk.co.kilfeder.damask.podcasts.core.model.DAY_MS
 import uk.co.kilfeder.damask.podcasts.core.rules.ListeningRules
-import uk.co.kilfeder.damask.podcasts.core.rules.MINUTE_MS
+import uk.co.kilfeder.damask.podcasts.core.model.MINUTE_MS
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -57,6 +57,7 @@ class DatabaseTest {
             enclosure_url = "https://cdn.example.com/$guid.mp3",
             image_url = null,
             duration_ms = HOUR_MS,
+            notes_html = "<p>Notes for $guid</p>",
         )
     }
 
@@ -100,7 +101,28 @@ class DatabaseTest {
         assertEquals(150_000, row.content_ms)
     }
 
+    @Test
+    fun notesAndMediaAreReadOneEpisodeAtATime() {
+        show("s", "uncategorised")
+        feedEpisode("s", "e")
+        val lookup = EpisodeLookup(db)
+        assertEquals("<p>Notes for e</p>", lookup.notes(key("s", "e")))
+        assertNull(lookup.notes(key("s", "missing")))
+        assertEquals(EpisodeMedia("https://cdn.example.com/e.mp3", null), lookup.media(key("s", "e")))
+        assertNull(lookup.media(key("s", "missing")))
+    }
+
     // --- User state ----------------------------------------------------------------------------
+
+    @Test
+    fun listenTimeAddsUpPerDayAndCategory() {
+        store.addListenTime(CategoryId("news"), "2026-11-27", wallMs = 60_000, contentMs = 90_000)
+        store.addListenTime(CategoryId("news"), "2026-11-27", wallMs = 30_000, contentMs = 30_000)
+        store.addListenTime(CategoryId("news"), "2026-11-27", wallMs = 0, contentMs = 0)
+        val row = db.listenStatsQueries.selectByDevice(clock.deviceId).executeAsList().single()
+        assertEquals(90_000, row.wall_ms)
+        assertEquals(120_000, row.content_ms)
+    }
 
     @Test
     fun savingPositionCreatesTheMinimalRecordForPlayed() {
@@ -169,7 +191,7 @@ class DatabaseTest {
     fun loadsShowsWithSettingsAndFeedType() {
         category("drama")
         show("saga", "drama")
-        db.feedQueries.upsertShowFeed("saga", "Saga", null, itunes_type = "serial")
+        db.feedQueries.upsertShowFeed("saga", "Saga", null, itunes_type = "serial", author = null, description = null)
         val show = repository.load().showsById.getValue(ShowId("saga"))
         assertEquals(ShowType.SERIAL, show.type)
         assertEquals(CategoryId("drama"), show.categoryId)

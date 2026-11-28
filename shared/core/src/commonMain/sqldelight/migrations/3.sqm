@@ -1,0 +1,6 @@
+-- Schema 3 -> 4: episode show notes, for the episode page.
+ALTER TABLE episode ADD COLUMN notes_html TEXT;
+
+-- Forget the HTTP validators, so the next refresh downloads every feed in full and stores the
+-- notes of episodes already cached (an unchanged feed would otherwise answer 304 Not Modified).
+UPDATE feed_fetch_state SET etag = NULL, last_modified = NULL;

@@ -1,5 +1,7 @@
 Damask: a podcast player that rotates genres. Kotlin Multiplatform, targeting Android, iOS and desktop (JVM).
 
+Changing the code? Read [AGENTS.md](./AGENTS.md) first: the commit gate, the layers, and keeping it DRY.
+
 * [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
   you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
 

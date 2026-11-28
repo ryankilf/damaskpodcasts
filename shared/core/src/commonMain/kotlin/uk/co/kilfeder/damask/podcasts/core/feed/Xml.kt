@@ -38,6 +38,7 @@ internal class XmlNode(
 internal enum class Namespace(private val uri: String, private val prefix: String) {
     NONE("", ""),
     ITUNES("http://www.itunes.com/dtds/podcast-1.0.dtd", "itunes"),
+    CONTENT("http://purl.org/rss/1.0/modules/content/", "content"),
     ;
 
     fun matches(node: XmlNode): Boolean =

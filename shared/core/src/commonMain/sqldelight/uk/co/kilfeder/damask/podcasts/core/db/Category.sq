@@ -7,7 +7,9 @@ CREATE TABLE category (
   name        TEXT NOT NULL,               -- user-editable; seeded from Apple's top level
   is_system   INTEGER NOT NULL DEFAULT 0,  -- 1 = Uncategorised: can't be renamed or deleted
   deleted     INTEGER NOT NULL DEFAULT 0,  -- tombstone
-  hlc         INTEGER NOT NULL             -- last write wins, per record
+  hlc         INTEGER NOT NULL,            -- last write wins, per record
+  episode_order TEXT,                      -- NEWEST | OLDEST; NULL = variety (shows by LRP, round-robin)
+  colour      TEXT                         -- one of the 16 genre colour names; NULL until it has shows
 );
 
 -- Uncategorised has a fixed ID so every device seeds the *same* row (no duplicates after sync).
@@ -22,6 +24,35 @@ ON CONFLICT (id) DO UPDATE SET
   deleted = excluded.deleted,
   hlc = excluded.hlc
 WHERE excluded.hlc > category.hlc;
+
+-- The genre's order (its queue, its Up Next picks, autoplay through it). A synced write.
+setEpisodeOrder:
+UPDATE category SET episode_order = :episode_order, hlc = :hlc WHERE id = :id AND :hlc > hlc;
+
+-- Renaming and deleting (a tombstone: its shows count as Uncategorised). Synced writes; the
+-- built-in Uncategorised can't be either.
+rename:
+UPDATE category SET name = :name, hlc = :hlc WHERE id = :id AND is_system = 0 AND :hlc > hlc;
+
+markDeleted:
+UPDATE category SET deleted = 1, hlc = :hlc WHERE id = :id AND is_system = 0 AND :hlc > hlc;
+
+-- A genre's colour (a name from the palette). A synced write.
+setColour:
+UPDATE category SET colour = :colour, hlc = :hlc WHERE id = :id AND :hlc > hlc;
+
+-- Genres in use that have no colour yet, in name order, for least-used assignment.
+selectNeedingColour:
+SELECT c.id FROM category c
+WHERE c.deleted = 0 AND c.is_system = 0 AND c.colour IS NULL
+  AND EXISTS (SELECT 1 FROM show s WHERE s.category_id = c.id AND s.subscribed = 1)
+ORDER BY c.name;
+
+selectUsedColours:
+SELECT colour FROM category WHERE deleted = 0 AND colour IS NOT NULL;
+
+selectEpisodeOrder:
+SELECT episode_order FROM category WHERE id = :id;
 
 selectLive:
 SELECT * FROM category WHERE deleted = 0;

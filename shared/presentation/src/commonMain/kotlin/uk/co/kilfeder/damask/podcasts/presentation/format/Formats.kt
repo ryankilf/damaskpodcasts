@@ -27,7 +27,12 @@ object Formats {
     private const val PERCENT = 100
     private const val TWO_DIGITS = 2
     private val WEEKDAYS = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+    private val WEEKDAYS_PLURAL =
+        listOf("Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays", "Sundays")
     private val MONTHS = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+    /** "Thursdays", for "Usually publishes Thursdays". */
+    fun weekdays(day: kotlinx.datetime.DayOfWeek): String = WEEKDAYS_PLURAL[day.ordinal]
 
     /** "Today", "Yesterday", "3 days ago", "2 weeks ago", "5 months ago", "2 years ago". */
     fun relativeDate(epochMs: Long, nowMs: Long, zone: TimeZone = TimeZone.currentSystemDefault()): String {
@@ -42,6 +47,15 @@ object Formats {
             days < YEAR_DAYS -> plural(days / MONTH_DAYS, "month") + " ago"
             else -> plural(days / YEAR_DAYS, "year") + " ago"
         }
+    }
+
+    /**
+     * For "Last played …": [date] with "today" and "yesterday" in lower case, as they sit
+     * mid-sentence ("Last played yesterday", "Last played 3 days ago").
+     */
+    fun lastPlayed(epochMs: Long, nowMs: Long, zone: TimeZone = TimeZone.currentSystemDefault()): Summarised {
+        val date = date(epochMs, nowMs, zone)
+        return date.copy(summary = date.summary.replaceFirstChar { it.lowercase() })
     }
 
     /** "Thu 6 Nov 2026, 21:14". */

@@ -77,6 +77,9 @@ Compose:
     active: true
   CompositionLocalAllowlist:
     active: true
+    # LocalShowMessage: the app's snackbar, so rememberSafeIntent() can say "no app for that"
+    # from anywhere without threading a callback through every screen.
+    allowedCompositionLocals: ['LocalShowMessage']
   CompositionLocalNaming:
     active: true
   ContentEmitterReturningValues:
@@ -161,3 +164,8 @@ DamaskA11y:
   NoHardcodedUiStrings: # string resources for text + a11y labels (translatable, reachable from Swift)
     active: true
     excludes: ['**/commonTest/**', '**/jvmTest/**', '**/androidHostTest/**', '**/iosTest/**', '**/test/**']
+
+DamaskSafety:
+  active: true
+  UnsafeIntentLaunch: # other apps only through rememberSafeIntent(); no app for it = snackbar, not a crash
+    active: true

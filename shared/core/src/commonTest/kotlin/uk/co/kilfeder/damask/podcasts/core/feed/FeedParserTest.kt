@@ -14,6 +14,8 @@ object SampleFeeds {
           <channel>
             <title><![CDATA[History & Friends]]></title>
             <language>en-gb</language>
+            <itunes:author>Friends &amp; Co</itunes:author>
+            <description>Old things, told well.</description>
             <itunes:type>serial</itunes:type>
             <itunes:new-feed-url>https://new.example.com/feed</itunes:new-feed-url>
             <image><url>https://example.com/rss-art.jpg</url></image>
@@ -70,6 +72,8 @@ class FeedParserTest {
         assertEquals("https://example.com/art.jpg", feed.imageUrl, "itunes:image beats <image><url>")
         assertEquals("serial", feed.itunesType)
         assertEquals("en-gb", feed.language)
+        assertEquals("Friends & Co", feed.author)
+        assertEquals("Old things, told well.", feed.description, "the channel's own, not an item's")
         assertEquals("https://new.example.com/feed", feed.newFeedUrl)
         assertEquals(listOf(FeedCategory("Society & Culture", "History"), FeedCategory("Education")), feed.categories)
     }
@@ -84,6 +88,26 @@ class FeedParserTest {
         assertEquals("https://example.com/ep1.jpg", first.imageUrl)
         assertNull(feed.episodes[1].publishedAt)
         assertEquals("Don\u2019t \u2014 no guid", feed.episodes[1].title, "numeric character references")
+    }
+
+    @Test
+    fun readsShowNotesPreferringContentEncoded() {
+        val item = { inner: String ->
+            """<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
+                xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>T</title>
+                <item><guid>g</guid><enclosure url="https://e.com/a.mp3"/>$inner</item>
+                </channel></rss>"""
+        }
+        val notes = { inner: String -> FeedParser.parse(item(inner)).episodes.single().notesHtml }
+        assertEquals(
+            "<p>Rich</p>",
+            notes("<description>Plain</description><content:encoded><![CDATA[<p>Rich</p>]]></content:encoded>"),
+        )
+        assertEquals("<b>Escaped</b> & more", notes("<description>&lt;b&gt;Escaped&lt;/b&gt; &amp; more</description>"))
+        assertEquals("Summary", notes("<itunes:summary>Summary</itunes:summary>"))
+        assertNull(notes(""))
+        val huge = "x".repeat(FeedParser.MAX_NOTES_CHARS + 10)
+        assertEquals(FeedParser.MAX_NOTES_CHARS, notes("<description>$huge</description>")?.length)
     }
 
     @Test

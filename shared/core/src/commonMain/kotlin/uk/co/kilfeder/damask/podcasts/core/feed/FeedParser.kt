@@ -7,6 +7,8 @@ private const val NOT_A_FEED = "This isn’t a podcast feed"
 
 /** RSS 2.0 + iTunes podcast tags. Lenient: real-world feeds are messy. */
 object FeedParser {
+    /** Longer show notes are cut: a few feeds paste whole transcripts into every item. */
+    const val MAX_NOTES_CHARS = 100_000
 
     fun parse(xml: String): FeedDocument {
         val root = try {
@@ -19,6 +21,9 @@ object FeedParser {
             title = channel.childText("title").orEmpty(),
             imageUrl = channel.child("image", Namespace.ITUNES)?.attr("href")
                 ?: channel.child("image")?.childText("url"),
+            author = channel.childText("author", Namespace.ITUNES),
+            description = (channel.childText("description") ?: channel.childText("summary", Namespace.ITUNES))
+                ?.take(MAX_NOTES_CHARS),
             itunesType = channel.childText("type", Namespace.ITUNES),
             categories = channel.children("category", Namespace.ITUNES).mapNotNull { it.toCategory() },
             language = channel.childText("language"),
@@ -47,6 +52,12 @@ object FeedParser {
             enclosureUrl = enclosure,
             imageUrl = child("image", Namespace.ITUNES)?.attr("href"),
             durationMs = childText("duration", Namespace.ITUNES)?.let(ItunesDuration::parseMs),
+            notesHtml = notes(),
         )
     }
+
+    /** The richest show notes the item has. */
+    private fun XmlNode.notes(): String? =
+        (childText("encoded", Namespace.CONTENT) ?: childText("description") ?: childText("summary", Namespace.ITUNES))
+            ?.take(MAX_NOTES_CHARS)
 }

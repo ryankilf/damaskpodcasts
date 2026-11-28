@@ -1,32 +1,24 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.presentation.genres.nameOf
+import androidx.compose.runtime.setValue
+
+import androidx.compose.runtime.getValue
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.selection.triStateToggleable
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.TriStateCheckbox
-import androidx.compose.material3.SheetValue
-import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -34,12 +26,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -56,17 +46,14 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
-import uk.co.kilfeder.damask.podcasts.presentation.importer.CategoryOptionUi
+import uk.co.kilfeder.damask.podcasts.presentation.genres.CategoryOptionUi
 import uk.co.kilfeder.damask.podcasts.presentation.importer.ImportRowUi
 import uk.co.kilfeder.damask.podcasts.presentation.importer.ImportUiState
+import uk.co.kilfeder.damask.podcasts.presentation.importer.LatestShowUi
 import uk.co.kilfeder.damask.podcasts.presentation.importer.ImportViewModel
-import uk.co.kilfeder.damask.podcasts.presentation.importer.matching
 import uk.co.kilfeder.damask.podcasts.ui.components.Artwork
 import uk.co.kilfeder.damask.podcasts.ui.components.LatestShowCard
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
-import uk.co.kilfeder.damask.podcasts.ui.resources.category_no_match
-import uk.co.kilfeder.damask.podcasts.ui.resources.category_search
-import uk.co.kilfeder.damask.podcasts.ui.resources.category_sheet_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_category
 import uk.co.kilfeder.damask.podcasts.ui.resources.import_choose
@@ -136,16 +123,14 @@ private fun ImportContent(
             onAction = onChooseFile,
             modifier = modifier,
         )
-        is ImportUiState.Reading -> Column(modifier.fillMaxSize()) {
-            LatestShowCard(state.latest, Modifier.weight(1f).fillMaxWidth().padding(Spacing.Space4))
-            Progress(
+        is ImportUiState.Reading ->
+            Working(
                 label = stringResource(Res.string.import_reading, state.done, state.total),
                 done = state.done,
                 total = state.total,
-                modifier = Modifier.fillMaxWidth(),
-                fill = false,
+                latest = state.latest,
+                modifier = modifier,
             )
-        }
         is ImportUiState.Review -> Review(
             state = state,
             onCategoryChange = onCategoryChange,
@@ -154,16 +139,14 @@ private fun ImportContent(
             onConfirm = onConfirm,
             modifier = modifier,
         )
-        is ImportUiState.Subscribing -> Column(modifier.fillMaxSize()) {
-            LatestShowCard(state.latest, Modifier.weight(1f).fillMaxWidth().padding(Spacing.Space4))
-            Progress(
+        is ImportUiState.Subscribing ->
+            Working(
                 label = stringResource(Res.string.import_subscribing, state.done, state.total),
                 done = state.done,
                 total = state.total,
-                modifier = Modifier.fillMaxWidth(),
-                fill = false,
+                latest = state.latest,
+                modifier = modifier,
             )
-        }
         // Momentary: the app leaves this screen as soon as it sees Done.
         is ImportUiState.Done -> Unit
         is ImportUiState.Failed -> Message(
@@ -194,6 +177,15 @@ private fun Message(
 }
 
 /** A determinate bar once the total is known (before then, an indeterminate one). */
+/** Reading feeds or saving shows: the latest show's cover, then progress. */
+@Composable
+private fun Working(label: String, done: Int, total: Int, latest: LatestShowUi?, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxSize()) {
+        LatestShowCard(latest, Modifier.weight(1f).fillMaxWidth().padding(Spacing.Space4))
+        Progress(label = label, done = done, total = total, modifier = Modifier.fillMaxWidth(), fill = false)
+    }
+}
+
 @Composable
 private fun Progress(label: String, done: Int, total: Int, modifier: Modifier = Modifier, fill: Boolean = true) {
     Column(
@@ -274,7 +266,7 @@ private fun ImportRow(
             .padding(start = Spacing.Space4, end = Spacing.Space4, top = Spacing.Space2, bottom = Spacing.Space2),
     ) {
         Checkbox(checked = row.selected, onCheckedChange = null)
-        Artwork(row.artworkUrl)
+        Artwork(row.artworkUrl, row.fallback)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.Space1)) {
             Text(row.title, style = DamaskTextStyles.Title, maxLines = 2)
             row.problem?.let {
@@ -284,7 +276,7 @@ private fun ImportRow(
                     color = MaterialTheme.colorScheme.error,
                 )
             }
-            CategoryPicker(row, categories, onCategoryChange)
+            RowCategoryButton(row, categories, onCategoryChange)
         }
     }
 }
@@ -320,93 +312,17 @@ private fun SelectAll(
 }
 
 @Composable
-private fun CategoryPicker(
+private fun RowCategoryButton(
     row: ImportRowUi,
     categories: List<CategoryOptionUi>,
     onCategoryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var open by remember { mutableStateOf(false) }
-    val current = categories.firstOrNull { it.id == row.categoryId }?.name.orEmpty()
+    val current = categories.nameOf(row.categoryId)
     val description = stringResource(Res.string.import_category, row.title, current)
-    OutlinedButton(
-        onClick = { open = true },
-        modifier = modifier.semantics { contentDescription = description },
-    ) { Text(current) }
-    if (open) {
-        CategorySheet(
-            showTitle = row.title,
-            categories = categories,
-            selectedId = row.categoryId,
-            onSelect = {
-                open = false
-                onCategoryChange(it)
-            },
-            onDismiss = { open = false },
-        )
-    }
-}
-
-/** A searchable list of categories in a bottom sheet; the current one is marked. */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun CategorySheet(
-    showTitle: String,
-    categories: List<CategoryOptionUi>,
-    selectedId: String,
-    onSelect: (String) -> Unit,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var query by remember { mutableStateOf("") }
-    val matches = categories.matching(query)
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberBottomSheetState(SheetValue.Hidden, setOf(SheetValue.Hidden, SheetValue.Expanded)),
-        modifier = modifier,
-    ) {
-        // Always full height: the list scrolls inside a fixed area, so filtering changes what's
-        // listed but never the sheet's size. imePadding keeps the list above the keyboard.
-        Column(Modifier.fillMaxHeight().imePadding()) {
-            Text(
-                text = stringResource(Res.string.category_sheet_title, showTitle),
-                style = DamaskTextStyles.TitleLarge,
-                maxLines = 2,
-                modifier = Modifier.padding(horizontal = Spacing.Space4).semantics { heading() },
-            )
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                singleLine = true,
-                label = { Text(stringResource(Res.string.category_search)) },
-                leadingIcon = { Icon(imageVector = Icons.Rounded.Search, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth().padding(Spacing.Space4),
-            )
-            LazyColumn(Modifier.weight(1f).selectableGroup()) {
-                if (matches.isEmpty()) {
-                    item(key = "none") { EmptyMessage(stringResource(Res.string.category_no_match, query)) }
-                }
-                items(matches, key = { it.id }) { option ->
-                    CategoryOption(option.name, option.id == selectedId, onClick = { onSelect(option.id) })
-                }
-            }
+    CategoryPicker(row.title, categories, row.categoryId, onCategoryChange) { open ->
+        OutlinedButton(onClick = open, modifier = modifier.semantics { contentDescription = description }) {
+            Text(current)
         }
-    }
-}
-
-@Composable
-private fun CategoryOption(name: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.Space4),
-        modifier = modifier
-            .fillMaxWidth()
-            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
-            .heightIn(min = Sizes.MinTouchTarget)
-            .padding(horizontal = Spacing.Space4),
-    ) {
-        // The row is the touch target; the radio button only shows the state.
-        RadioButton(selected = selected, onClick = null)
-        Text(name, style = DamaskTextStyles.Body)
     }
 }

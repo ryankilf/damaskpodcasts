@@ -18,9 +18,7 @@ class ClickableRoleRequired(config: Config) : Rule(
     config,
     "Interactive modifiers must declare a non-null `role = Role.X`.",
 ) {
-    private val functions: List<String> by config(
-        listOf("clickable", "combinedClickable", "selectable", "toggleable", "triStateToggleable"),
-    )
+    private val functions: List<String> by config(INTERACTIVE_MODIFIERS)
 
     override fun visitCallExpression(expression: KtCallExpression) {
         super.visitCallExpression(expression)

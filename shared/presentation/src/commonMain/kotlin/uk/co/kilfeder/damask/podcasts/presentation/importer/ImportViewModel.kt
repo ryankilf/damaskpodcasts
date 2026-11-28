@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.presentation.importer
 
+import uk.co.kilfeder.damask.podcasts.presentation.genres.hueOf
+import uk.co.kilfeder.damask.podcasts.presentation.genres.categoryOptions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,30 +14,23 @@ import uk.co.kilfeder.damask.podcasts.core.importer.ImportCandidate
 import uk.co.kilfeder.damask.podcasts.core.importer.ImportListener
 import uk.co.kilfeder.damask.podcasts.core.importer.OpmlEntry
 import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
+import uk.co.kilfeder.damask.podcasts.core.sync.ShowIds
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
-
-data class CategoryOptionUi(val id: String, val name: String)
-
-/**
- * The categories matching a search: case-insensitive, and "&" matches "and" both ways, so
- * "health and" finds "Health & Fitness". An empty query matches everything.
- */
-fun List<CategoryOptionUi>.matching(query: String): List<CategoryOptionUi> {
-    val wanted = searchKey(query)
-    return if (wanted.isEmpty()) this else filter { searchKey(it.name).contains(wanted) }
-}
-
-private fun searchKey(text: String): String =
-    text.lowercase().replace("&", " and ").split(Regex("\\s+")).filter { it.isNotEmpty() }.joinToString(" ")
+import uk.co.kilfeder.damask.podcasts.presentation.format.ArtworkFallback
+import uk.co.kilfeder.damask.podcasts.presentation.genres.CategoryOptionUi
 
 data class ImportRowUi(
     val index: Int,
     val title: String,
     val artworkUrl: String?,
+    val fallback: ArtworkFallback,
     val categoryId: String,
     /** Why the feed couldn't be read; it can still be subscribed and is retried on refresh. */
     val problem: String?,
-    /** Ticked by default; unticked shows aren't subscribed. */
+    /**
+     * Unticked shows aren't subscribed. Ticked by default, except shows whose feed couldn't be
+     * read: those start unticked with the reason beside them, and can still be ticked.
+     */
     val selected: Boolean = true,
 )
 
@@ -96,7 +91,15 @@ class ImportViewModel internal constructor(private val graph: AppGraph) : ViewMo
     fun onCategoryChanged(index: Int, categoryId: String) {
         val current = state.value as? ImportUiState.Review ?: return
         state.value = current.copy(
-            rows = current.rows.map { if (it.index == index) it.copy(categoryId = categoryId) else it },
+            rows = current.rows.map {
+                if (it.index != index) {
+                    it
+                } else {
+                    // The placeholder tile takes the new genre's colour.
+                    val hue = current.categories.hueOf(categoryId)
+                    it.copy(categoryId = categoryId, fallback = it.fallback.copy(hue = hue))
+                }
+            },
         )
     }
 
@@ -127,6 +130,8 @@ class ImportViewModel internal constructor(private val graph: AppGraph) : ViewMo
                     row.artworkUrl?.let { latest = LatestShowUi(row.title.ifBlank { null }, it) }
                     state.value = ImportUiState.Subscribing(done, total, latest)
                 }
+                // Genres the import filled get their colours.
+                graph.genreSettings.assignMissingColours()
             }
             state.value = ImportUiState.Done(choices.size)
         }
@@ -163,11 +168,17 @@ class ImportViewModel internal constructor(private val graph: AppGraph) : ViewMo
     }
 
     private suspend fun review(categoryIds: List<String>): ImportUiState.Review {
-        val categories = graph.library.first().categories
-            .sortedWith(compareBy({ it.isSystem }, { it.name.lowercase() }))
-            .map { CategoryOptionUi(it.id.value, it.name) }
+        val categories = graph.library.first().categoryOptions()
         val rows = candidates.mapIndexed { index, c ->
-            ImportRowUi(index, c.title, c.imageUrl, categoryIds[index], c.problem)
+            ImportRowUi(
+                index = index,
+                title = c.title,
+                artworkUrl = c.imageUrl,
+                fallback = ArtworkFallback.of(c.title, categories.hueOf(categoryIds[index])),
+                categoryId = categoryIds[index],
+                problem = c.problem,
+                selected = c.problem == null,
+            )
         }
         return ImportUiState.Review(rows, categories)
     }

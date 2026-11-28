@@ -20,6 +20,7 @@ internal fun ShowRow.toModel(type: ShowType) = Show(
     keepModeOverride = Columns.keepMode(keep_mode),
     keepCount = keep_count.toInt(),
     subscribed = Columns.bool(subscribed),
+    feedUrl = feed_url,
 )
 
 /**

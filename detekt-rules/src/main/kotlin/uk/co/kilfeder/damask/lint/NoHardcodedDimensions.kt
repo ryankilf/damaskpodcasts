@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.lint
 
+import org.jetbrains.kotlin.psi.KtExpression
 import dev.detekt.api.Config
 import dev.detekt.api.Entity
 import dev.detekt.api.Finding
@@ -36,10 +37,7 @@ class NoHardcodedDimensions(config: Config) : Rule(
         val literal = expression.receiverExpression as? KtConstantExpression ?: return
         if (literal.text.normalisedNumber() in allowedValues) return
         report(
-            Finding(
-                Entity.from(expression),
-                "Inline dimension `${expression.text}`. Use a named token from Dimens.kt / ui.theme instead.",
-            ),
+            finding(expression),
         )
     }
 
@@ -49,14 +47,16 @@ class NoHardcodedDimensions(config: Config) : Rule(
         if (name !in constructors) return
         if (expression.valueArguments.none { it.getArgumentExpression() is KtConstantExpression }) return
         report(
-            Finding(
-                Entity.from(expression),
-                "Inline dimension `${expression.text}`. Use a named token from Dimens.kt / ui.theme instead.",
-            ),
+            finding(expression),
         )
     }
 
     private fun String.normalisedNumber(): String =
-        removeSuffix("f").removeSuffix("F").replace("_", "").toDoubleOrNull()
-            ?.toBigDecimal()?.stripTrailingZeros()?.toPlainString() ?: this
+        numericLiteral()?.toBigDecimal()?.stripTrailingZeros()?.toPlainString() ?: this
+
+    private fun finding(expression: KtExpression) =
+        Finding(
+            Entity.from(expression),
+            "Inline dimension `${expression.text}`. Use a named token from Dimens.kt / ui.theme instead.",
+        )
 }

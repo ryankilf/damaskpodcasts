@@ -6,13 +6,44 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
+/**
+ * The bytedeco natives for the machine building (and so packaging) the app. FFmpeg's LGPL build only,
+ * never a -gpl classifier (verifyNoBannedArtifacts). There's no Windows arm64 build.
+ */
+val nativePlatform: String = run {
+    val os = System.getProperty("os.name").lowercase()
+    val arch = if (System.getProperty("os.arch").lowercase() in setOf("aarch64", "arm64")) "arm64" else "x86_64"
+    when {
+        "mac" in os -> "macosx-$arch"
+        "win" in os -> "windows-x86_64"
+        else -> "linux-$arch"
+    }
+}
+
 dependencies {
     implementation(project(":shared:ui"))
+
+    // Desktop playback (spec › Desktop playback): FFmpeg through JavaCV. JavaCV's own dependencies
+    // (OpenCV, Tesseract, JavaFX, ...) aren't wanted: only JavaCPP and FFmpeg, natives for this OS.
+    implementation(libs.javacv) { isTransitive = false }
+    implementation(libs.javacpp)
+    implementation(libs.ffmpeg)
+    runtimeOnly(variantOf(libs.javacpp) { classifier(nativePlatform) })
+    runtimeOnly(variantOf(libs.ffmpeg) { classifier(nativePlatform) })
+    // OS media keys and Now Playing: MPNowPlayingInfoCenter (macOS), SMTC (Windows), MPRIS (Linux).
+    implementation(libs.nucleus.mediaControl)
 
     implementation(compose.desktop.currentOs)
     implementation(libs.kotlinx.coroutinesSwing)
 
     implementation(libs.compose.uiToolingPreview)
+
+    testImplementation(libs.kotlin.test)
+}
+
+// Development runs log every HTTP request (see HttpClients.logRequests); packaged apps don't.
+tasks.withType<JavaExec>().configureEach {
+    if (name == "run") systemProperty("damask.httpLog", "true")
 }
 
 compose.desktop {
@@ -29,4 +60,11 @@ compose.desktop {
             linux { iconFile.set(project.file("icons/damask.png")) }
         }
     }
+}
+
+// Opt-in real-stream smoke test: -Pdamask.audio=<enclosure URL> (see RealStreamSmokeTest).
+val smokeAudio = providers.gradleProperty("damask.audio")
+tasks.withType<Test>().configureEach {
+    smokeAudio.orNull?.let { systemProperty("damask.audio", it) }
+    testLogging.showStandardStreams = smokeAudio.isPresent
 }

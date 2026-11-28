@@ -78,13 +78,20 @@ The home screen leads with what you've started, then the cross-genre rotation.
 | Home: In Progress | Episodes started but not played and touched within the last 6 months (serial shows never expire) | Most recently played first |
 | Home: Up Next | One episode per category, repeated to fill; excludes in-progress episodes | Categories by LRP |
 | Genres | List of categories, each opening its queue | LRP first |
-| Genre queue | That category's in-progress episodes, then one episode per show, interleaved | In-progress first, then shows by LRP |
-| Now Playing | The current episode, held until it is played. Starting another episode leaves this one in In Progress at its saved position | — |
+| Genre queue | A ⋮ in its bar has the same Change colour, Rename and Delete as Manage genres (not on Uncategorised; deleting goes back to Genres). Like a show's page: the next shows' covers stacked, the genre's name, "Last played … · N shows", and a patterned Resume / Play button that plays through the genre from the start of its queue (it plays in place). Then the genre's in-progress episodes, then Up next with an order chip: Variety (one episode per show, interleaved, shows least recently played first), Newest first or Oldest first (every unplayed episode by date). The order is per genre and synced; it is also the order Home's Up Next takes that genre's episodes in, and what autoplay plays next within it | In-progress first, then the genre's order |
+| Manage genres | From the tune icon on Genres: every genre with its colour (tap the dot to change), chip and show count; Change colour, Rename and Delete in its ⋮ (deleting moves its shows to Uncategorised, after asking); New genre. Uncategorised is grey and fixed | A–Z, Uncategorised last |
+| Shows | Every subscribed show, with its genre and when it was last played; "Search your shows" filters by name as you type. Each opens its page | A–Z, ignoring a leading "The" |
+| Show | Artwork, name, author, how often it publishes ("Weekly · Last played today", exact values on long press; no episode count, as we can't know it) and a genre chip that moves it to another genre. A patterned button resumes the episode in progress ("Resume · 32 min left") or plays the next unplayed one ("Play · 47 min"); it never names the episode, and that episode is highlighted in the list. The description shows three lines, and More opens the rest in place. Episodes carry an order chip (Newest first / Oldest first), which is also the order the show plays in; oldest first, the list opens at the first unplayed episode. Played episodes are dimmed, read "Played · 52 min" and have a replay button. The ⋮ menu has Copy feed URL and Unsubscribe | The show's order |
+| Now Playing | The current episode, held until it is played. Starting another episode leaves this one in In Progress at its saved position. Tapping an episode row opens it, as an ordinary screen with the top bar and tabs, without playing it; play buttons (on rows, the show page, the player) play in place and never open anything. Play on an episode's screen starts it from wherever it was opened (Up Next, its genre, its show); while something is loaded, a mini-player sits above the tabs. Show notes open from the peek at the bottom as their own screen, with every link also listed under Links | — |
 | Played | Log of every play session, finished episodes included; supports re-listening and undoing an accidental mark-played | Newest first |
 | Import | OPML file, then a confirm-or-change category list, one row per show | Alphabetical |
-| Search | Results from our index of the Podcast Index catalogue, with their artwork; "Hide explicit" applies. Subscribing sends the show through the same category confirmation step | Index relevance, then popularity and recency |
+| Discover | Search: results from our index of the Podcast Index catalogue, with their artwork; "Hide explicit" applies. Subscribing sends the show through the same category confirmation step | Index relevance, then popularity and recency |
 
 Design work lives in the [screen flow board](https://claude.ai/artifact/AEBbsBe7TLKUWNa2QKms3Q) and the [Podcast App design system](https://claude.ai/artifact/EZHMHvdS5nqQch8gN5a4SK).
+
+### Motion
+
+Moving between screens fades through: the old screen fades out (90ms), then the new one fades in (210ms), so the two never overlap. On one-pane layouts every screen change fades; on two-pane layouts changing tab fades the whole layout, and the detail pane fades on its own when the selection changes (a genre, a show, the playing episode, its notes). On one-pane layouts the heading is part of the screen and fades with it, so the old screen never jumps when the new one has a different heading (or none). The mini-player and the tabs stay still. Every play button swaps between play and pause with a quick fade-through: the old icon fades out (60ms), then the new one fades and grows in (120ms), centred, never overlapping (`PlayPauseCrossfade`). Android's animation scale (including "Remove animations") applies, as Compose follows it. Timings are in `theme/Motion.kt`; the helper is `components/FadeThrough.kt`.
 
 ## Ordering rules
 
@@ -107,7 +114,7 @@ Up Next is generated lazily, one page at a time. Generation stops when the page 
 
 A genre queue is also generated a page at a time. Generation stops when the page is full, or when a full round across the genre's shows adds nothing.
 
-**Genres list:** categories by `lastListened` ascending.
+**Genres list:** categories by `lastListened` ascending. Each row shows a stack of up to three covers: the shows whose episodes come next in that genre's queue, front first, then its other shows by LRP if the queue runs dry. The pictures change only as you listen, never at random.
 
 **Worked example.** History was last listened to 9 days ago, Politics 2 days ago, and Tech 4 hours ago. Up Next leads with a History episode, then Politics, then Tech. If you pass 30% on the History episode, History becomes the freshest category. Up Next then reorders to Politics, Tech, History.
 
@@ -213,7 +220,9 @@ CREATE TABLE show_feed (
   show_id      TEXT PRIMARY KEY REFERENCES show(id),
   title        TEXT NOT NULL,
   image_url    TEXT,                     -- channel itunes:image
-  itunes_type  TEXT                      -- episodic | serial; drives the auto defaults
+  itunes_type  TEXT,                     -- episodic | serial; drives the auto defaults
+  author       TEXT,                     -- channel itunes:author, for the show page
+  description  TEXT                      -- channel description (or itunes:summary), for the show page
 );
 
 -- Every category the feed declares, as written. Input for the prefill and any future tags.
@@ -573,7 +582,7 @@ Questions that came up while the spec was being written, with how each was settl
 
 The open work before desktop playback is considered de-risked:
 
-- [ ] FFmpeg through JavaCV: stream an MP3 and an Opus file through `atempo` at 2× with pitch preserved, output through `javax.sound`, with accurate seeking and pause/resume.
+- [x] FFmpeg through JavaCV: stream an MP3 and an Opus file through `atempo` at 2× with pitch preserved, output through `javax.sound`, with accurate seeking and pause/resume. (Done; see [Playback](playback.md) › Desktop. The `aac_at`/`aac_mf` OS decoder question is still open.)
 - [ ] Loopback proxy: OkHttp, redirects (including HTTP to HTTPS), `Range` passthrough, basic auth, token-guarded paths, streaming to disk.
-- [ ] Nucleus Media Control: media keys and Now Playing working on macOS, Windows and Linux. Check maintenance and licence.
+- [ ] Nucleus Media Control: media keys and Now Playing working on macOS, Windows and Linux. Check maintenance and licence. (Wired up with 2.5.18, MIT, on all three; the native library loads on macOS arm64. Still to confirm by hand on each OS.)
 - [ ] Packaging: jpackage with a jlink-trimmed runtime and AppCDS, with the per-platform JavaCV natives and Nucleus bundled. macOS signing and notarisation of the native libraries.

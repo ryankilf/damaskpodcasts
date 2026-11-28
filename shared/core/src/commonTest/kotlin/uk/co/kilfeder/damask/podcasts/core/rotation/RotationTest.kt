@@ -18,7 +18,7 @@ import uk.co.kilfeder.damask.podcasts.core.model.EpisodeOrder
 import uk.co.kilfeder.damask.podcasts.core.model.Show
 import uk.co.kilfeder.damask.podcasts.core.model.ShowType
 import uk.co.kilfeder.damask.podcasts.core.rules.ListeningRules
-import uk.co.kilfeder.damask.podcasts.core.rules.MINUTE_MS
+import uk.co.kilfeder.damask.podcasts.core.model.MINUTE_MS
 import uk.co.kilfeder.damask.podcasts.core.show
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -82,6 +82,23 @@ class RotationTest {
         val queue = rotation(listOf(category("News")), shows, episodes).genreQueue(CategoryId("News"))
         // In progress (most recent first), then c (never listened), b (5 days), a (1 day); round 2: a only.
         assertEquals(listOf("c-started", "b-started", "c1", "b1", "a1", "a2"), queue.guids)
+    }
+
+    @Test
+    fun coverShowsFollowTheQueueThenFillByLrp() {
+        val shows = listOf(show("a", "News"), show("b", "News"), show("c", "News"), show("d", "News"))
+        val episodes = listOf(
+            episode("a", "a1", publishedDaysAgo = 1).finished(daysAgo(1)),
+            episode("b", "b1", publishedDaysAgo = 1),
+            episode("b", "b-old", publishedDaysAgo = 9).finished(daysAgo(3)),
+            episode("c", "c-started", publishedDaysAgo = 3).at(5 * MINUTE_MS, hoursAgo(1)),
+            // d has nothing left to play, so it only appears as filler.
+            episode("d", "d1", publishedDaysAgo = 1).finished(daysAgo(7)),
+        )
+        val rotation = rotation(listOf(category("News")), shows, episodes)
+        // Queue: c-started (in progress), then b1. a (fully listened) and d fill, by LRP.
+        assertEquals(listOf("c", "b"), rotation.coverShows(CategoryId("News"), 2).map { it.id.value })
+        assertEquals(listOf("c", "b", "d", "a"), rotation.coverShows(CategoryId("News"), 4).map { it.id.value })
     }
 
     @Test
