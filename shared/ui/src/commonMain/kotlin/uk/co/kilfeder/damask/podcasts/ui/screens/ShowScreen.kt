@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.resources.discover_feed_problem
 import uk.co.kilfeder.damask.podcasts.ui.components.BarPlayButton
 import uk.co.kilfeder.damask.podcasts.ui.components.BarArtwork
 import uk.co.kilfeder.damask.podcasts.ui.components.collapsingTitle
@@ -116,7 +117,9 @@ private fun ShowContent(
             show == null -> EmptyState(
                 icon = Icons.Rounded.Podcasts,
                 title = stringResource(Res.string.shows_untitled),
-                body = stringResource(Res.string.episode_gone_body),
+                // Opened from Discover and its feed couldn't be read: say why.
+                body = state.problem?.let { stringResource(Res.string.discover_feed_problem, it) }
+                    ?: stringResource(Res.string.episode_gone_body),
                 modifier = Modifier.weight(1f),
             )
             else -> ShowList(

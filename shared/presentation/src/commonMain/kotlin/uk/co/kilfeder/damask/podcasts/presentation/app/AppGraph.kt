@@ -39,6 +39,7 @@ import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeViewModel
 import uk.co.kilfeder.damask.podcasts.core.directory.AppleDirectory
 import uk.co.kilfeder.damask.podcasts.presentation.discover.DiscoverViewModel
+import uk.co.kilfeder.damask.podcasts.presentation.discover.ShowPreviews
 import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreQueueViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.genres.GenresViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.home.HomeViewModel
@@ -87,6 +88,7 @@ class AppGraph internal constructor(
     internal val repository = LibraryRepository(db)
     internal val importer = OpmlImporter(fetcher, feeds, CategoryPrefill(db))
     internal val refresher = FeedRefresher(fetcher, feeds)
+    internal val previews by lazy { ShowPreviews(this) }
 
     /** Artwork client: the shared HTTP client (retries, timeouts, http -> https), following redirects. */
     val imageHttpClient: HttpClient get() = HttpClients.images

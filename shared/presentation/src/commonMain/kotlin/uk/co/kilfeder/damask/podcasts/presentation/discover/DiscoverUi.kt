@@ -7,9 +7,6 @@ enum class DiscoverRowState {
     /** Not subscribed: Subscribe. */
     NEW,
 
-    /** Reading its feed to open its page (not subscribing). */
-    OPENING,
-
     /** Reading its feed to subscribe. */
     SUBSCRIBING,
 
@@ -26,9 +23,9 @@ data class DiscoverRowUi(
     val artworkUrl: String?,
     val fallback: ArtworkFallback,
     val state: DiscoverRowState,
-    /** Set when [state] is [DiscoverRowState.SUBSCRIBED]: its page opens straight away. */
+    /** Set when [state] is [DiscoverRowState.SUBSCRIBED]. */
     val showId: String? = null,
-    /** Why its feed couldn't be read, after a Subscribe or open that failed. */
+    /** Why its feed couldn't be read, after a Subscribe that failed. */
     val problem: String? = null,
 )
 
@@ -54,6 +51,6 @@ sealed interface DiscoverResults {
 data class DiscoverUiState(
     val query: String = "",
     val results: DiscoverResults = DiscoverResults.Idle,
-    /** A show whose page should open now (its feed has just been read); see onShowOpened. */
+    /** A show whose page should open now; see onShowOpened. */
     val openShowId: String? = null,
 )

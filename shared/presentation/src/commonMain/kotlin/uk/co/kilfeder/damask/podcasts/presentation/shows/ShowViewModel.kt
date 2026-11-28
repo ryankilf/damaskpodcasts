@@ -10,6 +10,7 @@ import uk.co.kilfeder.damask.podcasts.presentation.episodes.nextUpOf
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.toEpisodeOrder
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.toListOrder
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.ListOrder
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import uk.co.kilfeder.damask.podcasts.presentation.format.lastPlayed
 import uk.co.kilfeder.damask.podcasts.presentation.genres.categoryOptions
@@ -25,6 +26,7 @@ import uk.co.kilfeder.damask.podcasts.core.model.ShowId
 import uk.co.kilfeder.damask.podcasts.core.rotation.Library
 import uk.co.kilfeder.damask.podcasts.core.rotation.Rotation
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
+import uk.co.kilfeder.damask.podcasts.presentation.discover.PreviewState
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeRowUi
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.toRow
 import uk.co.kilfeder.damask.podcasts.presentation.format.ArtworkFallback
@@ -45,6 +47,8 @@ data class ShowUiState(
     val genres: List<CategoryOptionUi> = emptyList(),
     /** The colour a genre created from the sheet starts with: the least used. */
     val nextHue: GenreHue = GenreHue.RED,
+    /** Opened from Discover and its feed couldn't be read: why. */
+    val problem: String? = null,
 )
 
 /**
@@ -55,9 +59,14 @@ data class ShowUiState(
 class ShowViewModel internal constructor(private val graph: AppGraph, showId: String) : ViewModel() {
     private val id = ShowId(showId)
 
-    val uiState: StateFlow<ShowUiState> = graph.rotation.map { rotation ->
+    val uiState: StateFlow<ShowUiState> = combine(graph.rotation, graph.previews.state) { rotation, previews ->
         val library = rotation.library
-        val show = library.showsById[id] ?: return@map ShowUiState(loading = false)
+        val show = library.showsById[id] ?: return@combine when (val preview = previews[id]) {
+            // Opened from Discover: its feed is still being read.
+            PreviewState.Loading -> ShowUiState(loading = true)
+            is PreviewState.Failed -> ShowUiState(loading = false, problem = preview.reason)
+            null -> ShowUiState(loading = false)
+        }
         state(show, library, rotation)
     }.stateInUi(viewModelScope, ShowUiState())
 

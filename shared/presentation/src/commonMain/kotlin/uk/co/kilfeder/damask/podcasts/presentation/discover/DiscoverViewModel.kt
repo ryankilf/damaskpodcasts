@@ -45,13 +45,13 @@ private data class Progress(
 /**
  * Discover (spec › Search): searches Apple's podcast directory as you type. Subscribe reads the
  * feed and subscribes in the genre Apple gives (else the feed's own), with no sheet: you change
- * it on the show's page. Tapping a show you don't have reads its feed and opens its page
- * unsubscribed, to listen before subscribing.
+ * it on the show's page. Tapping a show you don't have opens its page at once, unsubscribed, to
+ * listen before subscribing; its feed is read there ([ShowPreviews]).
  */
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class DiscoverViewModel internal constructor(private val graph: AppGraph) : ViewModel() {
     private val query = MutableStateFlow("")
-    /** Rows whose feed is being read, and why ([DiscoverRowState.OPENING] or SUBSCRIBING). */
+    /** Rows whose feed is being read to subscribe. */
     private val fetching = MutableStateFlow<Map<String, DiscoverRowState>>(emptyMap())
     private val problems = MutableStateFlow<Map<String, String>>(emptyMap())
     private val openShowId = MutableStateFlow<String?>(null)
@@ -104,9 +104,10 @@ class DiscoverViewModel internal constructor(private val graph: AppGraph) : View
         }
     }
 
-    /** Tapping a show you don't have: read its feed and open its page, unsubscribed. */
-    fun onOpen(key: String) = withFeed(key, DiscoverRowState.OPENING) { candidate ->
-        openShowId.value = graph.onDb { graph.importer.preview(candidate) }.value
+    /** Tapping a show you don't have: its page opens now, and reads the feed itself. */
+    fun onOpen(key: String) {
+        val show = lastShows.firstOrNull { FeedUrl.normalise(it.feedUrl) == key } ?: return
+        openShowId.value = graph.previews.open(show).value
     }
 
     /** The screen has opened [DiscoverUiState.openShowId]. */

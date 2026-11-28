@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,7 +14,6 @@ import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -141,10 +139,6 @@ private fun DiscoverRow(row: DiscoverRowUi, actions: DiscoverActions, modifier: 
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            // Opening (not subscribing): a thin bar under the name, and Subscribe stays as it is.
-            if (row.state == DiscoverRowState.OPENING) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = Spacing.Space1))
-            }
             row.problem?.let {
                 Text(
                     text = stringResource(Res.string.discover_feed_problem, it),
@@ -160,13 +154,9 @@ private fun DiscoverRow(row: DiscoverRowUi, actions: DiscoverActions, modifier: 
 @Composable
 private fun SubscribeAction(row: DiscoverRowUi, onSubscribe: () -> Unit, modifier: Modifier = Modifier) {
     when (row.state) {
-        DiscoverRowState.NEW, DiscoverRowState.OPENING -> {
+        DiscoverRowState.NEW -> {
             val label = stringResource(Res.string.discover_subscribe_label, row.title)
-            FilledTonalButton(
-                onClick = onSubscribe,
-                enabled = row.state == DiscoverRowState.NEW,
-                modifier = modifier.semantics { contentDescription = label },
-            ) {
+            FilledTonalButton(onClick = onSubscribe, modifier = modifier.semantics { contentDescription = label }) {
                 Text(stringResource(Res.string.discover_subscribe))
             }
         }
