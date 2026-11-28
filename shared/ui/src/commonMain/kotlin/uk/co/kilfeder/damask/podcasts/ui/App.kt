@@ -145,7 +145,7 @@ private fun ShellLayout(
             onUnsubscribe = intents.onUnsubscribe,
             onImportFinish = intents.onImportFinish,
             onBack = { intents.onBack() },
-            rowPlayer = RowPlayer(state.playing, state.playingNow, intents.onRowPlayPause),
+            rowPlayer = RowPlayer(state.playing, state.playingNow, intents.onRowPlayPause, openedEpisode(state)),
         )
         Row(Modifier.fillMaxSize()) {
             val compact = width == WidthClass.COMPACT
@@ -216,3 +216,10 @@ internal class ShellActions(
     val onBack: () -> Unit,
     val rowPlayer: RowPlayer,
 )
+
+/** The episode whose screen (or show notes) is open, for highlighting it in lists. */
+private fun openedEpisode(state: AppUiState): EpisodeId? = when (val top = state.nav.top) {
+    is Destination.Episode -> top.id
+    is Destination.ShowNotes -> top.id
+    else -> null
+}

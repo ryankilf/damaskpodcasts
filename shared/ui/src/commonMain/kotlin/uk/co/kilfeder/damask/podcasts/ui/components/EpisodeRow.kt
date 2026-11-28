@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
+import androidx.compose.ui.semantics.selected
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -87,7 +88,8 @@ internal fun EpisodeRow(
 
 /**
  * An episode in a list: [player] plays or pauses it in place, starting it from [source]; tapping
- * the row opens it ([onClick]). Every episode list uses this.
+ * the row opens it ([onClick]). The open one is highlighted, as selected genres and shows are.
+ * Every episode list uses this.
  */
 @Composable
 internal fun EpisodeRow(
@@ -100,17 +102,21 @@ internal fun EpisodeRow(
     onSwipe: () -> Unit = {},
     background: Color = MaterialTheme.colorScheme.surface,
     dimPlayed: Boolean = false,
-) = EpisodeRow(
-    row = row,
-    playing = player.isPlaying(row.id),
-    onClick = onClick,
-    onPlayPause = { player.playPause(row.id, source) },
-    modifier = modifier,
-    swipeLabel = swipeLabel,
-    onSwipe = onSwipe,
-    background = background,
-    dimPlayed = dimPlayed,
-)
+) {
+    val opened = player.isOpened(row.id)
+    val tint = if (opened) MaterialTheme.colorScheme.secondaryContainer else background
+    EpisodeRow(
+        row = row,
+        playing = player.isPlaying(row.id),
+        onClick = onClick,
+        onPlayPause = { player.playPause(row.id, source) },
+        modifier = if (opened) modifier.background(tint).semantics { selected = true } else modifier,
+        swipeLabel = swipeLabel,
+        onSwipe = onSwipe,
+        background = tint,
+        dimPlayed = dimPlayed,
+    )
+}
 
 @Composable
 private fun RowContent(
