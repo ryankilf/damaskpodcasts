@@ -1,7 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui
 
-import uk.co.kilfeder.damask.podcasts.ui.components.ManageCategoriesButton
-import uk.co.kilfeder.damask.podcasts.ui.resources.manage_categories
+import uk.co.kilfeder.damask.podcasts.ui.components.ManageGenresButton
+import uk.co.kilfeder.damask.podcasts.ui.resources.manage_genres
 import uk.co.kilfeder.damask.podcasts.ui.components.SettingsButton
 import uk.co.kilfeder.damask.podcasts.ui.components.BackButton
 import androidx.compose.foundation.layout.Column
@@ -145,7 +145,7 @@ internal fun TabRail(selected: Tab, onSelectTab: (Tab) -> Unit, onSettings: () -
 
 internal fun titleOf(state: AppUiState): StringResource = when (state.nav.top) {
     Destination.Settings -> Res.string.settings
-    Destination.ManageCategories -> Res.string.manage_categories
+    Destination.ManageGenres -> Res.string.manage_genres
     Destination.Import -> Res.string.import_screen_title
     Destination.InProgress -> Res.string.home_in_progress
     is Destination.GenreQueue -> Res.string.tab_genres
@@ -185,7 +185,7 @@ internal fun topLevelAction(
     state: AppUiState,
     compact: Boolean,
     onSettings: () -> Unit,
-    onManageCategories: () -> Unit,
+    onManageGenres: () -> Unit,
 ): (@Composable () -> Unit)? {
     if (state.nav.top != null) return null
     return when {
@@ -193,7 +193,7 @@ internal fun topLevelAction(
             { SettingsButton(onSettings) }
         }
         state.nav.tab == Tab.GENRES -> {
-            { ManageCategoriesButton(onManageCategories) }
+            { ManageGenresButton(onManageGenres) }
         }
         else -> null
     }

@@ -1,7 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui
 
-import uk.co.kilfeder.damask.podcasts.ui.components.ManageCategoriesButton
-import uk.co.kilfeder.damask.podcasts.ui.screens.ManageCategoriesScreen
+import uk.co.kilfeder.damask.podcasts.ui.components.ManageGenresButton
+import uk.co.kilfeder.damask.podcasts.ui.screens.ManageGenresScreen
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Box
@@ -101,7 +101,7 @@ internal fun ShellContent(
                             state = shown,
                             compact = width == WidthClass.COMPACT,
                             onSettings = { actions.onNavigate(Destination.Settings) },
-                            onManageCategories = { actions.onNavigate(Destination.ManageCategories) },
+                            onManageGenres = { actions.onNavigate(Destination.ManageGenres) },
                         ),
                     )
                 }
@@ -121,8 +121,8 @@ private fun PanesFor(state: AppUiState, graph: AppGraph, actions: ShellActions, 
             val genre = (top as? Destination.GenreQueue)?.categoryId
             TwoPanes(
                 left = {
-                    val manage = { actions.onNavigate(Destination.ManageCategories) }
-                    ListPane(title, it, actions = { ManageCategoriesButton(manage) }) { m ->
+                    val manage = { actions.onNavigate(Destination.ManageGenres) }
+                    ListPane(title, it, actions = { ManageGenresButton(manage) }) { m ->
                         GenresScreen(graph, actions.onOpenGenre, m, selectedId = genre)
                     }
                 },
@@ -182,6 +182,7 @@ private fun SinglePane(state: AppUiState, graph: AppGraph, actions: ShellActions
                 modifier = readable,
                 showHeader = true,
                 onBack = actions.onBack,
+                onLeave = actions.onBack,
             )
             is Destination.Episode -> EpisodeScreen(top.id, graph, actions, Modifier.fillMaxSize(), top.source)
             is Destination.Show -> ShowScreen(
@@ -197,7 +198,7 @@ private fun SinglePane(state: AppUiState, graph: AppGraph, actions: ShellActions
             Destination.Settings ->
                 SettingsScreen(graph, onImport = { actions.onNavigate(Destination.Import) }, modifier = readable)
             Destination.Import -> ImportScreen(graph, onFinish = actions.onImportFinish, modifier = readable)
-            Destination.ManageCategories -> ManageCategoriesScreen(graph, modifier = readable)
+            Destination.ManageGenres -> ManageGenresScreen(graph, modifier = readable)
             null -> TabContent(state.nav.tab, graph, actions, readable)
         }
     }

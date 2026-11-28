@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
+import uk.co.kilfeder.damask.podcasts.ui.theme.genreSwatch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -147,7 +148,7 @@ private fun Swatch(hue: GenreHue, selected: Boolean, onClick: () -> Unit, modifi
                 .size(Sizes.MinTouchTarget)
                 .then(if (selected) Modifier.border(Sizes.GenreRingWidth, colors.onSurface, CircleShape) else Modifier)
                 .padding(if (selected) Spacing.Space1 else Sizes.None)
-                .background(genreTones(hue).stripe, CircleShape),
+                .genreSwatch(genreTones(hue), colors.outlineVariant, CircleShape),
         ) {
             if (selected) {
                 Box(

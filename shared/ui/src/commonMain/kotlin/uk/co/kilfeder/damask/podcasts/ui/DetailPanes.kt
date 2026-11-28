@@ -121,6 +121,7 @@ private fun GenreDetail(categoryId: String?, actions: ShellActions, graph: AppGr
             rowPlayer = actions.rowPlayer,
             modifier = Modifier.widthIn(max = Sizes.MaxContentWidth).fillMaxSize(),
             showHeader = true,
+            onLeave = actions.onBack,
         )
     }
 }

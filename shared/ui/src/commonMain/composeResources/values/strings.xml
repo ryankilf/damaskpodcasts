@@ -133,9 +133,9 @@
     <string name="import_failed">That doesn’t look like a list of podcasts. Try saving it from your old app again.</string>
     <string name="import_start_again">Choose a different file</string>
     <string name="import_category">Genre for %1$s: %2$s</string>
-    <string name="category_find_or_create">Find or create a category</string>
+    <string name="category_find_or_create">Find or create a genre</string>
     <string name="category_create">Create “%1$s”</string>
-    <string name="category_new_colour">Colour for the new category: %1$s. Change colour</string>
+    <string name="category_new_colour">Colour for the new genre: %1$s. Change colour</string>
     <string name="category_sheet_title">Genre for %1$s</string>
     <string name="category_search">Search genres</string>
     <string name="category_no_match">No genres match “%1$s”</string>
@@ -164,11 +164,13 @@
     <string name="row_resume">Resume %1$s, %2$s</string>
     <string name="row_pause">Pause %1$s, %2$s</string>
 
-    <!-- Manage categories and genre colours -->
-    <string name="manage_categories">Manage categories</string>
-    <string name="manage_new">New category</string>
+    <!-- Manage genres and genre colours -->
+    <string name="manage_genres">Manage genres</string>
+    <string name="manage_new">New genre</string>
     <string name="manage_options">%1$s options: rename, delete</string>
     <string name="manage_rename">Rename</string>
+    <string name="manage_colour">Change colour</string>
+    <string name="genre_options">%1$s options</string>
     <string name="manage_delete">Delete</string>
     <string name="manage_always_grey">always grey</string>
     <string name="colour_for">Colour for %1$s</string>
@@ -178,7 +180,7 @@
     <string name="save">Save</string>
     <string name="create">Create</string>
     <string name="category_name">Name</string>
-    <string name="category_new_title">New category</string>
+    <string name="category_new_title">New genre</string>
     <string name="category_rename_title">Rename %1$s</string>
     <string name="category_delete_title">Delete %1$s?</string>
     <plurals name="category_delete_body">

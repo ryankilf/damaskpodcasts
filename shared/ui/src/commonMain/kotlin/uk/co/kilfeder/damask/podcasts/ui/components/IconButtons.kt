@@ -1,6 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
-import uk.co.kilfeder.damask.podcasts.ui.resources.manage_categories
+import uk.co.kilfeder.damask.podcasts.ui.resources.manage_genres
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -30,10 +30,10 @@ internal fun SettingsButton(onClick: () -> Unit, modifier: Modifier = Modifier) 
     }
 }
 
-/** The tune (sliders) icon in the Genres heading that opens Manage categories. */
+/** The tune (sliders) icon in the Genres heading that opens Manage genres. */
 @Composable
-internal fun ManageCategoriesButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun ManageGenresButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     IconButton(onClick = onClick, modifier = modifier) {
-        Icon(Icons.Rounded.Tune, contentDescription = stringResource(Res.string.manage_categories))
+        Icon(Icons.Rounded.Tune, contentDescription = stringResource(Res.string.manage_genres))
     }
 }

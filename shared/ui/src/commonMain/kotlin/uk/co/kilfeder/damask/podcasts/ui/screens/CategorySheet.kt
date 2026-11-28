@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.theme.genreSwatch
 import uk.co.kilfeder.damask.podcasts.ui.theme.genreTones
 import uk.co.kilfeder.damask.podcasts.ui.resources.category_new_colour
 import uk.co.kilfeder.damask.podcasts.ui.resources.category_find_or_create
@@ -14,8 +15,6 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.border
-import androidx.compose.foundation.background
 import androidx.compose.runtime.setValue
 
 import androidx.compose.runtime.getValue
@@ -213,12 +212,8 @@ private fun CategoryOption(
 /** A genre's colour as a small rounded square (the sheet's rows and its create row). */
 @Composable
 private fun GenreSquare(hue: GenreHue, modifier: Modifier = Modifier, ringed: Boolean = false) {
-    val shape = MaterialTheme.shapes.extraSmall
-    val ring = MaterialTheme.colorScheme.outline
-    Box(
-        modifier
-            .size(Sizes.GenreSquare)
-            .then(if (ringed) Modifier.border(Sizes.ArtworkHairline, ring, shape) else Modifier)
-            .background(genreTones(hue).stripe, shape),
-    )
+    val colors = MaterialTheme.colorScheme
+    // The create row's square is a button, so it gets the stronger outline.
+    val edge = if (ringed) colors.outline else colors.outlineVariant
+    Box(modifier.size(Sizes.GenreSquare).genreSwatch(genreTones(hue), edge, MaterialTheme.shapes.extraSmall))
 }

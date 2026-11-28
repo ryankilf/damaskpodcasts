@@ -1,5 +1,11 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.presentation.genres.ManagedGenreUi
+import uk.co.kilfeder.damask.podcasts.ui.components.rememberGenreEditState
+import uk.co.kilfeder.damask.podcasts.ui.components.GenreMenu
+import uk.co.kilfeder.damask.podcasts.ui.components.GenreEditState
+import uk.co.kilfeder.damask.podcasts.ui.components.GenreEditDialogs
+import uk.co.kilfeder.damask.podcasts.ui.components.GenreEditIntents
 import uk.co.kilfeder.damask.podcasts.ui.theme.genreTones
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.size
@@ -70,9 +76,22 @@ internal fun GenreQueueScreen(
     modifier: Modifier = Modifier,
     showHeader: Boolean = false,
     onBack: (() -> Unit)? = null,
+    onLeave: () -> Unit = {},
     viewModel: GenreQueueViewModel = viewModel(key = "genre-$categoryId") { graph.genreQueueViewModel(categoryId) },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // The page's ⋮ (Change colour, Rename, Delete) works as on Manage genres; deleting leaves it.
+    val editing = rememberGenreEditState()
+    GenreEditDialogs(
+        state = editing,
+        editor = GenreEditIntents(
+            onColourChange = viewModel::onColourChange,
+            onRename = viewModel::onRename,
+            onDelete = viewModel::onDelete,
+            onCreate = viewModel::onCreate,
+            onLeave = onLeave,
+        ),
+    )
     GenreQueueContent(
         state = state,
         onDismissEpisode = viewModel::onMarkPlayed,
@@ -83,6 +102,7 @@ internal fun GenreQueueScreen(
         categoryId = categoryId,
         showHeader = showHeader,
         onBack = onBack,
+        editing = editing,
         modifier = modifier,
     )
 }
@@ -102,6 +122,7 @@ private fun GenreQueueContent(
     categoryId: String,
     showHeader: Boolean,
     onBack: (() -> Unit)?,
+    editing: GenreEditState,
     modifier: Modifier = Modifier,
 ) {
     if (state.loading) {
@@ -113,7 +134,21 @@ private fun GenreQueueContent(
     val listBackground = if (showHeader && onBack == null) colors.surfaceContainerLow else colors.surface
     val titleState = rememberCollapsingTitleState()
     Column(modifier) {
-        if (showHeader) GenreTopBar(state, titleState, listBackground, onBack, rowPlayer, PlaySource.Genre(categoryId))
+        if (showHeader) {
+            GenreTopBar(
+                state = state,
+                titleState = titleState,
+                background = listBackground,
+                onBack = onBack,
+                rowPlayer = rowPlayer,
+                source = PlaySource.Genre(categoryId),
+                menu = if (state.isSystem) {
+                    null
+                } else {
+                    { GenreMenu(ManagedGenreUi(categoryId, state.name, state.hue, state.showCount, false), editing) }
+                },
+            )
+        }
         GenreQueueList(
             state = state,
             onDismissEpisode = onDismissEpisode,
@@ -216,6 +251,7 @@ private fun GenreTopBar(
     rowPlayer: RowPlayer,
     source: PlaySource,
     modifier: Modifier = Modifier,
+    menu: (@Composable () -> Unit)? = null,
 ) {
     val cover = state.covers.firstOrNull()
     val next = state.nextUp
@@ -227,7 +263,7 @@ private fun GenreTopBar(
         onBack = onBack,
         art = cover?.let { { BarArtwork(it.url, it.fallback) } },
         collapsedAction = next?.let { { BarPlayButton(it, rowPlayer, source) } },
-    )
+    ) { menu?.invoke() }
 }
 
 /** The header, then the button that plays through the genre from the start of its queue. */

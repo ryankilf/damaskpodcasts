@@ -1,5 +1,9 @@
 package uk.co.kilfeder.damask.podcasts.ui.theme
 
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreHue
@@ -59,3 +63,11 @@ val GenreTonesDark: Map<GenreHue, GenreTones> = mapOf(
     GenreHue.SLATE to GenreTones(Color(0xFFD5E4F2), Color(0xFF3A4853), Color(0xFFD5E4F2)),
     GenreHue.GREY to GenreTones(Color(0xFFB3A9AA), Color(0xFF4C4546), Color(0xFFEBE0E1)),
 )
+
+/**
+ * A colour swatch for [hue] (the colour sheet, Manage genres' dots, the genre sheet's squares):
+ * the container tone, which is the colour you see on chips and tiles, with a hairline [edge] so
+ * pale colours still stand out on a pale sheet.
+ */
+fun Modifier.genreSwatch(tones: GenreTones, edge: Color, shape: Shape): Modifier =
+    background(tones.container, shape).border(Sizes.ArtworkHairline, edge, shape)

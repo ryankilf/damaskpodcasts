@@ -41,6 +41,8 @@ data class GenreQueueUiState(
     val order: ListOrder = ListOrder.VARIETY,
     /** The genre's colour: the bar by its name and its rows' stripes. */
     val hue: GenreHue = GenreHue.GREY,
+    /** Uncategorised: no colour, name or delete to change (no ⋮ menu). */
+    val isSystem: Boolean = false,
     /** The queue's in-progress episodes (it starts with them), shown in their own panel. */
     val inProgress: List<EpisodeRowUi> = emptyList(),
     /** The rest of the queue, in the genre's [order]. */
@@ -52,7 +54,7 @@ data class GenreQueueUiState(
 class GenreQueueViewModel internal constructor(
     private val graph: AppGraph,
     categoryId: String,
-) : ViewModel() {
+) : ViewModel(), GenreEdits by GenreEditor(graph) {
     private val id = CategoryId(categoryId)
     private val size = MutableStateFlow(PAGE_SIZE)
 
@@ -74,6 +76,7 @@ class GenreQueueViewModel internal constructor(
             nextUp = queue.firstOrNull()?.let { nextUpOf(it, rows.first(), rotation) },
             order = (library.category(id)?.order ?: GenreOrder.VARIETY).toListOrder(),
             hue = library.hueOf(id),
+            isSystem = library.category(id)?.isSystem ?: false,
             lastListened = rotation.lastPlayed(id, now),
             inProgress = inProgress,
             upNext = upNext,

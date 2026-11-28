@@ -17,7 +17,7 @@ class GenreSettings(private val db: DamaskDatabase, private val clock: DeviceClo
      * Oldest first needs every episode, so its shows' feeds are marked to download in full on
      * their next refresh (refresh them straight after, to bring the older episodes back).
      */
-    /** A new genre (Manage categories, or the show page's genre sheet), in [colour]. */
+    /** A new genre (Manage genres, or the show page's genre sheet), in [colour]. */
     @OptIn(ExperimentalUuidApi::class)
     fun create(name: String, colour: GenreColour): CategoryId = db.transactionWithResult {
         val id = Uuid.random().toString()
@@ -31,7 +31,7 @@ class GenreSettings(private val db: DamaskDatabase, private val clock: DeviceClo
     /** Its shows count as Uncategorised from now on (Library.effectiveCategory). */
     fun delete(id: CategoryId) = db.categoryQueries.markDeleted(clock.issue().value, id.value)
 
-    /** The user picked a colour for a genre (Manage categories, or when creating one). */
+    /** The user picked a colour for a genre (Manage genres, or when creating one). */
     fun setColour(id: CategoryId, colour: GenreColour) =
         db.categoryQueries.setColour(colour.storedName, clock.issue().value, id.value)
 

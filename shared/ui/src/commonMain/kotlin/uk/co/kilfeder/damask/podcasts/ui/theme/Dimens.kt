@@ -156,7 +156,7 @@ object Sizes {
     /** The ring round a selected genre row on tablets. */
     val GenreRingWidth = 2.dp
 
-    /** A colour swatch's dot on Manage categories, and the check circle on a picked swatch. */
+    /** A colour swatch's dot on Manage genres, and the check circle on a picked swatch. */
     val SwatchDot = 28.dp
 
     /** A genre's colour beside its name in the genre sheet. */
