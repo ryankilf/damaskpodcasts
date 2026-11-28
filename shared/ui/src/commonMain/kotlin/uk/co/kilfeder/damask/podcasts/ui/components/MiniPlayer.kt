@@ -5,6 +5,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -45,13 +49,20 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 @Composable
 internal fun MiniPlayer(
     graph: AppGraph,
+    extendUnderGestureBar: Boolean,
     onOpen: (EpisodeId) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MiniPlayerViewModel = viewModel { graph.miniPlayerViewModel() },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    state.player?.let {
-        MiniPlayerBar(it, onOpen = { onOpen(it.id) }, onPlayPause = viewModel::onPlayPause, modifier)
+    val gestureBar = Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars)
+    val player = state.player
+    when {
+        player != null -> Column(modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+            MiniPlayerBar(player, onOpen = { onOpen(player.id) }, onPlayPause = viewModel::onPlayPause)
+            if (extendUnderGestureBar) Spacer(gestureBar)
+        }
+        extendUnderGestureBar -> Spacer(modifier.then(gestureBar))
     }
 }
 
@@ -68,7 +79,6 @@ private fun MiniPlayerBar(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .clickable(onClickLabel = openLabel, role = Role.Button, onClick = onOpen)
             .height(Sizes.MiniPlayerHeight)
             .padding(start = Spacing.Space4, end = Spacing.Space1),

@@ -3,7 +3,8 @@ package uk.co.kilfeder.damask.podcasts.ui
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Category
@@ -90,11 +91,20 @@ internal fun BottomBars(
     onNavigate: (Destination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // The tab bar keeps clear of the system's gesture bar by itself. Without it (rail layouts) this
-    // area does, so the mini-player, or the screen's own bottom edge, isn't drawn under it.
-    val insets = if (showTabs) Modifier else Modifier.windowInsetsPadding(WindowInsets.navigationBars)
-    Column(modifier.then(insets)) {
-        if (!playingShown) MiniPlayer(graph = graph, onOpen = { onNavigate(Destination.Episode(it)) })
+    // The tab bar keeps clear of the system's gesture bar by itself. Without it (rail layouts) the
+    // mini-player's colour runs down behind the gesture bar; with no mini-player, a plain gap keeps
+    // the screen's bottom edge clear of it.
+    val underGestureBar = !showTabs
+    Column(modifier) {
+        if (playingShown) {
+            if (underGestureBar) Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
+        } else {
+            MiniPlayer(
+                graph = graph,
+                extendUnderGestureBar = underGestureBar,
+                onOpen = { onNavigate(Destination.Episode(it)) },
+            )
+        }
         if (showTabs) TabBar(tab, onSelectTab)
     }
 }
