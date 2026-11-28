@@ -1,5 +1,10 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.components.collapsingTitle
+import uk.co.kilfeder.damask.podcasts.ui.components.collapsingListTop
+import uk.co.kilfeder.damask.podcasts.ui.components.rememberCollapsingTitleState
+import uk.co.kilfeder.damask.podcasts.ui.components.CollapsingTopBar
+import uk.co.kilfeder.damask.podcasts.ui.components.CollapsingTitleState
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_episodes_heading
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.ListOrder
 import uk.co.kilfeder.damask.podcasts.ui.components.BackButton
@@ -100,8 +105,9 @@ private fun ShowContent(
     modifier: Modifier = Modifier,
 ) {
     val show = state.show
+    val titleState = rememberCollapsingTitleState()
     Column(modifier) {
-        ShowTopBar(show, actions)
+        ShowTopBar(show, actions, titleState, background)
         when {
             state.loading -> Loading(Modifier.weight(1f))
             show == null -> EmptyState(
@@ -110,7 +116,16 @@ private fun ShowContent(
                 body = stringResource(Res.string.episode_gone_body),
                 modifier = Modifier.weight(1f),
             )
-            else -> ShowList(state, show, actions, intents, rowPlayer, background, Modifier.weight(1f))
+            else -> ShowList(
+                state = state,
+                show = show,
+                actions = actions,
+                intents = intents,
+                rowPlayer = rowPlayer,
+                background = background,
+                titleState = titleState,
+                modifier = Modifier.weight(1f).collapsingListTop(titleState),
+            )
         }
     }
 }
@@ -123,6 +138,7 @@ private fun ShowList(
     intents: ShowIntents,
     rowPlayer: RowPlayer,
     background: Color,
+    titleState: CollapsingTitleState,
     modifier: Modifier = Modifier,
 ) {
     val list = rememberLazyListState()
@@ -130,7 +146,9 @@ private fun ShowList(
     val source = PlaySource.Show(show.showId)
     val nextId = state.nextUp?.id
     LazyColumn(state = list, modifier = modifier) {
-        item(key = "details") { ShowDetails(show, state.genres, intents.onGenreChange) }
+        item(key = "details") {
+            ShowDetails(show, state.genres, intents.onGenreChange, titleModifier = Modifier.collapsingTitle(titleState))
+        }
         item(key = "actions") {
             val next = state.nextUp
             ShowActions(
@@ -177,18 +195,22 @@ private fun OpenAtFirstUnplayed(startAt: Int?, list: LazyListState) {
     }
 }
 
-/** Back (on its own screen) and the show's ⋮ menu. */
+/** Back (on its own screen) and the show's ⋮ menu; the name joins them once scrolled. */
 @Composable
-private fun ShowTopBar(show: ShowPageUi?, actions: ShowPageActions, modifier: Modifier = Modifier) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = Sizes.PaneHeaderHeight)
-            .padding(horizontal = Spacing.Space1),
+private fun ShowTopBar(
+    show: ShowPageUi?,
+    actions: ShowPageActions,
+    titleState: CollapsingTitleState,
+    background: Color,
+    modifier: Modifier = Modifier,
+) {
+    CollapsingTopBar(
+        state = titleState,
+        title = show?.title.orEmpty(),
+        modifier = modifier,
+        background = background,
+        onBack = actions.onBack,
     ) {
-        actions.onBack?.let { BackButton(it) }
-        Spacer(Modifier.weight(1f))
         if (show != null && show.subscribed) ShowMenu(show, actions.onUnsubscribe)
     }
 }

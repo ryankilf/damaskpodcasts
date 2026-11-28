@@ -1,5 +1,10 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.components.collapsingTitle
+import uk.co.kilfeder.damask.podcasts.ui.components.collapsingListTop
+import uk.co.kilfeder.damask.podcasts.ui.components.rememberCollapsingTitleState
+import uk.co.kilfeder.damask.podcasts.ui.components.CollapsingTopBar
+import uk.co.kilfeder.damask.podcasts.ui.components.CollapsingTitleState
 import uk.co.kilfeder.damask.podcasts.ui.components.panelColor
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.ui.semantics.semantics
@@ -12,7 +17,6 @@ import androidx.compose.foundation.layout.Row
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 import uk.co.kilfeder.damask.podcasts.ui.components.PlayNextButton
 import uk.co.kilfeder.damask.podcasts.ui.components.CoverStack
-import uk.co.kilfeder.damask.podcasts.ui.components.BackButton
 import uk.co.kilfeder.damask.podcasts.presentation.genres.COVER_COUNT
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.ListOrder
 import androidx.compose.foundation.layout.padding
@@ -77,6 +81,10 @@ internal fun GenreQueueScreen(
     )
 }
 
+/**
+ * A genre's page: a small bar that stays put (back, and the name once the big one has scrolled
+ * under it), then the header, the button and the queue.
+ */
 @Composable
 private fun GenreQueueContent(
     state: GenreQueueUiState,
@@ -94,10 +102,43 @@ private fun GenreQueueContent(
         Loading(modifier)
         return
     }
-    val markPlayed = stringResource(Res.string.mark_played)
-    // On wide layouts the queue sits on the tinted detail card (a heading, no back); rows match it.
+    // On wide layouts the queue sits on the tinted detail card (no back); rows and bar match it.
     val colors = MaterialTheme.colorScheme
     val listBackground = if (showHeader && onBack == null) colors.surfaceContainerLow else colors.surface
+    val titleState = rememberCollapsingTitleState()
+    Column(modifier) {
+        if (showHeader) CollapsingTopBar(titleState, state.name, background = listBackground, onBack = onBack)
+        GenreQueueList(
+            state = state,
+            onDismissEpisode = onDismissEpisode,
+            onLoadMore = onLoadMore,
+            onOrderChange = onOrderChange,
+            onOpenEpisode = onOpenEpisode,
+            rowPlayer = rowPlayer,
+            categoryId = categoryId,
+            showHeader = showHeader,
+            titleState = titleState,
+            listBackground = listBackground,
+            modifier = Modifier.weight(1f).collapsingListTop(titleState),
+        )
+    }
+}
+
+@Composable
+private fun GenreQueueList(
+    state: GenreQueueUiState,
+    onDismissEpisode: (EpisodeId) -> Unit,
+    onLoadMore: () -> Unit,
+    onOrderChange: (ListOrder) -> Unit,
+    onOpenEpisode: (EpisodeId) -> Unit,
+    rowPlayer: RowPlayer,
+    categoryId: String,
+    showHeader: Boolean,
+    titleState: CollapsingTitleState,
+    listBackground: Color,
+    modifier: Modifier = Modifier,
+) {
+    val markPlayed = stringResource(Res.string.mark_played)
     val source = PlaySource.Genre(categoryId)
     // Marks what the Resume / Play button will play, so you can see it before pressing.
     val nextId = state.nextUp?.id
@@ -114,7 +155,7 @@ private fun GenreQueueContent(
         )
     }
     LazyColumn(modifier) {
-        if (showHeader) genreHeader(state, onBack, rowPlayer, source)
+        if (showHeader) genreHeader(state, titleState, rowPlayer, source)
         if (state.inProgress.isNotEmpty()) {
             item(key = "in-progress") {
                 PrimaryPanel(stringResource(Res.string.home_in_progress), Modifier.padding(top = Spacing.Space2)) {
@@ -161,11 +202,11 @@ private fun EmptyQueue(state: GenreQueueUiState, modifier: Modifier = Modifier) 
 /** The header, then the button that plays through the genre from the start of its queue. */
 private fun LazyListScope.genreHeader(
     state: GenreQueueUiState,
-    onBack: (() -> Unit)?,
+    titleState: CollapsingTitleState,
     rowPlayer: RowPlayer,
     source: PlaySource,
 ) {
-    item(key = "header") { GenreHeader(state, onBack) }
+    item(key = "header") { GenreHeader(state, Modifier, Modifier.collapsingTitle(titleState)) }
     val next = state.nextUp ?: return
     item(key = "play") {
         PlayNextButton(
@@ -179,17 +220,20 @@ private fun LazyListScope.genreHeader(
 
 /**
  * The genre's page header (like a show's): its next shows' covers stacked, its name, and "Last
- * played today · 4 shows". Back on phones; beside the list on wide layouts there's none.
+ * played today · 4 shows". Back is in the bar above ([CollapsingTopBar]).
  */
 @Composable
-private fun GenreHeader(state: GenreQueueUiState, onBack: (() -> Unit)?, modifier: Modifier = Modifier) {
+private fun GenreHeader(
+    state: GenreQueueUiState,
+    modifier: Modifier = Modifier,
+    titleModifier: Modifier = Modifier,
+) {
     val shows = pluralStringResource(Res.plurals.genres_shows, state.showCount, state.showCount)
     Column(modifier.fillMaxWidth()) {
-        onBack?.let { BackButton(it, Modifier.padding(start = Spacing.Space1, top = Spacing.Space2)) }
         Row(
             horizontalArrangement = Arrangement.spacedBy(Spacing.Space4),
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(start = Spacing.Space4, end = Spacing.Space4, top = Spacing.Space4),
+            modifier = Modifier.padding(start = Spacing.Space4, end = Spacing.Space4),
         ) {
             CoverStack(state.covers, COVER_COUNT, size = Sizes.ShowHeaderArtwork, shape = MaterialTheme.shapes.medium)
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.Space1), modifier = Modifier.weight(1f)) {
@@ -197,7 +241,7 @@ private fun GenreHeader(state: GenreQueueUiState, onBack: (() -> Unit)?, modifie
                     text = state.name,
                     style = DamaskTextStyles.TitleLarge,
                     color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.semantics { heading() },
+                    modifier = titleModifier.semantics { heading() },
                 )
                 LastPlayedText(state.lastListened, after = shows)
             }

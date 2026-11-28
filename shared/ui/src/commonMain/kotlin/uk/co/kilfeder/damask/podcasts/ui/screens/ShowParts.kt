@@ -69,6 +69,7 @@ internal fun ShowDetails(
     genres: List<CategoryOptionUi>,
     onGenreChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    titleModifier: Modifier = Modifier,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(Spacing.Space4),
@@ -82,7 +83,7 @@ internal fun ShowDetails(
                 text = show.title.ifBlank { stringResource(Res.string.shows_untitled) },
                 style = DamaskTextStyles.TitleLarge,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.semantics { heading() },
+                modifier = titleModifier.semantics { heading() },
             )
             val muted = MaterialTheme.colorScheme.onSurfaceVariant
             if (show.author.isNotBlank()) {
