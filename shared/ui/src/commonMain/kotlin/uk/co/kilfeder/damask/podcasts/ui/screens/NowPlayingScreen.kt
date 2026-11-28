@@ -196,7 +196,9 @@ private fun PlayerArtwork(url: String?, fallback: ArtworkFallback, modifier: Mod
         modifier = modifier.heightIn(min = Sizes.NowPlayingArtworkMin),
     ) {
         val glow = Sizes.AmbientGlowInset * 2
-        val side = min(min(maxWidth, maxHeight - glow), Sizes.NowPlayingArtworkMax)
+        // The glow's margin comes off both ways: leaving it out of the width made the artwork wider
+        // than its space in narrow panes, so it was squeezed into a tall frame and cropped.
+        val side = min(min(maxWidth - glow, maxHeight - glow), Sizes.NowPlayingArtworkMax)
             .coerceAtLeast(Sizes.NowPlayingArtworkMin - glow)
         AmbientGlow(artworkUrl = url, shape = MaterialTheme.shapes.medium) {
             Artwork(url, fallback, size = side, shape = MaterialTheme.shapes.medium)
