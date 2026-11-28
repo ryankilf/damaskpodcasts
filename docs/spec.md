@@ -18,7 +18,7 @@ Nothing is released publicly until sync exists. The private build is local-only 
 | --- | --- |
 | Private build (Android, desktop) | OPML import from Pocket Casts; genre assignment; Up Next, Genres, genre queues; In Progress, Now Playing, Played; stream and download; resume position; search through our search gateway (private token); local storage with SQLDelight; Android Auto (Media3 browse tree) |
 | v1: first public release | Everything in the private build, plus Supabase sync and Google sign-in; search for every install, anonymous sessions included; daily background sync; 18+ store rating with store age signals; store billing; UK launch first |
-| v2 | Android Automotive OS (standalone, using sync); iOS player with Sign in with Apple and CarPlay (requires Apple's CarPlay audio entitlement) |
+| v2 | Android Automotive OS (standalone, using sync); iOS player with Sign in with Apple and CarPlay (requires Apple's CarPlay audio entitlement). iOS platform pieces (audio, billing, CarPlay) are written in Swift behind small Kotlin interfaces |
 | Later | Chapters; skip-silence |
 
 ## Core concepts
