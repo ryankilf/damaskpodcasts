@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.components.BarPlayButton
+import uk.co.kilfeder.damask.podcasts.ui.components.BarArtwork
 import uk.co.kilfeder.damask.podcasts.ui.components.collapsingTitle
 import uk.co.kilfeder.damask.podcasts.ui.components.collapsingListTop
 import uk.co.kilfeder.damask.podcasts.ui.components.rememberCollapsingTitleState
@@ -107,7 +109,7 @@ private fun GenreQueueContent(
     val listBackground = if (showHeader && onBack == null) colors.surfaceContainerLow else colors.surface
     val titleState = rememberCollapsingTitleState()
     Column(modifier) {
-        if (showHeader) CollapsingTopBar(titleState, state.name, background = listBackground, onBack = onBack)
+        if (showHeader) GenreTopBar(state, titleState, listBackground, onBack, rowPlayer, PlaySource.Genre(categoryId))
         GenreQueueList(
             state = state,
             onDismissEpisode = onDismissEpisode,
@@ -196,6 +198,30 @@ private fun EmptyQueue(state: GenreQueueUiState, modifier: Modifier = Modifier) 
         body = stringResource(Res.string.genre_queue_empty_body, state.name),
         modifier = modifier,
         meta = last?.let { { LastPlayedText(it) } },
+    )
+}
+
+/** Back; once scrolled, the genre's front cover, its name and a round play button join it. */
+@Composable
+private fun GenreTopBar(
+    state: GenreQueueUiState,
+    titleState: CollapsingTitleState,
+    background: Color,
+    onBack: (() -> Unit)?,
+    rowPlayer: RowPlayer,
+    source: PlaySource,
+    modifier: Modifier = Modifier,
+) {
+    val cover = state.covers.firstOrNull()
+    val next = state.nextUp
+    CollapsingTopBar(
+        state = titleState,
+        title = state.name,
+        modifier = modifier,
+        background = background,
+        onBack = onBack,
+        art = cover?.let { { BarArtwork(it.url, it.fallback) } },
+        collapsedAction = next?.let { { BarPlayButton(it, rowPlayer, source) } },
     )
 }
 

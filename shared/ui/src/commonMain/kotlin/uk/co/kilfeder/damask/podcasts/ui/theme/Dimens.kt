@@ -113,6 +113,9 @@ object Sizes {
     /** The mini-player above the tabs (MiniPlayer artboard): its height, artwork and progress bar. */
     val MiniPlayerHeight = 64.dp
     val MiniPlayerArtwork = 44.dp
+
+    /** The cover in a collapsed page bar (show and genre pages). */
+    val BarArtwork = 32.dp
     val MiniPlayerProgressHeight = 3.dp
 
     /** Artwork in the show notes header (NowPlayingNotes artboard). */

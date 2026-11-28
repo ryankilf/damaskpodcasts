@@ -1,7 +1,9 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -30,10 +32,10 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 
 /**
  * The big heading → small sticky heading pattern (show and genre pages): a bar that stays put
- * with back and actions; once the page's big title has scrolled under it, the bar shows [title]
- * small, in the same colour as the big one, and a hairline appears under it. The bar never
- * changes colour. Screen readers already have the big title, so the
- * small one is hidden from them.
+ * with back and actions, always the page's colour. Once the page's big title has scrolled under
+ * it, the bar shows the page small: [art] and [title] fade in, and [collapsedAction] (the round
+ * play button, standing in for the big one that has scrolled away) appears before [actions].
+ * Screen readers already have the big title, so the small one is hidden from them.
  */
 @Composable
 internal fun CollapsingTopBar(
@@ -42,11 +44,12 @@ internal fun CollapsingTopBar(
     modifier: Modifier = Modifier,
     background: Color = MaterialTheme.colorScheme.surface,
     onBack: (() -> Unit)? = null,
+    art: (@Composable () -> Unit)? = null,
+    collapsedAction: (@Composable () -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     val collapsed = state.collapsed
-    val edge = MaterialTheme.colorScheme.outlineVariant
-    val titleAlpha by animateFloatAsState(
+    val shownAlpha by animateFloatAsState(
         targetValue = if (collapsed) 1f else 0f,
         animationSpec = tween(if (collapsed) Motion.FADE_IN_MS else Motion.FADE_OUT_MS),
         label = "barTitle",
@@ -55,32 +58,36 @@ internal fun CollapsingTopBar(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            // The page's own colour throughout; only a hairline under it fades in once collapsed,
-            // to separate the bar from what scrolls beneath.
             .background(background)
-            .drawWithContent {
-                drawContent()
-                val stroke = Sizes.ArtworkHairline.toPx()
-                val y = size.height - stroke / 2
-                drawLine(edge.copy(alpha = edge.alpha * titleAlpha), Offset(0f, y), Offset(size.width, y), stroke)
-            }
             .heightIn(min = Sizes.PaneHeaderHeight)
             .padding(horizontal = Spacing.Space1),
     ) {
         if (onBack != null) BackButton(onBack) else Spacer(Modifier.width(Spacing.Space3))
         // Always there, taking the free space so the actions stay at the end; it fades in and out.
-        Text(
-            text = title,
-            style = DamaskTextStyles.Title,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.Space3),
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = Spacing.Space2)
-                .graphicsLayer { alpha = titleAlpha }
+                .padding(horizontal = Spacing.Space1)
+                .graphicsLayer { alpha = shownAlpha }
                 .clearAndSetSemantics { },
-        )
+        ) {
+            art?.invoke()
+            Text(
+                text = title,
+                style = DamaskTextStyles.Title,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        // Only there when collapsed, so a hidden button can't be pressed.
+        AnimatedVisibility(
+            visible = collapsed && collapsedAction != null,
+            enter = fadeIn(tween(Motion.FADE_IN_MS)),
+            exit = fadeOut(tween(Motion.FADE_OUT_MS)),
+        ) { collapsedAction?.invoke() }
         actions()
     }
 }

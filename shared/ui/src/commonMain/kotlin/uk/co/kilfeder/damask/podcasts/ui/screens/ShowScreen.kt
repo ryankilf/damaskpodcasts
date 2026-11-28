@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.components.BarPlayButton
+import uk.co.kilfeder.damask.podcasts.ui.components.BarArtwork
 import uk.co.kilfeder.damask.podcasts.ui.components.collapsingTitle
 import uk.co.kilfeder.damask.podcasts.ui.components.collapsingListTop
 import uk.co.kilfeder.damask.podcasts.ui.components.rememberCollapsingTitleState
@@ -107,7 +109,7 @@ private fun ShowContent(
     val show = state.show
     val titleState = rememberCollapsingTitleState()
     Column(modifier) {
-        ShowTopBar(show, actions, titleState, background)
+        ShowTopBar(state, actions, titleState, background, rowPlayer)
         when {
             state.loading -> Loading(Modifier.weight(1f))
             show == null -> EmptyState(
@@ -195,21 +197,30 @@ private fun OpenAtFirstUnplayed(startAt: Int?, list: LazyListState) {
     }
 }
 
-/** Back (on its own screen) and the show's ⋮ menu; the name joins them once scrolled. */
+/** Back (on its own screen) and the show's ⋮ menu; its cover, name and play join them once scrolled. */
 @Composable
 private fun ShowTopBar(
-    show: ShowPageUi?,
+    state: ShowUiState,
     actions: ShowPageActions,
     titleState: CollapsingTitleState,
     background: Color,
+    rowPlayer: RowPlayer,
     modifier: Modifier = Modifier,
 ) {
+    val show = state.show
+    val next = state.nextUp
     CollapsingTopBar(
         state = titleState,
         title = show?.title.orEmpty(),
         modifier = modifier,
         background = background,
         onBack = actions.onBack,
+        art = show?.let { { BarArtwork(it.artworkUrl, it.fallback) } },
+        collapsedAction = if (show != null && next != null) {
+            { BarPlayButton(next, rowPlayer, PlaySource.Show(show.showId)) }
+        } else {
+            null
+        },
     ) {
         if (show != null && show.subscribed) ShowMenu(show, actions.onUnsubscribe)
     }
