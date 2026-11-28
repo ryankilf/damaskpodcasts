@@ -10,6 +10,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
+import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
+import uk.co.kilfeder.damask.podcasts.ui.components.RowPlayer
 import uk.co.kilfeder.damask.podcasts.presentation.played.PlayedUiState
 import uk.co.kilfeder.damask.podcasts.presentation.played.PlayedViewModel
 import uk.co.kilfeder.damask.podcasts.ui.components.EpisodeRow
@@ -22,11 +24,12 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.played_empty_title
 internal fun PlayedScreen(
     graph: AppGraph,
     onOpenEpisode: (EpisodeId) -> Unit,
+    rowPlayer: RowPlayer,
     modifier: Modifier = Modifier,
     viewModel: PlayedViewModel = viewModel { graph.playedViewModel() },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    PlayedContent(state, viewModel::onMarkUnplayed, onOpenEpisode, modifier)
+    PlayedContent(state, viewModel::onMarkUnplayed, onOpenEpisode, rowPlayer, modifier)
 }
 
 @Composable
@@ -34,6 +37,7 @@ private fun PlayedContent(
     state: PlayedUiState,
     onRestoreEpisode: (EpisodeId) -> Unit,
     onOpenEpisode: (EpisodeId) -> Unit,
+    rowPlayer: RowPlayer,
     modifier: Modifier = Modifier,
 ) {
     if (state.loading) {
@@ -55,12 +59,19 @@ private fun PlayedContent(
             if (row.isPlayed) {
                 EpisodeRow(
                     row = row.episode,
+                    playing = rowPlayer.isPlaying(row.episode.id),
                     onClick = { onOpenEpisode(row.episode.id) },
+                    onPlayPause = { rowPlayer.playPause(row.episode.id, PlaySource.Played) },
                     swipeLabel = markUnplayed,
                     onSwipe = { onRestoreEpisode(row.episode.id) },
                 )
             } else {
-                EpisodeRow(row.episode, onClick = { onOpenEpisode(row.episode.id) })
+                EpisodeRow(
+                    row = row.episode,
+                    playing = rowPlayer.isPlaying(row.episode.id),
+                    onClick = { onOpenEpisode(row.episode.id) },
+                    onPlayPause = { rowPlayer.playPause(row.episode.id, PlaySource.Played) },
+                )
             }
         }
     }

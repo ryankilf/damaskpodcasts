@@ -36,6 +36,8 @@ data class AppUiState(
     val message: AppMessage? = null,
     /** The episode loaded in the player, if any (wide layouts show it in a pane). */
     val playing: EpisodeId? = null,
+    /** It's playing rather than paused (rows show pause for it). */
+    val playingNow: Boolean = false,
 )
 
 /** Top-level state: navigation and appearance. Every launch opens on Home. */
@@ -47,9 +49,9 @@ class AppViewModel internal constructor(private val graph: AppGraph) : ViewModel
         graph.settings.values,
         nav,
         message,
-        graph.playback.state.map { it?.id }.distinctUntilChanged(),
-    ) { settings, nav, message, playing ->
-        AppUiState(Stage.MAIN, nav, settings.useWallpaperColours, message, playing)
+        graph.playback.state.map { it?.id to (it?.isPlaying == true) }.distinctUntilChanged(),
+    ) { settings, nav, message, (playing, playingNow) ->
+        AppUiState(Stage.MAIN, nav, settings.useWallpaperColours, message, playing, playingNow)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), AppUiState())
 
     fun onSelectTab(tab: Tab) = nav.update { it.select(tab) }
@@ -74,6 +76,12 @@ class AppViewModel internal constructor(private val graph: AppGraph) : ViewModel
         graph.playback.play(id, source.toContext())
         val episode = Destination.Episode(id)
         if (open && nav.value.top != episode) nav.update { it.push(episode) }
+    }
+
+    /** A row's own play button: pauses or resumes the playing episode, or plays this one, in place. */
+    fun onRowPlayPause(id: EpisodeId, source: PlaySource) {
+        val playback = graph.playback
+        if (playback.state.value?.id == id) playback.togglePlayPause() else playback.play(id, source.toContext())
     }
 
     /** Opens a genre's queue; one already showing (beside the list, on wide layouts) is replaced. */

@@ -59,6 +59,9 @@ object Sizes {
     /** Minimum episode row height. */
     val RowMinHeight = 72.dp
 
+    /** The filled pause button inside a playing row's ring (EpisodeRow artboard). */
+    val RowPauseButton = 36.dp
+
     /** The progress ring around a row's play control. */
     val ProgressRingStroke = 3.dp
 

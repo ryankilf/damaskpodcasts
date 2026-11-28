@@ -18,6 +18,7 @@ import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.navigation.Destination
 import uk.co.kilfeder.damask.podcasts.presentation.navigation.Tab
 import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
+import uk.co.kilfeder.damask.podcasts.ui.components.RowPlayer
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.genre_pick_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.genre_pick_title
@@ -53,6 +54,7 @@ internal class ShellActions(
     val onOpenGenre: (String) -> Unit,
     val onImportFinish: (Int) -> Unit,
     val onBack: () -> Unit,
+    val rowPlayer: RowPlayer,
 )
 
 /** On wide layouts Home and Played show the playing episode beside the list. */
@@ -116,11 +118,12 @@ private fun SinglePane(state: AppUiState, graph: AppGraph, actions: ShellActions
                 graph = graph,
                 categoryId = top.categoryId,
                 onOpenEpisode = { actions.onPlayEpisode(it, PlaySource.Genre(top.categoryId)) },
+                rowPlayer = actions.rowPlayer,
                 modifier = readable,
             )
             is Destination.Episode -> EpisodeScreen(top.id, graph, actions, Modifier.fillMaxSize())
             Destination.InProgress ->
-                InProgressScreen(graph, onOpenEpisode = actions.onPlayEpisode, modifier = readable)
+                InProgressScreen(graph, actions.onPlayEpisode, actions.rowPlayer, modifier = readable)
             is Destination.ShowNotes -> ShowNotesScreen(graph, top.id, onClose = actions.onBack, modifier = readable)
             Destination.Settings ->
                 SettingsScreen(graph, onImport = { actions.onNavigate(Destination.Import) }, modifier = readable)
@@ -154,12 +157,14 @@ private fun TabContent(tab: Tab, graph: AppGraph, actions: ShellActions, modifie
             onImport = { actions.onNavigate(Destination.Import) },
             onOpenEpisode = actions.onPlayEpisode,
             onSeeAllInProgress = { actions.onNavigate(Destination.InProgress) },
+            rowPlayer = actions.rowPlayer,
             modifier = modifier,
         )
         Tab.GENRES -> GenresScreen(graph, onOpenGenre = actions.onOpenGenre, modifier = modifier)
         Tab.PLAYED -> PlayedScreen(
             graph = graph,
             onOpenEpisode = { actions.onPlayEpisode(it, PlaySource.Played) },
+            rowPlayer = actions.rowPlayer,
             modifier = modifier,
         )
         Tab.SEARCH -> SearchScreen(modifier)
@@ -205,6 +210,7 @@ private fun GenrePane(categoryId: String?, graph: AppGraph, actions: ShellAction
             graph = graph,
             categoryId = categoryId,
             onOpenEpisode = { actions.onPlayEpisode(it, PlaySource.Genre(categoryId)) },
+            rowPlayer = actions.rowPlayer,
             modifier = modifier,
         )
     }

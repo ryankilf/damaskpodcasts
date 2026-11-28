@@ -17,6 +17,7 @@ import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
+import uk.co.kilfeder.damask.podcasts.ui.components.RowPlayer
 import uk.co.kilfeder.damask.podcasts.presentation.home.HomeUiState
 import uk.co.kilfeder.damask.podcasts.presentation.home.HomeViewModel
 import uk.co.kilfeder.damask.podcasts.ui.components.EpisodeRow
@@ -38,6 +39,7 @@ internal fun HomeScreen(
     onImport: () -> Unit,
     onOpenEpisode: (EpisodeId, PlaySource) -> Unit,
     onSeeAllInProgress: () -> Unit,
+    rowPlayer: RowPlayer,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel { graph.homeViewModel() },
 ) {
@@ -51,6 +53,7 @@ internal fun HomeScreen(
         onImport = onImport,
         onOpenEpisode = onOpenEpisode,
         onSeeAllInProgress = onSeeAllInProgress,
+        rowPlayer = rowPlayer,
         modifier = modifier,
     )
 }
@@ -66,6 +69,7 @@ private fun HomeContent(
     onImport: () -> Unit,
     onOpenEpisode: (EpisodeId, PlaySource) -> Unit,
     onSeeAllInProgress: () -> Unit,
+    rowPlayer: RowPlayer,
     modifier: Modifier = Modifier,
 ) {
     if (state.loading) {
@@ -94,6 +98,7 @@ private fun HomeContent(
                         rows = state.inProgress,
                         onOpenEpisode = onOpenEpisode,
                         onSeeAll = onSeeAllInProgress,
+                        rowPlayer = rowPlayer,
                         modifier = Modifier.padding(top = Spacing.Space4),
                     )
                 }
@@ -105,7 +110,9 @@ private fun HomeContent(
             items(state.upNext, key = { "u-${it.id.showId}-${it.id.guid}" }) { row ->
                 EpisodeRow(
                     row = row,
+                    playing = rowPlayer.isPlaying(row.id),
                     onClick = { onOpenEpisode(row.id, PlaySource.UpNext) },
+                    onPlayPause = { rowPlayer.playPause(row.id, PlaySource.UpNext) },
                     swipeLabel = markPlayed,
                     onSwipe = { onDismissEpisode(row.id) },
                 )

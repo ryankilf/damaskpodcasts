@@ -10,6 +10,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
+import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
+import uk.co.kilfeder.damask.podcasts.ui.components.RowPlayer
 import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreQueueUiState
 import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreQueueViewModel
 import uk.co.kilfeder.damask.podcasts.ui.components.EpisodeRow
@@ -22,11 +24,20 @@ internal fun GenreQueueScreen(
     graph: AppGraph,
     categoryId: String,
     onOpenEpisode: (EpisodeId) -> Unit,
+    rowPlayer: RowPlayer,
     modifier: Modifier = Modifier,
     viewModel: GenreQueueViewModel = viewModel(key = "genre-$categoryId") { graph.genreQueueViewModel(categoryId) },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    GenreQueueContent(state, viewModel::onMarkPlayed, viewModel::onLoadMore, onOpenEpisode, modifier)
+    GenreQueueContent(
+        state = state,
+        onDismissEpisode = viewModel::onMarkPlayed,
+        onLoadMore = viewModel::onLoadMore,
+        onOpenEpisode = onOpenEpisode,
+        rowPlayer = rowPlayer,
+        categoryId = categoryId,
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -35,6 +46,8 @@ private fun GenreQueueContent(
     onDismissEpisode: (EpisodeId) -> Unit,
     onLoadMore: () -> Unit,
     onOpenEpisode: (EpisodeId) -> Unit,
+    rowPlayer: RowPlayer,
+    categoryId: String,
     modifier: Modifier = Modifier,
 ) {
     if (state.loading) {
@@ -49,7 +62,9 @@ private fun GenreQueueContent(
         items(state.episodes, key = { "${it.id.showId}-${it.id.guid}" }) { row ->
             EpisodeRow(
                 row = row,
+                playing = rowPlayer.isPlaying(row.id),
                 onClick = { onOpenEpisode(row.id) },
+                onPlayPause = { rowPlayer.playPause(row.id, PlaySource.Genre(categoryId)) },
                 swipeLabel = markPlayed,
                 onSwipe = { onDismissEpisode(row.id) },
             )

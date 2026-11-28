@@ -13,6 +13,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import uk.co.kilfeder.damask.podcasts.ui.components.LocalShowMessage
+import uk.co.kilfeder.damask.podcasts.ui.components.RowPlayer
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -67,6 +68,7 @@ fun App(
                         onSelectTab = viewModel::onSelectTab,
                         onNavigate = viewModel::onNavigate,
                         onPlayEpisode = viewModel::onPlayEpisode,
+                        onRowPlayPause = viewModel::onRowPlayPause,
                         onOpenGenre = viewModel::onOpenGenre,
                         onBack = viewModel::onBack,
                         onImportFinish = viewModel::onImportFinished,
@@ -83,6 +85,7 @@ private class AppIntents(
     val onSelectTab: (Tab) -> Unit,
     val onNavigate: (Destination) -> Unit,
     val onPlayEpisode: (EpisodeId, PlaySource, Boolean) -> Unit,
+    val onRowPlayPause: (EpisodeId, PlaySource) -> Unit,
     val onOpenGenre: (String) -> Unit,
     val onBack: () -> Boolean,
     val onImportFinish: (Int) -> Unit,
@@ -128,6 +131,7 @@ private fun ShellLayout(
             onOpenGenre = intents.onOpenGenre,
             onImportFinish = intents.onImportFinish,
             onBack = { intents.onBack() },
+            rowPlayer = RowPlayer(state.playing, state.playingNow, intents.onRowPlayPause),
         )
         Row(Modifier.fillMaxSize()) {
             if (width != WidthClass.COMPACT) TabRail(state.nav.tab, intents.onSelectTab)

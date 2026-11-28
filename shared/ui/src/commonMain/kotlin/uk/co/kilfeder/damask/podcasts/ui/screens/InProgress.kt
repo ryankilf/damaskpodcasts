@@ -29,6 +29,7 @@ import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeRowUi
 import uk.co.kilfeder.damask.podcasts.presentation.home.HomeViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
 import uk.co.kilfeder.damask.podcasts.ui.components.EpisodeRow
+import uk.co.kilfeder.damask.podcasts.ui.components.RowPlayer
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.home_in_progress
 import uk.co.kilfeder.damask.podcasts.ui.resources.in_progress_count
@@ -49,6 +50,7 @@ internal fun InProgressPanel(
     rows: List<EpisodeRowUi>,
     onOpenEpisode: (EpisodeId, PlaySource) -> Unit,
     onSeeAll: () -> Unit,
+    rowPlayer: RowPlayer,
     modifier: Modifier = Modifier,
 ) {
     val onPanel = MaterialTheme.colorScheme.onPrimaryContainer
@@ -76,9 +78,7 @@ internal fun InProgressPanel(
                 color = onPanel,
             )
         }
-        rows.take(IN_PROGRESS_PREVIEW).forEach { row ->
-            EpisodeRow(row, onClick = { onOpenEpisode(row.id, PlaySource.Resume) })
-        }
+        rows.take(IN_PROGRESS_PREVIEW).forEach { row -> ResumeRow(row, onOpenEpisode, rowPlayer) }
         if (rows.size > IN_PROGRESS_PREVIEW) {
             TextButton(onClick = onSeeAll, modifier = Modifier.align(Alignment.End).padding(end = Spacing.Space1)) {
                 val label = stringResource(Res.string.in_progress_see_all, rows.size)
@@ -94,6 +94,7 @@ internal fun InProgressPanel(
 internal fun InProgressScreen(
     graph: AppGraph,
     onOpenEpisode: (EpisodeId, PlaySource) -> Unit,
+    rowPlayer: RowPlayer,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel { graph.homeViewModel() },
 ) {
@@ -104,7 +105,24 @@ internal fun InProgressScreen(
     }
     LazyColumn(modifier) {
         items(state.inProgress, key = { "p-${it.id.showId}-${it.id.guid}" }) { row ->
-            EpisodeRow(row, onClick = { onOpenEpisode(row.id, PlaySource.Resume) })
+            ResumeRow(row, onOpenEpisode, rowPlayer)
         }
     }
+}
+
+/** An in-progress row: plays with the context saved with it. */
+@Composable
+private fun ResumeRow(
+    row: EpisodeRowUi,
+    onOpenEpisode: (EpisodeId, PlaySource) -> Unit,
+    rowPlayer: RowPlayer,
+    modifier: Modifier = Modifier,
+) {
+    EpisodeRow(
+        row = row,
+        playing = rowPlayer.isPlaying(row.id),
+        onClick = { onOpenEpisode(row.id, PlaySource.Resume) },
+        onPlayPause = { rowPlayer.playPause(row.id, PlaySource.Resume) },
+        modifier = modifier,
+    )
 }

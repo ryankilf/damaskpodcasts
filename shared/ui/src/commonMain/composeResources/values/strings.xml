@@ -104,4 +104,7 @@
     <string name="settings_wallpaper">Use wallpaper colours</string>
     <string name="settings_wallpaper_body">Match Damask to your wallpaper.</string>
     <string name="no_app_for_action">Couldn’t find an app to open that.</string>
+    <string name="row_play">Play %1$s</string>
+    <string name="row_resume">Resume %1$s, %2$s</string>
+    <string name="row_pause">Pause %1$s, %2$s</string>
 </resources>

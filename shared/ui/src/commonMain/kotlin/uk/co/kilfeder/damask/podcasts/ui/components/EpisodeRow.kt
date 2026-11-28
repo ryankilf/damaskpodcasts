@@ -39,20 +39,23 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
  * One episode (design hand-off › EpisodeRow): artwork, two-line title, "show · time" with the
  * exact value on long press, and a progress ring once started.
  *
- * Tapping the row opens the episode page ([onClick]). With [swipeLabel] set, swiping the row
+ * Tapping the row plays and opens the episode ([onClick]); the button in the ring plays or pauses
+ * it in place ([onPlayPause], [RowPlayButton]). With [swipeLabel] set, swiping the row
  * away (or the matching accessibility action) calls [onSwipe]: Mark played in queues, Mark
  * unplayed in Played.
  */
 @Composable
 internal fun EpisodeRow(
     row: EpisodeRowUi,
+    playing: Boolean,
     onClick: () -> Unit,
+    onPlayPause: () -> Unit,
     modifier: Modifier = Modifier,
     swipeLabel: String? = null,
     onSwipe: () -> Unit = {},
 ) {
     if (swipeLabel == null) {
-        RowContent(row, onClick, modifier)
+        RowContent(row, playing, onClick, onPlayPause, modifier)
         return
     }
     val state = rememberSwipeToDismissBoxState()
@@ -65,12 +68,18 @@ internal fun EpisodeRow(
             customActions = listOf(CustomAccessibilityAction(swipeLabel) { onSwipe(); true })
         },
     ) {
-        RowContent(row, onClick, Modifier.background(MaterialTheme.colorScheme.surface))
+        RowContent(row, playing, onClick, onPlayPause, Modifier.background(MaterialTheme.colorScheme.surface))
     }
 }
 
 @Composable
-private fun RowContent(row: EpisodeRowUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun RowContent(
+    row: EpisodeRowUi,
+    playing: Boolean,
+    onClick: () -> Unit,
+    onPlayPause: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.Space3),
@@ -93,14 +102,7 @@ private fun RowContent(row: EpisodeRowUi, onClick: () -> Unit, modifier: Modifie
             )
             MetaLine(row)
         }
-        row.progress?.let { progress ->
-            CircularProgressIndicator(
-                progress = { progress },
-                strokeWidth = Sizes.ProgressRingStroke,
-                trackColor = MaterialTheme.colorScheme.outlineVariant,
-                modifier = Modifier.size(Sizes.MinTouchTarget),
-            )
-        }
+        RowPlayButton(row, playing, onPlayPause)
     }
 }
 
