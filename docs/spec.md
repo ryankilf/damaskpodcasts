@@ -332,7 +332,7 @@ The query string is **never** touched, because premium tokens live in it. When t
 
 Discover searches **Apple's podcast directory**, straight from the device: no key, no account, nothing of ours in between. It's for discovery only: once you've subscribed, everything comes from the show's own feed.
 
-- **Request.** `GET https://itunes.apple.com/search?media=podcast&entity=podcast&term=<query>&country=<device region>&limit=50`, plus `explicit=No` when "Hide explicit" is on. The query is 1–100 characters after trimming.
+- **Request.** `GET https://itunes.apple.com/search?media=podcast&entity=podcast&term=<query>&country=<device region>&limit=200`, plus `explicit=No` when "Hide explicit" is on. The query is 1–100 characters after trimming.
 - **When.** After a short pause in typing and on submit, never per keystroke. Apple documents a limit of roughly 20 calls a minute (per IP, so per user, not per app). A refusal (403 or 429) says search is busy and to try again in a minute.
 - **What's used from a result.** Apple's ID, title, author, artwork (the 600 px URL, else the 100 px one), feed URL, genre IDs and explicitness. Results without a feed URL are dropped: they can't be subscribed to.
 - **Results** show artwork, name and host, in Apple's order. A show you already subscribe to (matched by normalised feed URL) says Subscribed.

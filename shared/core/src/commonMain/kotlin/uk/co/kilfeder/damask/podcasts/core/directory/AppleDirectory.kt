@@ -75,7 +75,8 @@ class AppleDirectory(private val client: HttpClient) {
 
     companion object {
         private const val SEARCH_URL = "https://itunes.apple.com/search"
-        private const val LIMIT = 50
+        /** Apple's maximum: its search matches names and hosts loosely, so the one you want can be well down. */
+        private const val LIMIT = 200
         private const val COUNTRY_CODE_LENGTH = 2
         private const val FORBIDDEN = 403
         private const val TOO_MANY_REQUESTS = 429
