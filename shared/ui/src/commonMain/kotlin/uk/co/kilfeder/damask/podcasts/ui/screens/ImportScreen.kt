@@ -274,7 +274,7 @@ private fun ImportRow(
             .padding(start = Spacing.Space4, end = Spacing.Space4, top = Spacing.Space2, bottom = Spacing.Space2),
     ) {
         Checkbox(checked = row.selected, onCheckedChange = null)
-        Artwork(row.artworkUrl)
+        Artwork(row.artworkUrl, row.fallback)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.Space1)) {
             Text(row.title, style = DamaskTextStyles.Title, maxLines = 2)
             row.problem?.let {

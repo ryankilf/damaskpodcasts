@@ -91,7 +91,7 @@ private fun RowContent(
             .heightIn(min = Sizes.RowMinHeight)
             .padding(horizontal = Spacing.Space4, vertical = Spacing.Space2),
     ) {
-        Artwork(row.artworkUrl)
+        Artwork(row.artworkUrl, row.fallback)
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.Space1),
             modifier = Modifier.weight(1f),

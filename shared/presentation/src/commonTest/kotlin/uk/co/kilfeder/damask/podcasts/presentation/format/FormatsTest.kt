@@ -65,4 +65,10 @@ class FormatsTest {
         assertNull(NavState().pop())
         assertEquals(NavState(tab = Tab.PLAYED), queue.select(Tab.PLAYED))
     }
+
+    @Test
+    fun lastPlayedReadsMidSentence() {
+        assertEquals("yesterday", Formats.lastPlayed(now - day, now, utc).summary)
+        assertEquals("3 days ago", Formats.lastPlayed(now - 3 * day, now, utc).summary)
+    }
 }

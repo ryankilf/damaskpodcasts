@@ -2,6 +2,8 @@ package uk.co.kilfeder.damask.podcasts.ui.screens
 
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.History
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -46,6 +48,7 @@ private fun PlayedContent(
     }
     if (state.rows.isEmpty()) {
         EmptyState(
+            icon = Icons.Rounded.History,
             title = stringResource(Res.string.played_empty_title),
             body = stringResource(Res.string.played_empty),
             modifier = modifier,

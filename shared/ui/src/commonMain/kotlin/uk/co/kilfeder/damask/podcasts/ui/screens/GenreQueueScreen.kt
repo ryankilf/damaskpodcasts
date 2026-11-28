@@ -3,6 +3,8 @@ package uk.co.kilfeder.damask.podcasts.ui.screens
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,7 +27,8 @@ import uk.co.kilfeder.damask.podcasts.ui.components.ExactValueText
 import uk.co.kilfeder.damask.podcasts.ui.components.PaneHeader
 import uk.co.kilfeder.damask.podcasts.ui.components.PrimaryPanel
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
-import uk.co.kilfeder.damask.podcasts.ui.resources.genre_queue_empty
+import uk.co.kilfeder.damask.podcasts.ui.resources.genre_queue_empty_body
+import uk.co.kilfeder.damask.podcasts.ui.resources.genre_queue_empty_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.genres_last
 import uk.co.kilfeder.damask.podcasts.ui.resources.genres_never
 import uk.co.kilfeder.damask.podcasts.ui.resources.genres_shows
@@ -44,6 +47,7 @@ internal fun GenreQueueScreen(
     rowPlayer: RowPlayer,
     modifier: Modifier = Modifier,
     showHeader: Boolean = false,
+    onBack: (() -> Unit)? = null,
     viewModel: GenreQueueViewModel = viewModel(key = "genre-$categoryId") { graph.genreQueueViewModel(categoryId) },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -55,6 +59,7 @@ internal fun GenreQueueScreen(
         rowPlayer = rowPlayer,
         categoryId = categoryId,
         showHeader = showHeader,
+        onBack = onBack,
         modifier = modifier,
     )
 }
@@ -68,6 +73,7 @@ private fun GenreQueueContent(
     rowPlayer: RowPlayer,
     categoryId: String,
     showHeader: Boolean,
+    onBack: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     if (state.loading) {
@@ -75,9 +81,9 @@ private fun GenreQueueContent(
         return
     }
     val markPlayed = stringResource(Res.string.mark_played)
-    // On wide layouts the queue sits on the tinted detail card (showHeader); rows match it.
+    // On wide layouts the queue sits on the tinted detail card (a heading, no back); rows match it.
     val colors = MaterialTheme.colorScheme
-    val listBackground = if (showHeader) colors.surfaceContainerLow else colors.surface
+    val listBackground = if (showHeader && onBack == null) colors.surfaceContainerLow else colors.surface
     val row: @Composable (EpisodeRowUi, Color) -> Unit = { episode, background ->
         EpisodeRow(
             row = episode,
@@ -90,7 +96,7 @@ private fun GenreQueueContent(
         )
     }
     LazyColumn(modifier) {
-        if (showHeader) item(key = "header") { QueueHeader(state) }
+        if (showHeader) item(key = "header") { QueueHeader(state, onBack) }
         if (state.inProgress.isNotEmpty()) {
             item(key = "in-progress") {
                 PrimaryPanel(stringResource(Res.string.home_in_progress), Modifier.padding(top = Spacing.Space2)) {
@@ -99,7 +105,7 @@ private fun GenreQueueContent(
             }
         }
         if (state.upNext.isEmpty() && state.inProgress.isEmpty()) {
-            item(key = "empty") { EmptyMessage(stringResource(Res.string.genre_queue_empty)) }
+            item(key = "empty") { EmptyQueue(state, Modifier.fillParentMaxHeight(EMPTY_HEIGHT_SHARE)) }
         }
         if (state.upNext.isNotEmpty()) sectionHeader("up-next", stringResourceKey = Res.string.home_up_next)
         items(state.upNext, key = { "${it.id.showId}-${it.id.guid}" }) { row(it, listBackground) }
@@ -107,13 +113,38 @@ private fun GenreQueueContent(
     }
 }
 
+/** What part of the screen an empty queue's message fills, below the header. */
+private const val EMPTY_HEIGHT_SHARE = 0.8f
+
+/** Nothing left to play in this genre (design hand-off › Empty · genre queue). */
+@Composable
+private fun EmptyQueue(state: GenreQueueUiState, modifier: Modifier = Modifier) {
+    val last = state.lastListened
+    EmptyState(
+        icon = Icons.Rounded.Category,
+        title = stringResource(Res.string.genre_queue_empty_title, state.name),
+        body = stringResource(Res.string.genre_queue_empty_body, state.name),
+        modifier = modifier,
+        meta = last?.let {
+            {
+                ExactValueText(
+                    value = it,
+                    display = stringResource(Res.string.genres_last, it.summary),
+                    style = DamaskTextStyles.BodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+    )
+}
+
 /** The genre's name with "Last played today · 4 shows" (design hand-off › GenreQueuePane). */
 @Composable
-private fun QueueHeader(state: GenreQueueUiState, modifier: Modifier = Modifier) {
+private fun QueueHeader(state: GenreQueueUiState, onBack: (() -> Unit)?, modifier: Modifier = Modifier) {
     val shows = pluralStringResource(Res.plurals.genres_shows, state.showCount, state.showCount)
     val last = state.lastListened
     val color = MaterialTheme.colorScheme.onSurfaceVariant
-    PaneHeader(state.name, modifier) {
+    PaneHeader(state.name, modifier, onBack = onBack) {
         if (last == null) {
             val text = stringResource(Res.string.row_meta, stringResource(Res.string.genres_never), shows)
             Text(text, style = DamaskTextStyles.BodySmall, color = color)

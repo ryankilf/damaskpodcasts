@@ -103,3 +103,13 @@ Now specified in [spec › Search](spec.md#search) and [spec › Compliance](spe
 - **Built by hand from the window width, not with `NavigationSuiteScaffold` / `ListDetailPaneScaffold`.** The spec allowed this if the Compose Multiplatform port was in doubt. Hand-built panes keep navigation in the shared `NavState`, with no second back stack inside a scaffold.
 - **The right-hand pane on Home and Played is the playing episode.** Tapping an episode plays it, so "the episode you tapped" and "the one playing" are the same (the user's call).
 - **Wide episode screens put the show notes beside the player** (the user's call), from 720dp.
+
+## Design pass, 28 Nov (design canvas v1 screens)
+
+- **Five tabs:** Home, Genres, Shows, Played, Search (the user's call on the canvas: "Extra clicks be damned"). Shows is every subscribed show A–Z; on wide layouts it sits beside the selected show's page.
+- **Show page: a plain first version** (artwork, name, genre, every episode in the show's own order, playing with the show's context) until the canvas has one. The design agent has been asked for it, with per-show settings and the feed-unavailable state.
+- **Phone headings are left-aligned**, as on every canvas screen: "Home" (not "Damask") with the cog, + on Shows, a back arrow on inner screens. A genre's queue draws its own heading (back, name, "Last played … · N shows").
+- **Empty states use the canvas's shared EmptyState:** a damask tile with an icon, a title, one line, and at most one filled button. Home with no shows (Search, then Import), Home with nothing new (Check now), an empty genre (with when it was last played), Played.
+- **Settings in groups:** Appearance (wallpaper colours), Library (Import subscriptions), Search (Hide explicit). Account (sync, subscription) and About (licences, version) come when those exist.
+- **Shows without artwork get their initials on a colour** (the user's call), from a fixed palette of muted earthy colours (`ArtworkFallbackColors`, all passing 4.5:1 for white). The colour comes from a stable FNV-1a hash of the show's permanent ID, so it's the same everywhere and on every device; the import list uses the ID the show will have. The tile sits behind the artwork, so it also shows while loading and when an image fails. Initials come from the first two significant words ("Empires of Dust" ED, "The Rest Is History" RH).
+- **"Last played" reads mid-sentence:** "Last played yesterday", not "Yesterday" (`Formats.lastPlayed`).

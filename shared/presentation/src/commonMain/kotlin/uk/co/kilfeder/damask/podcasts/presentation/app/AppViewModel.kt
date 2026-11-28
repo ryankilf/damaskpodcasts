@@ -84,6 +84,12 @@ class AppViewModel internal constructor(private val graph: AppGraph) : ViewModel
         if (playback.state.value?.id == id) playback.togglePlayPause() else playback.play(id, source.toContext())
     }
 
+    /** Opens a show's page; one already showing (beside the list, on wide layouts) is replaced. */
+    fun onOpenShow(showId: String) = nav.update { state ->
+        val page = Destination.Show(showId)
+        if (state.top is Destination.Show) state.pop()?.push(page) ?: state.push(page) else state.push(page)
+    }
+
     /** Opens a genre's queue; one already showing (beside the list, on wide layouts) is replaced. */
     fun onOpenGenre(categoryId: String) = nav.update { state ->
         val queue = Destination.GenreQueue(categoryId)

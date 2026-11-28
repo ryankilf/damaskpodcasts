@@ -187,7 +187,7 @@ private fun Header(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(start = Spacing.Space3, end = Spacing.Space1),
         ) {
-            Artwork(episode.artworkUrl, size = Sizes.NotesHeaderArtwork)
+            Artwork(episode.artworkUrl, episode.fallback, size = Sizes.NotesHeaderArtwork)
             Column(Modifier.weight(1f)) {
                 Text(
                     text = episode.title,

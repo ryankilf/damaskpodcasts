@@ -44,6 +44,15 @@ object Formats {
         }
     }
 
+    /**
+     * For "Last played …": [date] with "today" and "yesterday" in lower case, as they sit
+     * mid-sentence ("Last played yesterday", "Last played 3 days ago").
+     */
+    fun lastPlayed(epochMs: Long, nowMs: Long, zone: TimeZone = TimeZone.currentSystemDefault()): Summarised {
+        val date = date(epochMs, nowMs, zone)
+        return date.copy(summary = date.summary.replaceFirstChar { it.lowercase() })
+    }
+
     /** "Thu 6 Nov 2026, 21:14". */
     fun exactDateTime(epochMs: Long, zone: TimeZone = TimeZone.currentSystemDefault()): String {
         val t = Instant.fromEpochMilliseconds(epochMs).toLocalDateTime(zone)

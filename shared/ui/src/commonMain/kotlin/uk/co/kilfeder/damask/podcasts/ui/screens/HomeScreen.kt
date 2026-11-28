@@ -3,9 +3,12 @@ package uk.co.kilfeder.damask.podcasts.ui.screens
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Podcasts
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -27,7 +30,10 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.home_in_progress
 import uk.co.kilfeder.damask.podcasts.ui.resources.home_no_shows_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.home_no_shows_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.home_search
-import uk.co.kilfeder.damask.podcasts.ui.resources.import_from_settings
+import uk.co.kilfeder.damask.podcasts.ui.resources.home_caught_up_body
+import uk.co.kilfeder.damask.podcasts.ui.resources.home_caught_up_title
+import uk.co.kilfeder.damask.podcasts.ui.resources.home_check_now
+import uk.co.kilfeder.damask.podcasts.ui.resources.import_subscriptions
 import uk.co.kilfeder.damask.podcasts.ui.resources.home_up_next
 import uk.co.kilfeder.damask.podcasts.ui.resources.mark_played
 import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
@@ -58,6 +64,40 @@ internal fun HomeScreen(
     )
 }
 
+/**
+ * Home with nothing to show (design hand-off › Empty states): no shows yet (search, or import),
+ * or every episode played (check for new ones).
+ */
+@Composable
+private fun HomeEmpty(
+    hasShows: Boolean,
+    onSearch: () -> Unit,
+    onImport: () -> Unit,
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (hasShows) {
+        EmptyState(
+            icon = Icons.Rounded.CheckCircle,
+            title = stringResource(Res.string.home_caught_up_title),
+            body = stringResource(Res.string.home_caught_up_body),
+            modifier = modifier,
+        ) {
+            TextButton(onClick = onRefresh) { Text(stringResource(Res.string.home_check_now)) }
+        }
+    } else {
+        EmptyState(
+            icon = Icons.Rounded.Podcasts,
+            title = stringResource(Res.string.home_no_shows_title),
+            body = stringResource(Res.string.home_no_shows_body),
+            modifier = modifier,
+        ) {
+            Button(onClick = onSearch) { Text(stringResource(Res.string.home_search)) }
+            TextButton(onClick = onImport) { Text(stringResource(Res.string.import_subscriptions)) }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HomeContent(
@@ -76,17 +116,8 @@ private fun HomeContent(
         Loading(modifier)
         return
     }
-    if (!state.hasSubscriptions) {
-        EmptyState(
-            title = stringResource(Res.string.home_no_shows_title),
-            body = stringResource(Res.string.home_no_shows_body),
-            modifier = modifier,
-        ) {
-            Button(onClick = onSearch, modifier = Modifier.padding(top = Spacing.Space4)) {
-                Text(stringResource(Res.string.home_search))
-            }
-            OutlinedButton(onClick = onImport) { Text(stringResource(Res.string.import_from_settings)) }
-        }
+    if (!state.hasSubscriptions || (state.inProgress.isEmpty() && state.upNext.isEmpty())) {
+        HomeEmpty(state.hasSubscriptions, onSearch, onImport, onRefresh, modifier)
         return
     }
     val markPlayed = stringResource(Res.string.mark_played)

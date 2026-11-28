@@ -16,11 +16,11 @@ private const val HALF_HEIGHT = 7f / 9f
 
 /**
  * The damask diaper drawn behind a filled play or pause button: tone-on-tone diamonds in [color]
- * at 16%, every [pitch] (about 9dp on 36–48dp buttons, 14dp on the 80dp Now Playing button).
+ * at 16% (or [alpha]), every [pitch] (about 9dp on 36–48dp buttons, 14dp on the 80dp Now Playing button).
  * Only filled play/pause buttons get it, so the pattern means "press here to listen". Clip the
  * button to its shape before this, so the pattern stays inside it.
  */
-internal fun Modifier.damaskFill(color: Color, pitch: Dp): Modifier = drawBehind {
+internal fun Modifier.damaskFill(color: Color, pitch: Dp, alpha: Float = DIAPER_ALPHA): Modifier = drawBehind {
     val step = pitch.toPx()
     val halfWidth = step * HALF_WIDTH
     val halfHeight = step * HALF_HEIGHT
@@ -38,5 +38,5 @@ internal fun Modifier.damaskFill(color: Color, pitch: Dp): Modifier = drawBehind
             path.close()
         }
     }
-    drawPath(path, color, alpha = DIAPER_ALPHA)
+    drawPath(path, color, alpha = alpha)
 }

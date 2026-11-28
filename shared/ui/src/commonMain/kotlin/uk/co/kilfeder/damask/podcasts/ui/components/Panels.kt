@@ -8,6 +8,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,6 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import org.jetbrains.compose.resources.stringResource
+import uk.co.kilfeder.damask.podcasts.ui.resources.Res
+import uk.co.kilfeder.damask.podcasts.ui.resources.back
 import uk.co.kilfeder.damask.podcasts.ui.theme.DamaskTextStyles
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
@@ -25,21 +32,34 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
  * GenreListPane, GenreQueuePane, TabletHome): the title, and an optional line under it.
  */
 @Composable
-internal fun PaneHeader(title: String, modifier: Modifier = Modifier, subtitle: @Composable (() -> Unit)? = null) {
-    Column(
-        verticalArrangement = Arrangement.Center,
+internal fun PaneHeader(
+    title: String,
+    modifier: Modifier = Modifier,
+    onBack: (() -> Unit)? = null,
+    subtitle: @Composable (() -> Unit)? = null,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = Sizes.PaneHeaderHeight)
-            .padding(horizontal = Spacing.Space4, vertical = Spacing.Space2),
+            .padding(start = if (onBack == null) Spacing.Space4 else Spacing.Space1, end = Spacing.Space4)
+            .padding(vertical = Spacing.Space2),
     ) {
-        Text(
-            text = title,
-            style = DamaskTextStyles.TitleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.semantics { heading() },
-        )
-        subtitle?.invoke()
+        onBack?.let {
+            IconButton(onClick = it) {
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(Res.string.back))
+            }
+        }
+        Column(verticalArrangement = Arrangement.Center) {
+            Text(
+                text = title,
+                style = DamaskTextStyles.TitleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.semantics { heading() },
+            )
+            subtitle?.invoke()
+        }
     }
 }
 

@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.stateIn
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 import uk.co.kilfeder.damask.podcasts.presentation.app.STOP_TIMEOUT_MS
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
+import uk.co.kilfeder.damask.podcasts.presentation.format.ArtworkFallback
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.toKey
 
 /** The mini-player above the tabs (design hand-off › MiniPlayer). */
@@ -17,6 +18,7 @@ data class MiniPlayerUi(
     val title: String,
     val showTitle: String,
     val artworkUrl: String?,
+    val fallback: ArtworkFallback,
     val isPlaying: Boolean,
     val buffering: Boolean,
     /** 0..1; null when the length isn't known. */
@@ -40,6 +42,10 @@ class MiniPlayerViewModel internal constructor(private val graph: AppGraph) : Vi
                     title = episode.title,
                     showTitle = library.showsById[episode.key.showId]?.title.orEmpty(),
                     artworkUrl = episode.imageUrl,
+                    fallback = ArtworkFallback.of(
+                        episode.key.showId.value,
+                        library.showsById[episode.key.showId]?.title.orEmpty(),
+                    ),
                     isPlaying = now.isPlaying,
                     buffering = now.buffering,
                     progress = now.durationMs?.takeIf { it > 0 }

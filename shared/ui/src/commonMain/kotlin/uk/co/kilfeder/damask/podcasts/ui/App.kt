@@ -70,6 +70,7 @@ fun App(
                         onPlayEpisode = viewModel::onPlayEpisode,
                         onRowPlayPause = viewModel::onRowPlayPause,
                         onOpenGenre = viewModel::onOpenGenre,
+                        onOpenShow = viewModel::onOpenShow,
                         onBack = viewModel::onBack,
                         onImportFinish = viewModel::onImportFinished,
                         onMessageShow = viewModel::onMessageShown,
@@ -87,6 +88,7 @@ private class AppIntents(
     val onPlayEpisode: (EpisodeId, PlaySource, Boolean) -> Unit,
     val onRowPlayPause: (EpisodeId, PlaySource) -> Unit,
     val onOpenGenre: (String) -> Unit,
+    val onOpenShow: (String) -> Unit,
     val onBack: () -> Boolean,
     val onImportFinish: (Int) -> Unit,
     val onMessageShow: () -> Unit,
@@ -129,6 +131,7 @@ private fun ShellLayout(
             onNavigate = intents.onNavigate,
             onPlayEpisode = { id, source -> intents.onPlayEpisode(id, source, width != WidthClass.EXPANDED) },
             onOpenGenre = intents.onOpenGenre,
+            onOpenShow = intents.onOpenShow,
             onImportFinish = intents.onImportFinish,
             onBack = { intents.onBack() },
             rowPlayer = RowPlayer(state.playing, state.playingNow, intents.onRowPlayPause),
@@ -141,13 +144,12 @@ private fun ShellLayout(
             val panes = isTwoPaneLayout(state, width)
             Scaffold(
                 topBar = {
-                    if (!panes) {
+                    if (!panes && !hasOwnHeading(state)) {
                         TopBar(
                             title = titleOf(state),
                             showBack = top != null,
-                            showSettings = compact && top == null,
                             onBack = { intents.onBack() },
-                            onSettings = onSettings,
+                            action = topLevelAction(state, compact, onSettings) { intents.onSelectTab(Tab.SEARCH) },
                         )
                     }
                 },
@@ -188,6 +190,7 @@ internal class ShellActions(
     val onNavigate: (Destination) -> Unit,
     val onPlayEpisode: (EpisodeId, PlaySource) -> Unit,
     val onOpenGenre: (String) -> Unit,
+    val onOpenShow: (String) -> Unit,
     val onImportFinish: (Int) -> Unit,
     val onBack: () -> Unit,
     val rowPlayer: RowPlayer,

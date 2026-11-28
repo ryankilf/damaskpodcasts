@@ -12,7 +12,9 @@ import uk.co.kilfeder.damask.podcasts.core.importer.ImportCandidate
 import uk.co.kilfeder.damask.podcasts.core.importer.ImportListener
 import uk.co.kilfeder.damask.podcasts.core.importer.OpmlEntry
 import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
+import uk.co.kilfeder.damask.podcasts.core.sync.ShowIds
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
+import uk.co.kilfeder.damask.podcasts.presentation.format.ArtworkFallback
 
 data class CategoryOptionUi(val id: String, val name: String)
 
@@ -32,6 +34,7 @@ data class ImportRowUi(
     val index: Int,
     val title: String,
     val artworkUrl: String?,
+    val fallback: ArtworkFallback,
     val categoryId: String,
     /** Why the feed couldn't be read; it can still be subscribed and is retried on refresh. */
     val problem: String?,
@@ -170,7 +173,16 @@ class ImportViewModel internal constructor(private val graph: AppGraph) : ViewMo
             .sortedWith(compareBy({ it.isSystem }, { it.name.lowercase() }))
             .map { CategoryOptionUi(it.id.value, it.name) }
         val rows = candidates.mapIndexed { index, c ->
-            ImportRowUi(index, c.title, c.imageUrl, categoryIds[index], c.problem, selected = c.problem == null)
+            ImportRowUi(
+                index = index,
+                title = c.title,
+                artworkUrl = c.imageUrl,
+                // The ID the show will have once subscribed, so it keeps its colour.
+                fallback = ArtworkFallback.of(ShowIds.fromFeedUrl(c.entry.feedUrl).value, c.title),
+                categoryId = categoryIds[index],
+                problem = c.problem,
+                selected = c.problem == null,
+            )
         }
         return ImportUiState.Review(rows, categories)
     }

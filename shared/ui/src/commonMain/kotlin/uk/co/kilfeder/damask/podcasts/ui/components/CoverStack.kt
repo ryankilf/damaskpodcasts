@@ -14,6 +14,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
+import uk.co.kilfeder.damask.podcasts.presentation.format.ArtworkFallback
+import uk.co.kilfeder.damask.podcasts.presentation.genres.CoverUi
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 
 /** Each cover further back is this much smaller than the one in front of it. */
@@ -29,8 +31,8 @@ private const val SHADE_PER_STEP = 0.18f
  * [Artwork].
  */
 @Composable
-internal fun CoverStack(urls: List<String>, maxCovers: Int, modifier: Modifier = Modifier) {
-    val covers = urls.take(maxCovers).ifEmpty { listOf(null) }
+internal fun CoverStack(covers: List<CoverUi>, maxCovers: Int, modifier: Modifier = Modifier) {
+    val shown = covers.take(maxCovers).ifEmpty { listOf(CoverUi(null, ArtworkFallback("", 0))) }
     val endOrigin = if (LocalLayoutDirection.current == LayoutDirection.Ltr) 1f else 0f
     val peek = Sizes.CoverStackPeek
     val scrim = MaterialTheme.colorScheme.scrim
@@ -40,10 +42,11 @@ internal fun CoverStack(urls: List<String>, maxCovers: Int, modifier: Modifier =
         modifier = modifier.size(DpSize(Sizes.RowArtwork + peek * (maxCovers - 1), Sizes.RowArtwork)),
     ) {
         // Back to front, so the front cover draws last.
-        covers.indices.reversed().forEach { depth ->
+        shown.indices.reversed().forEach { depth ->
             val scale = 1f - depth * SHRINK_PER_STEP
             Artwork(
-                url = covers[depth],
+                url = shown[depth].url,
+                fallback = shown[depth].fallback,
                 modifier = Modifier
                     .offset(x = peek * depth)
                     // Shrink towards the end edge, so each cover peeks out by exactly [peek].

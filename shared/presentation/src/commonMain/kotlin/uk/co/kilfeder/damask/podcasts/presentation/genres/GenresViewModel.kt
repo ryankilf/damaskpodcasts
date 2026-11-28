@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 import uk.co.kilfeder.damask.podcasts.presentation.app.STOP_TIMEOUT_MS
+import uk.co.kilfeder.damask.podcasts.presentation.format.ArtworkFallback
 import uk.co.kilfeder.damask.podcasts.presentation.format.Formats
 import uk.co.kilfeder.damask.podcasts.presentation.format.Summarised
 
@@ -20,8 +21,11 @@ data class GenreRowUi(
     /** The genre heard least recently, flagged "Longest unplayed" (only when there's a choice). */
     val stalest: Boolean = false,
     /** Up to [COVER_COUNT] covers, front first: the shows that come next in this genre's queue. */
-    val coverUrls: List<String>,
+    val covers: List<CoverUi>,
 )
+
+/** One show's cover in a genre row's stack. */
+data class CoverUi(val url: String?, val fallback: ArtworkFallback)
 
 /** How many covers a genre row stacks. */
 const val COVER_COUNT = 3
@@ -42,8 +46,9 @@ class GenresViewModel internal constructor(graph: AppGraph) : ViewModel() {
                 categoryId = category.id.value,
                 name = category.name,
                 showCount = shows.size,
-                lastListened = rotation.history.lastListened(category.id)?.let { Formats.date(it.wallMs, now) },
-                coverUrls = rotation.coverShows(category.id, COVER_COUNT).mapNotNull { it.imageUrl },
+                lastListened = rotation.history.lastListened(category.id)?.let { Formats.lastPlayed(it.wallMs, now) },
+                covers = rotation.coverShows(category.id, COVER_COUNT)
+                    .map { CoverUi(it.imageUrl, ArtworkFallback.of(it.id.value, it.title)) },
             )
         }
         // Genres come least recently played first, so the first is the one to flag.

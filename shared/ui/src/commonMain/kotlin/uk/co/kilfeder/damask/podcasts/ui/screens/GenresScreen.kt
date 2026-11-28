@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -74,6 +75,7 @@ private fun GenresContent(
     }
     if (state.genres.isEmpty()) {
         EmptyState(
+            icon = Icons.Rounded.Category,
             title = stringResource(Res.string.genres_empty_title),
             body = stringResource(Res.string.genres_empty_body),
             modifier = modifier,
@@ -103,7 +105,7 @@ private fun GenreRow(genre: GenreRowUi, selected: Boolean, onClick: () -> Unit, 
             .heightIn(min = Sizes.GenreRowMinHeight)
             .padding(horizontal = Spacing.Space3, vertical = Spacing.Space2),
     ) {
-        CoverStack(genre.coverUrls, maxCovers = COVER_COUNT)
+        CoverStack(genre.covers, maxCovers = COVER_COUNT)
         GenreText(genre, Modifier.weight(1f))
         Icon(
             imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,

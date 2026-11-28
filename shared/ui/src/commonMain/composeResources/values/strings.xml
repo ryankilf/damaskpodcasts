@@ -19,10 +19,29 @@
     <string name="in_progress_count">%1$d</string>
     <string name="in_progress_see_all">See all %1$d</string>
     <string name="home_refresh">Check for new episodes</string>
-    <string name="home_no_shows_title">No podcasts yet</string>
-    <string name="home_no_shows_body">Find shows to follow, or bring across the shows you follow in your old podcast app.</string>
-    <string name="home_search">Search for podcasts</string>
+    <string name="home_no_shows_title">No shows yet</string>
+    <string name="home_no_shows_body">Find shows by name, or bring your subscriptions over from another podcast app.</string>
+    <string name="home_search">Search for shows</string>
     <string name="home_empty">Nothing to play yet. New episodes will show up here.</string>
+    <string name="home_caught_up_title">Nothing new to play</string>
+    <string name="home_caught_up_body">Every episode from your shows is played. New ones appear here as they’re published.</string>
+    <string name="home_check_now">Check now</string>
+    <string name="import_subscriptions">Import subscriptions</string>
+    <plurals name="shows_count">
+        <item quantity="one">%1$d show, A–Z</item>
+        <item quantity="other">%1$d shows, A–Z</item>
+    </plurals>
+    <string name="shows_untitled">Untitled show</string>
+    <string name="shows_add">Add a show</string>
+    <string name="show_pick_title">Pick a show</string>
+    <string name="show_pick_body">Its episodes show here, in the show’s own order.</string>
+    <plurals name="show_episodes">
+        <item quantity="one">%1$d episode</item>
+        <item quantity="other">%1$d episodes</item>
+    </plurals>
+    <string name="tab_shows">Shows</string>
+    <string name="genre_queue_empty_title">Nothing left in %1$s</string>
+    <string name="genre_queue_empty_body">%1$s drops out of Up next until one of its shows publishes a new episode.</string>
     <string name="mark_played">Mark played</string>
     <string name="mark_unplayed">Mark unplayed</string>
     <string name="episode_title">Episode</string>
@@ -65,7 +84,7 @@
 
     <!-- Played -->
     <string name="played_empty_title">Nothing played yet</string>
-    <string name="played_empty">Episodes you play appear here.</string>
+    <string name="played_empty">Everything you start or finish lands here, newest first, so you can pick it back up or undo a mark-played.</string>
     <string name="played_last">Last played %1$s</string>
 
     <!-- Search -->
@@ -100,6 +119,10 @@
     <string name="import_from_settings">Bring shows from another app</string>
 
     <!-- Settings -->
+    <string name="settings_group_appearance">Appearance</string>
+    <string name="settings_group_library">Library</string>
+    <string name="settings_group_search">Search</string>
+    <string name="settings_import_body">From an OPML file exported by another app</string>
     <string name="settings_hide_explicit">Hide explicit</string>
     <string name="settings_hide_explicit_body">Hide shows and episodes marked as explicit.</string>
     <string name="settings_wallpaper">Use wallpaper colours</string>

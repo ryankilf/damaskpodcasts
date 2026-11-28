@@ -55,7 +55,7 @@ class GenreQueueViewModel internal constructor(
             loading = false,
             name = library.categories.firstOrNull { it.id == id }?.name.orEmpty(),
             showCount = library.showsByCategory[id].orEmpty().size,
-            lastListened = rotation.history.lastListened(id)?.let { Formats.date(it.wallMs, now) },
+            lastListened = rotation.history.lastListened(id)?.let { Formats.lastPlayed(it.wallMs, now) },
             inProgress = inProgress,
             upNext = upNext,
             canLoadMore = queue.size > size,

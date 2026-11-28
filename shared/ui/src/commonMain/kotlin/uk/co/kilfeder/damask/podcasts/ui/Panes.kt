@@ -13,6 +13,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Category
+import androidx.compose.material.icons.rounded.PlayCircle
+import androidx.compose.material.icons.rounded.Podcasts
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +36,8 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.genre_pick_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.genre_pick_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.now_playing_empty_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.now_playing_empty_title
+import uk.co.kilfeder.damask.podcasts.ui.resources.show_pick_body
+import uk.co.kilfeder.damask.podcasts.ui.resources.show_pick_title
 import uk.co.kilfeder.damask.podcasts.ui.screens.EmptyState
 import uk.co.kilfeder.damask.podcasts.ui.screens.GenreQueueScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.GenresScreen
@@ -42,6 +48,8 @@ import uk.co.kilfeder.damask.podcasts.ui.screens.NowPlayingScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.PlayedScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.SearchScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.SettingsScreen
+import uk.co.kilfeder.damask.podcasts.ui.screens.ShowScreen
+import uk.co.kilfeder.damask.podcasts.ui.screens.ShowsScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.ShowNotesScreen
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
@@ -58,8 +66,9 @@ internal fun isTwoPaneLayout(state: AppUiState, width: WidthClass): Boolean {
     val top = state.nav.top
     val tab = state.nav.tab
     return when {
-        top == null -> tab.pairsWithPlayer() || tab == Tab.GENRES
+        top == null -> tab.pairsWithPlayer() || tab == Tab.GENRES || tab == Tab.SHOWS
         top is Destination.GenreQueue -> tab == Tab.GENRES
+        top is Destination.Show -> tab == Tab.SHOWS
         top is Destination.ShowNotes -> tab.pairsWithPlayer()
         else -> false
     }
@@ -106,6 +115,19 @@ internal fun ShellContent(
                 modifier = modifier,
             )
         }
+        tab == Tab.SHOWS -> {
+            val show = (top as? Destination.Show)?.showId
+            TwoPanes(
+                left = {
+                    ListPane(title, it) { m ->
+                        val search = { actions.onSelectTab(Tab.SEARCH) }
+                        ShowsScreen(graph, actions.onOpenShow, search, m, selectedId = show)
+                    }
+                },
+                right = { ShowPane(show, graph, actions, it) },
+                modifier = modifier,
+            )
+        }
         // The notes peek in the player pane opens the notes in the same pane; back returns to it.
         top is Destination.ShowNotes -> TwoPanes(
             left = { ListPane(title, it) { m -> TabContent(tab, graph, actions, m) } },
@@ -132,8 +154,17 @@ private fun SinglePane(state: AppUiState, graph: AppGraph, actions: ShellActions
                 onOpenEpisode = { actions.onPlayEpisode(it, PlaySource.Genre(top.categoryId)) },
                 rowPlayer = actions.rowPlayer,
                 modifier = readable,
+                showHeader = true,
+                onBack = actions.onBack,
             )
             is Destination.Episode -> EpisodeScreen(top.id, graph, actions, Modifier.fillMaxSize())
+            is Destination.Show -> ShowScreen(
+                graph = graph,
+                showId = top.showId,
+                onOpenEpisode = actions.onPlayEpisode,
+                rowPlayer = actions.rowPlayer,
+                modifier = readable,
+            )
             Destination.InProgress ->
                 InProgressScreen(graph, actions.onPlayEpisode, actions.rowPlayer, modifier = readable)
             is Destination.ShowNotes -> ShowNotesScreen(graph, top.id, onClose = actions.onBack, modifier = readable)
@@ -158,6 +189,12 @@ private fun TabContent(tab: Tab, graph: AppGraph, actions: ShellActions, modifie
             modifier = modifier,
         )
         Tab.GENRES -> GenresScreen(graph, onOpenGenre = actions.onOpenGenre, modifier = modifier)
+        Tab.SHOWS -> ShowsScreen(
+            graph = graph,
+            onOpenShow = actions.onOpenShow,
+            onSearch = { actions.onSelectTab(Tab.SEARCH) },
+            modifier = modifier,
+        )
         Tab.PLAYED -> PlayedScreen(
             graph = graph,
             onOpenEpisode = { actions.onPlayEpisode(it, PlaySource.Played) },
@@ -184,6 +221,7 @@ private fun EpisodeScreen(id: EpisodeId, graph: AppGraph, actions: ShellActions,
 private fun PlayingPane(playing: EpisodeId?, graph: AppGraph, actions: ShellActions, modifier: Modifier = Modifier) {
     if (playing == null) {
         EmptyState(
+            icon = Icons.Rounded.PlayCircle,
             title = stringResource(Res.string.now_playing_empty_title),
             body = stringResource(Res.string.now_playing_empty_body),
             modifier = modifier,
@@ -192,6 +230,30 @@ private fun PlayingPane(playing: EpisodeId?, graph: AppGraph, actions: ShellActi
     }
     Box(contentAlignment = Alignment.TopCenter, modifier = modifier) {
         EpisodeScreen(playing, graph, actions, Modifier.widthIn(max = Sizes.PlayerPaneMaxWidth).fillMaxSize())
+    }
+}
+
+/** The right-hand pane beside Shows: the selected show's page. */
+@Composable
+private fun ShowPane(showId: String?, graph: AppGraph, actions: ShellActions, modifier: Modifier = Modifier) {
+    if (showId == null) {
+        EmptyState(
+            icon = Icons.Rounded.Podcasts,
+            title = stringResource(Res.string.show_pick_title),
+            body = stringResource(Res.string.show_pick_body),
+            modifier = modifier,
+        )
+        return
+    }
+    Box(contentAlignment = Alignment.TopStart, modifier = modifier) {
+        ShowScreen(
+            graph = graph,
+            showId = showId,
+            onOpenEpisode = actions.onPlayEpisode,
+            rowPlayer = actions.rowPlayer,
+            modifier = Modifier.widthIn(max = Sizes.MaxContentWidth).fillMaxSize(),
+            background = MaterialTheme.colorScheme.surfaceContainerLow,
+        )
     }
 }
 
@@ -208,6 +270,7 @@ private fun GenrePane(
         val content = Modifier.weight(1f).fillMaxWidth()
         if (categoryId == null) {
             EmptyState(
+                icon = Icons.Rounded.Category,
                 title = stringResource(Res.string.genre_pick_title),
                 body = stringResource(Res.string.genre_pick_body),
                 modifier = content,

@@ -83,7 +83,7 @@ private fun MiniPlayerBar(
             .height(Sizes.MiniPlayerHeight)
             .padding(start = Spacing.Space4, end = Spacing.Space1),
     ) {
-        Artwork(player.artworkUrl, size = Sizes.MiniPlayerArtwork)
+        Artwork(player.artworkUrl, player.fallback, size = Sizes.MiniPlayerArtwork)
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.Space1 / 2), modifier = Modifier.weight(1f)) {
             Text(
                 text = player.title,

@@ -23,6 +23,15 @@ class ColorContrastTest {
     @Test
     fun darkSchemeMeetsWcagAa() = assertContrast("dark", brandColorScheme(darkTheme = true))
 
+    @Test
+    fun artworkFallbackInitialsAreReadable() {
+        // Initials are large, bold text: WCAG AA asks 3:1; every tile clears 4.5:1 as well.
+        ArtworkFallbackColors.forEachIndexed { i, tile ->
+            val ratio = contrastRatio(ArtworkFallbackText, tile)
+            if (ratio < TEXT) fail("fallback tile $i: ${ratio.format()}:1")
+        }
+    }
+
     private fun assertContrast(name: String, scheme: ColorScheme) {
         val failures = scheme.pairs().mapNotNull { pair ->
             val ratio = contrastRatio(pair.foreground, pair.background)

@@ -42,6 +42,8 @@ import uk.co.kilfeder.damask.podcasts.presentation.playback.MiniPlayerViewModel
 import uk.co.kilfeder.damask.podcasts.presentation.playback.NoAudioEngine
 import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaybackController
 import uk.co.kilfeder.damask.podcasts.presentation.settings.SettingsViewModel
+import uk.co.kilfeder.damask.podcasts.presentation.shows.ShowViewModel
+import uk.co.kilfeder.damask.podcasts.presentation.shows.ShowsViewModel
 import kotlin.time.Clock
 
 /**
@@ -52,6 +54,8 @@ import kotlin.time.Clock
  * the HLC clock aren't thread-safe. [library] re-emits whenever a table the rotation reads changes,
  * so screens update by themselves after any write.
  */
+// One ViewModel factory per screen, so the function count grows with the screens, not complexity.
+@Suppress("TooManyFunctions")
 @OptIn(ExperimentalCoroutinesApi::class)
 class AppGraph internal constructor(
     driverFactory: DriverFactory,
@@ -121,6 +125,10 @@ class AppGraph internal constructor(
     fun episodeViewModel(id: EpisodeId) = EpisodeViewModel(this, id)
 
     fun miniPlayerViewModel() = MiniPlayerViewModel(this)
+
+    fun showsViewModel() = ShowsViewModel(this)
+
+    fun showViewModel(showId: String) = ShowViewModel(this, showId)
 
     fun importViewModel() = ImportViewModel(this)
 

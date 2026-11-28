@@ -25,6 +25,9 @@ object Spacing {
 
     /** space-6: between sections (In Progress, Up Next). */
     val Space6 = 24.dp
+
+    /** space-8: the empty state's side margins (EmptyState artboard). */
+    val Space8 = 32.dp
 }
 
 /** design-system `radius` tokens. */
@@ -86,6 +89,13 @@ object Sizes {
     val DamaskPitchLarge = 14.dp
     val DamaskPitchSmall = 9.dp
 
+    /** The empty state's damask tile, its icon circle and icon, and its text width (EmptyState artboard). */
+    val DamaskPitchPanel = 16.dp
+    val EmptyStateTile = 144.dp
+    val EmptyStateIconCircle = 72.dp
+    val EmptyStateIcon = 36.dp
+    val EmptyStateTextMaxWidth = 300.dp
+
     /** The position bar's thumb (NowPlayingPane artboard). */
     val ScrubberThumbWidth = 4.dp
     val ScrubberThumbHeight = 20.dp
@@ -118,6 +128,13 @@ object Sizes {
     /** The list pane on wide layouts (TabletHome, TabletGenres artboards), and a pane's heading. */
     val ListPaneWidth = 440.dp
     val PaneHeaderHeight = 64.dp
+
+    /** A show row in Shows (ShowListPane artboard), and its artwork. */
+    val ShowRowMinHeight = 64.dp
+    val ShowRowArtwork = 48.dp
+
+    /** The artwork at the top of a show's page. */
+    val ShowHeaderArtwork = 96.dp
 
     /** A genre row in the list (GenreListPane artboard). */
     val GenreRowMinHeight = 80.dp

@@ -8,12 +8,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Podcasts
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,7 +35,6 @@ import uk.co.kilfeder.damask.podcasts.presentation.navigation.Destination
 import uk.co.kilfeder.damask.podcasts.presentation.navigation.Tab
 import uk.co.kilfeder.damask.podcasts.ui.components.MiniPlayer
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
-import uk.co.kilfeder.damask.podcasts.ui.resources.app_name
 import uk.co.kilfeder.damask.podcasts.ui.resources.back
 import uk.co.kilfeder.damask.podcasts.ui.resources.episode_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.home_in_progress
@@ -44,19 +45,24 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.tab_genres
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_home
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_played
 import uk.co.kilfeder.damask.podcasts.ui.resources.tab_search
+import uk.co.kilfeder.damask.podcasts.ui.resources.tab_shows
+import uk.co.kilfeder.damask.podcasts.ui.resources.shows_add
 import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 
+/**
+ * The phone's heading (design hand-off › Main, Settings): left-aligned, with a back arrow on inner
+ * screens and the screen's one action at the end (the cog on Home, + on Shows).
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun TopBar(
     title: StringResource,
     showBack: Boolean,
-    showSettings: Boolean,
     onBack: () -> Unit,
-    onSettings: () -> Unit,
     modifier: Modifier = Modifier,
+    action: (@Composable () -> Unit)? = null,
 ) {
-    CenterAlignedTopAppBar(
+    TopAppBar(
         modifier = modifier,
         title = { Text(stringResource(title)) },
         navigationIcon = {
@@ -69,13 +75,7 @@ internal fun TopBar(
                 }
             }
         },
-        actions = {
-            if (showSettings) {
-                IconButton(onClick = onSettings) {
-                    Icon(imageVector = Icons.Rounded.Settings, contentDescription = stringResource(Res.string.settings))
-                }
-            }
-        },
+        actions = { action?.invoke() },
     )
 }
 
@@ -151,15 +151,17 @@ internal fun titleOf(state: AppUiState): StringResource = when (state.nav.top) {
     Destination.Import -> Res.string.import_screen_title
     Destination.InProgress -> Res.string.home_in_progress
     is Destination.GenreQueue -> Res.string.tab_genres
+    is Destination.Show -> Res.string.tab_shows
     is Destination.Episode -> Res.string.episode_title
     is Destination.ShowNotes -> Res.string.show_notes
-    null -> if (state.nav.tab == Tab.HOME) Res.string.app_name else state.nav.tab.label
+    null -> state.nav.tab.label
 }
 
 internal val Tab.label: StringResource
     get() = when (this) {
         Tab.HOME -> Res.string.tab_home
         Tab.GENRES -> Res.string.tab_genres
+        Tab.SHOWS -> Res.string.tab_shows
         Tab.PLAYED -> Res.string.tab_played
         Tab.SEARCH -> Res.string.tab_search
     }
@@ -168,6 +170,37 @@ private val Tab.icon: ImageVector
     get() = when (this) {
         Tab.HOME -> Icons.Rounded.Home
         Tab.GENRES -> Icons.Rounded.Category
+        Tab.SHOWS -> Icons.Rounded.Podcasts
         Tab.PLAYED -> Icons.Rounded.History
         Tab.SEARCH -> Icons.Rounded.Search
     }
+
+/** Screens that draw their own heading with a back arrow (a genre's queue: its name and when it was last played). */
+internal fun hasOwnHeading(state: AppUiState): Boolean = state.nav.top is Destination.GenreQueue
+
+/** The one action in a top-level screen's heading: the cog on Home (phones; the rail has it otherwise), + on Shows. */
+internal fun topLevelAction(
+    state: AppUiState,
+    compact: Boolean,
+    onSettings: () -> Unit,
+    onAddShow: () -> Unit,
+): (@Composable () -> Unit)? {
+    if (state.nav.top != null) return null
+    return when {
+        state.nav.tab == Tab.HOME && compact -> {
+            {
+                IconButton(onClick = onSettings) {
+                    Icon(imageVector = Icons.Rounded.Settings, contentDescription = stringResource(Res.string.settings))
+                }
+            }
+        }
+        state.nav.tab == Tab.SHOWS -> {
+            {
+                IconButton(onClick = onAddShow) {
+                    Icon(imageVector = Icons.Rounded.Add, contentDescription = stringResource(Res.string.shows_add))
+                }
+            }
+        }
+        else -> null
+    }
+}

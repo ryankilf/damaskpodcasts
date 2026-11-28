@@ -21,6 +21,7 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.Forward30
+import androidx.compose.material.icons.rounded.Podcasts
 import androidx.compose.material.icons.rounded.Replay10
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,7 +52,9 @@ import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeRowUi
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeUiState
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeViewModel
+import uk.co.kilfeder.damask.podcasts.presentation.format.ArtworkFallback
 import uk.co.kilfeder.damask.podcasts.ui.components.AmbientGlow
+import uk.co.kilfeder.damask.podcasts.ui.components.Artwork
 import uk.co.kilfeder.damask.podcasts.ui.components.GenreChip
 import uk.co.kilfeder.damask.podcasts.ui.components.PlayButton
 import uk.co.kilfeder.damask.podcasts.ui.components.PositionBar
@@ -134,6 +137,7 @@ internal fun EpisodeLoaded(
     when {
         state.loading -> Loading(modifier)
         episode == null -> EmptyState(
+            icon = Icons.Rounded.Podcasts,
             title = stringResource(Res.string.episode_gone_title),
             body = stringResource(Res.string.episode_gone_body),
             modifier = modifier,
@@ -153,7 +157,7 @@ private fun Player(
 ) {
     Column(modifier.fillMaxSize()) {
         Column(Modifier.weight(1f).padding(horizontal = Spacing.Space6)) {
-            Artwork(episode.artworkUrl, Modifier.weight(1f).fillMaxWidth())
+            PlayerArtwork(episode.artworkUrl, episode.fallback, Modifier.weight(1f).fillMaxWidth())
             Details(state, episode, onOpenGenre, Modifier.padding(top = Spacing.Space6))
             state.position?.let {
                 PositionBar(
@@ -193,7 +197,7 @@ internal class PlayerActions(
 
 /** The artwork fills the space left over, square, at most [Sizes.NowPlayingArtworkMax]. */
 @Composable
-private fun Artwork(url: String?, modifier: Modifier = Modifier) {
+private fun PlayerArtwork(url: String?, fallback: ArtworkFallback, modifier: Modifier = Modifier) {
     BoxWithConstraints(
         contentAlignment = Alignment.Center,
         modifier = modifier.heightIn(min = Sizes.NowPlayingArtworkMin),
@@ -202,12 +206,7 @@ private fun Artwork(url: String?, modifier: Modifier = Modifier) {
         val side = min(min(maxWidth, maxHeight - glow), Sizes.NowPlayingArtworkMax)
             .coerceAtLeast(Sizes.NowPlayingArtworkMin - glow)
         AmbientGlow(artworkUrl = url, shape = MaterialTheme.shapes.medium) {
-            AsyncImage(
-                model = url,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.size(side).clip(MaterialTheme.shapes.medium),
-            )
+            Artwork(url, fallback, size = side, shape = MaterialTheme.shapes.medium)
         }
     }
 }
