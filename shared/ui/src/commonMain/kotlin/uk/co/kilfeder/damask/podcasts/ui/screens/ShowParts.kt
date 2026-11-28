@@ -68,6 +68,7 @@ internal fun ShowDetails(
     show: ShowPageUi,
     genres: List<CategoryOptionUi>,
     onGenreChange: (String) -> Unit,
+    create: CreateGenre,
     modifier: Modifier = Modifier,
     titleModifier: Modifier = Modifier,
 ) {
@@ -99,7 +100,7 @@ internal fun ShowDetails(
             if (facts.summary.isNotEmpty()) {
                 ExactValueText(value = facts, style = DamaskTextStyles.BodySmall, color = muted)
             }
-            if (show.subscribed) GenreMenuChip(show, genres, onGenreChange)
+            if (show.subscribed) GenreMenuChip(show, genres, onGenreChange, create)
         }
     }
 }
@@ -133,11 +134,12 @@ private fun GenreMenuChip(
     show: ShowPageUi,
     genres: List<CategoryOptionUi>,
     onGenreChange: (String) -> Unit,
+    create: CreateGenre,
     modifier: Modifier = Modifier,
 ) {
     val name = show.genre.orEmpty()
     val description = stringResource(Res.string.show_genre_label, name)
-    CategoryPicker(show.title, genres, show.genreId, onGenreChange) { open ->
+    CategoryPicker(show.title, genres, show.genreId, onGenreChange, create) { open ->
         DropdownChip(name, Icons.Rounded.Category, description, open, modifier)
     }
 }

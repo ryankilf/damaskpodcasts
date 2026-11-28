@@ -158,6 +158,9 @@ object Sizes {
 
     /** A colour swatch's dot on Manage categories, and the check circle on a picked swatch. */
     val SwatchDot = 28.dp
+
+    /** A genre's colour beside its name in the genre sheet. */
+    val GenreSquare = 16.dp
     val SwatchCheck = 24.dp
 
     /** No space (a padding that's only there sometimes). */

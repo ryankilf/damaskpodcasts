@@ -91,6 +91,7 @@ internal fun ShowScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val intents = ShowIntents(
         onGenreChange = viewModel::onGenreChange,
+        onCreateGenre = viewModel::onCreateGenre,
         onOrderChange = viewModel::onOrderChange,
         onSubscribe = viewModel::onSubscribe,
     )
@@ -149,7 +150,13 @@ private fun ShowList(
     val nextId = state.nextUp?.id
     LazyColumn(state = list, modifier = modifier) {
         item(key = "details") {
-            ShowDetails(show, state.genres, intents.onGenreChange, titleModifier = Modifier.collapsingTitle(titleState))
+            ShowDetails(
+                show = show,
+                genres = state.genres,
+                onGenreChange = intents.onGenreChange,
+                create = CreateGenre(state.nextHue, intents.onCreateGenre),
+                titleModifier = Modifier.collapsingTitle(titleState),
+            )
         }
         item(key = "actions") {
             val next = state.nextUp

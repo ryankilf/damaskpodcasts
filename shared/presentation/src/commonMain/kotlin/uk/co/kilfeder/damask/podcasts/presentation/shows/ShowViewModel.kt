@@ -1,5 +1,9 @@
 package uk.co.kilfeder.damask.podcasts.presentation.shows
 
+import uk.co.kilfeder.damask.podcasts.presentation.genres.toColour
+import uk.co.kilfeder.damask.podcasts.presentation.genres.toHue
+import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreHue
+import uk.co.kilfeder.damask.podcasts.core.model.GenreColour
 import uk.co.kilfeder.damask.podcasts.presentation.genres.hueOf
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.NextUpUi
 import uk.co.kilfeder.damask.podcasts.presentation.app.refreshShows
@@ -39,6 +43,8 @@ data class ShowUiState(
     val startAt: Int? = null,
     /** Every genre, for the genre sheet. */
     val genres: List<CategoryOptionUi> = emptyList(),
+    /** The colour a genre created from the sheet starts with: the least used. */
+    val nextHue: GenreHue = GenreHue.RED,
 )
 
 /**
@@ -76,6 +82,7 @@ class ShowViewModel internal constructor(private val graph: AppGraph, showId: St
             },
             startAt = if (order == ListOrder.OLDEST_FIRST) rows.indexOfFirst { !it.played }.takeIf { it > 0 } else null,
             genres = library.categoryOptions(),
+            nextHue = GenreColour.leastUsed(library.categories.mapNotNull { it.colour }).toHue(),
         )
     }
 
@@ -104,6 +111,13 @@ class ShowViewModel internal constructor(private val graph: AppGraph, showId: St
         graph.showSettings.setCategory(id, CategoryId(genreId))
         // A genre gets its colour once it has a show.
         graph.genreSettings.assignMissingColours()
+    }
+
+    /** "Create “<name>”" in the genre sheet: makes the genre and moves the show into it. */
+    fun onCreateGenre(name: String, hue: GenreHue) {
+        val colour = hue.toColour() ?: return
+        if (name.isBlank()) return
+        write { graph.showSettings.setCategory(id, graph.genreSettings.create(name, colour)) }
     }
 
     /** The order chip: the list's order, and the order the show plays in. */

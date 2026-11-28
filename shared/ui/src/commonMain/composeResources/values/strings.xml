@@ -30,7 +30,7 @@
     </plurals>
     <string name="shows_untitled">Untitled show</string>
     <string name="shows_filter">Search your shows</string>
-    <string name="shows_filter_clear">Clear search</string>
+    <string name="search_clear">Clear search</string>
     <string name="shows_no_match">No shows match “%1$s”.</string>
     <string name="show_pick_title">Pick a show</string>
     <string name="show_pick_body">Its episodes show here, in the show’s own order.</string>
@@ -133,6 +133,9 @@
     <string name="import_failed">That doesn’t look like a list of podcasts. Try saving it from your old app again.</string>
     <string name="import_start_again">Choose a different file</string>
     <string name="import_category">Genre for %1$s: %2$s</string>
+    <string name="category_find_or_create">Find or create a category</string>
+    <string name="category_create">Create “%1$s”</string>
+    <string name="category_new_colour">Colour for the new category: %1$s. Change colour</string>
     <string name="category_sheet_title">Genre for %1$s</string>
     <string name="category_search">Search genres</string>
     <string name="category_no_match">No genres match “%1$s”</string>

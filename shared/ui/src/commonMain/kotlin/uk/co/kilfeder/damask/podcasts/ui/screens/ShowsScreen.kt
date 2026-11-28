@@ -1,42 +1,24 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.components.SearchField
 import uk.co.kilfeder.damask.podcasts.ui.components.SelectableListRow
 import uk.co.kilfeder.damask.podcasts.ui.resources.shows_no_match
-import uk.co.kilfeder.damask.podcasts.ui.resources.shows_filter_clear
 import uk.co.kilfeder.damask.podcasts.ui.resources.shows_filter
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.graphics.Color
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TextField
-import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Podcasts
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -47,15 +29,11 @@ import uk.co.kilfeder.damask.podcasts.presentation.shows.ShowRowUi
 import uk.co.kilfeder.damask.podcasts.presentation.shows.ShowsUiState
 import uk.co.kilfeder.damask.podcasts.presentation.shows.ShowsViewModel
 import uk.co.kilfeder.damask.podcasts.ui.components.Artwork
-import uk.co.kilfeder.damask.podcasts.ui.components.ExactValueText
 import uk.co.kilfeder.damask.podcasts.ui.components.LastPlayedText
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
-import uk.co.kilfeder.damask.podcasts.ui.resources.genres_last
-import uk.co.kilfeder.damask.podcasts.ui.resources.genres_never
 import uk.co.kilfeder.damask.podcasts.ui.resources.home_no_shows_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.home_no_shows_title
 import uk.co.kilfeder.damask.podcasts.ui.resources.home_search
-import uk.co.kilfeder.damask.podcasts.ui.resources.row_meta
 import uk.co.kilfeder.damask.podcasts.ui.resources.shows_count
 import uk.co.kilfeder.damask.podcasts.ui.resources.shows_untitled
 import uk.co.kilfeder.damask.podcasts.ui.theme.DamaskTextStyles
@@ -149,33 +127,10 @@ internal fun ShowMeta(show: ShowRowUi, modifier: Modifier = Modifier) =
 /** "Search your shows" (design hand-off › ShowListPane): filters your own shows; Discover finds new ones. */
 @Composable
 private fun ShowsFilter(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
-    val colors = MaterialTheme.colorScheme
-    val label = stringResource(Res.string.shows_filter)
-    TextField(
-        value = query,
-        onValueChange = onQueryChange,
-        singleLine = true,
-        placeholder = { Text(label) },
-        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-        trailingIcon = if (query.isEmpty()) {
-            null
-        } else {
-            {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Rounded.Close, contentDescription = stringResource(Res.string.shows_filter_clear))
-                }
-            }
-        },
-        shape = CircleShape,
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = colors.surfaceContainerHighest,
-            unfocusedContainerColor = colors.surfaceContainerHighest,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-        ),
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(start = Spacing.Space4, end = Spacing.Space4, bottom = Spacing.Space3)
-            .semantics { contentDescription = label },
+    SearchField(
+        query = query,
+        onQueryChange = onQueryChange,
+        placeholder = stringResource(Res.string.shows_filter),
+        modifier = modifier.padding(start = Spacing.Space4, end = Spacing.Space4, bottom = Spacing.Space3),
     )
 }
