@@ -55,4 +55,20 @@ class GenreColourTest {
         assertEquals(GenreColour.RED, colourOf("news"))
         assertEquals(GenreColour.ORANGE, settings.nextColour())
     }
+
+    @Test
+    fun createRenameAndDelete() {
+        genre("news")
+        val id = settings.create("  Irish History ", GenreColour.BROWN)
+        assertEquals("Irish History", LibraryRepository(db).load().category(id)?.name)
+        assertEquals(GenreColour.BROWN, colourOf(id.value))
+        settings.rename(id, "History of Ireland")
+        assertEquals("History of Ireland", LibraryRepository(db).load().category(id)?.name)
+        settings.delete(CategoryId("news"))
+        val library = LibraryRepository(db).load()
+        assertNull(library.category(CategoryId("news")), "deleted genres leave the list")
+        assertEquals(CategoryId("uncategorised"), library.effectiveCategory(library.showsById.values.first()))
+        settings.delete(CategoryId("uncategorised"))
+        assertEquals("Uncategorised", LibraryRepository(db).load().category(CategoryId("uncategorised"))?.name)
+    }
 }

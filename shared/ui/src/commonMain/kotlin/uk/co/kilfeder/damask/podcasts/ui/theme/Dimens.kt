@@ -156,6 +156,13 @@ object Sizes {
     /** The ring round a selected genre row on tablets. */
     val GenreRingWidth = 2.dp
 
+    /** A colour swatch's dot on Manage categories, and the check circle on a picked swatch. */
+    val SwatchDot = 28.dp
+    val SwatchCheck = 24.dp
+
+    /** No space (a padding that's only there sometimes). */
+    val None = 0.dp
+
     /** The playing episode's width in the right-hand pane (TabletHome artboard). */
     val PlayerPaneMaxWidth = 520.dp
 

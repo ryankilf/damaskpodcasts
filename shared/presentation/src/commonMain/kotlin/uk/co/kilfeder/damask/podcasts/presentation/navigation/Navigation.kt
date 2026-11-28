@@ -26,6 +26,9 @@ sealed interface Destination {
 
     data object Settings : Destination
 
+    /** Recolour, rename, delete and add genres (from the Genres header). */
+    data object ManageCategories : Destination
+
     data object Import : Destination
 }
 

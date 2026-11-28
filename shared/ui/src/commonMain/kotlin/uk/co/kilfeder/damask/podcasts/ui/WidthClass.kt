@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,9 +53,14 @@ internal fun TwoPanes(
 
 /** A list pane with its own heading, as wide layouts have no app bar. */
 @Composable
-internal fun ListPane(title: String, modifier: Modifier = Modifier, content: @Composable (Modifier) -> Unit) {
+internal fun ListPane(
+    title: String,
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
+    content: @Composable (Modifier) -> Unit,
+) {
     Column(modifier) {
-        PaneHeader(title)
+        PaneHeader(title, actions = actions)
         content(Modifier.weight(1f).fillMaxWidth())
     }
 }

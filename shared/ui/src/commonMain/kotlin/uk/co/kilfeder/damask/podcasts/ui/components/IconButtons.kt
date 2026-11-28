@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
+import uk.co.kilfeder.damask.podcasts.ui.resources.manage_categories
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Settings
@@ -25,5 +27,13 @@ internal fun BackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
 internal fun SettingsButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     IconButton(onClick = onClick, modifier = modifier) {
         Icon(Icons.Rounded.Settings, contentDescription = stringResource(Res.string.settings))
+    }
+}
+
+/** The tune (sliders) icon in the Genres heading that opens Manage categories. */
+@Composable
+internal fun ManageCategoriesButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    IconButton(onClick = onClick, modifier = modifier) {
+        Icon(Icons.Rounded.Tune, contentDescription = stringResource(Res.string.manage_categories))
     }
 }

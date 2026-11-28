@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.presentation.app
 
+import uk.co.kilfeder.damask.podcasts.presentation.genres.ManageCategoriesViewModel
 import kotlinx.coroutines.launch
 import uk.co.kilfeder.damask.podcasts.core.model.ShowId
 import uk.co.kilfeder.damask.podcasts.core.data.GenreSettings
@@ -144,6 +145,8 @@ class AppGraph internal constructor(
     fun importViewModel() = ImportViewModel(this)
 
     fun settingsViewModel() = SettingsViewModel(this)
+
+    fun manageCategoriesViewModel() = ManageCategoriesViewModel(this)
 
     /** Each platform adds its own `create` (it knows how to open the database). */
     companion object

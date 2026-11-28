@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui
 
+import uk.co.kilfeder.damask.podcasts.ui.components.ManageCategoriesButton
+import uk.co.kilfeder.damask.podcasts.ui.screens.ManageCategoriesScreen
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Box
@@ -99,6 +101,7 @@ internal fun ShellContent(
                             state = shown,
                             compact = width == WidthClass.COMPACT,
                             onSettings = { actions.onNavigate(Destination.Settings) },
+                            onManageCategories = { actions.onNavigate(Destination.ManageCategories) },
                         ),
                     )
                 }
@@ -117,7 +120,12 @@ private fun PanesFor(state: AppUiState, graph: AppGraph, actions: ShellActions, 
         tab == Tab.GENRES -> {
             val genre = (top as? Destination.GenreQueue)?.categoryId
             TwoPanes(
-                left = { ListPane(title, it) { m -> GenresScreen(graph, actions.onOpenGenre, m, selectedId = genre) } },
+                left = {
+                    val manage = { actions.onNavigate(Destination.ManageCategories) }
+                    ListPane(title, it, actions = { ManageCategoriesButton(manage) }) { m ->
+                        GenresScreen(graph, actions.onOpenGenre, m, selectedId = genre)
+                    }
+                },
                 right = { GenrePane(genre, state, graph, actions, it) },
                 modifier = modifier,
             )
@@ -189,6 +197,7 @@ private fun SinglePane(state: AppUiState, graph: AppGraph, actions: ShellActions
             Destination.Settings ->
                 SettingsScreen(graph, onImport = { actions.onNavigate(Destination.Import) }, modifier = readable)
             Destination.Import -> ImportScreen(graph, onFinish = actions.onImportFinish, modifier = readable)
+            Destination.ManageCategories -> ManageCategoriesScreen(graph, modifier = readable)
             null -> TabContent(state.nav.tab, graph, actions, readable)
         }
     }

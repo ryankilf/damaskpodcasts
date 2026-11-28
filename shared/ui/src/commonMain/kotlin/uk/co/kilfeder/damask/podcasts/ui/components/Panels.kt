@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
@@ -39,17 +40,18 @@ internal fun PaneHeader(
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
     subtitle: @Composable (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {},
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = Sizes.PaneHeaderHeight)
-            .padding(start = if (onBack == null) Spacing.Space4 else Spacing.Space1, end = Spacing.Space4)
+            .padding(start = if (onBack == null) Spacing.Space4 else Spacing.Space1, end = Spacing.Space1)
             .padding(vertical = Spacing.Space2),
     ) {
         onBack?.let { BackButton(it) }
-        Column(verticalArrangement = Arrangement.Center) {
+        Column(verticalArrangement = Arrangement.Center, modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
                 style = DamaskTextStyles.TitleLarge,
@@ -58,6 +60,7 @@ internal fun PaneHeader(
             )
             subtitle?.invoke()
         }
+        actions()
     }
 }
 

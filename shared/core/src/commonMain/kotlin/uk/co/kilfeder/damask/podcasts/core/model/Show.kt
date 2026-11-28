@@ -33,6 +33,12 @@ enum class GenreColour {
 
     companion object {
         fun fromStored(raw: String?): GenreColour? = entries.firstOrNull { it.storedName == raw }
+
+        /** The colour used by fewest genres in [used] (ties in palette order): a new genre's. */
+        fun leastUsed(used: Iterable<GenreColour>): GenreColour {
+            val counts = used.groupingBy { it }.eachCount()
+            return entries.minBy { counts[it] ?: 0 }
+        }
     }
 }
 

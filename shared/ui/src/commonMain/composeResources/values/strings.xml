@@ -151,4 +151,44 @@
     <string name="row_play">Play %1$s</string>
     <string name="row_resume">Resume %1$s, %2$s</string>
     <string name="row_pause">Pause %1$s, %2$s</string>
+
+    <!-- Manage categories and genre colours -->
+    <string name="manage_categories">Manage categories</string>
+    <string name="manage_new">New category</string>
+    <string name="manage_options">%1$s options: rename, delete</string>
+    <string name="manage_rename">Rename</string>
+    <string name="manage_delete">Delete</string>
+    <string name="manage_always_grey">always grey</string>
+    <string name="colour_for">Colour for %1$s</string>
+    <string name="colour_change">Colour for %1$s: %2$s. Change colour</string>
+    <string name="done">Done</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="create">Create</string>
+    <string name="category_name">Name</string>
+    <string name="category_new_title">New category</string>
+    <string name="category_rename_title">Rename %1$s</string>
+    <string name="category_delete_title">Delete %1$s?</string>
+    <plurals name="category_delete_body">
+        <item quantity="one">Its show moves to Uncategorised.</item>
+        <item quantity="other">Its %1$d shows move to Uncategorised.</item>
+    </plurals>
+    <string name="category_delete_empty">It has no shows.</string>
+    <string name="hue_red">Red</string>
+    <string name="hue_orange">Orange</string>
+    <string name="hue_amber">Amber</string>
+    <string name="hue_yellow">Yellow</string>
+    <string name="hue_lime">Lime</string>
+    <string name="hue_green">Green</string>
+    <string name="hue_teal">Teal</string>
+    <string name="hue_cyan">Cyan</string>
+    <string name="hue_blue">Blue</string>
+    <string name="hue_indigo">Indigo</string>
+    <string name="hue_violet">Violet</string>
+    <string name="hue_purple">Purple</string>
+    <string name="hue_magenta">Magenta</string>
+    <string name="hue_pink">Pink</string>
+    <string name="hue_brown">Brown</string>
+    <string name="hue_slate">Slate</string>
+    <string name="hue_grey">Grey</string>
 </resources>

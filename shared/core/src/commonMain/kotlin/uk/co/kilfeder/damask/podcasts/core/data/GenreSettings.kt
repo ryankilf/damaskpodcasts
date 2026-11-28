@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.core.data
 
+import kotlin.uuid.Uuid
+import kotlin.uuid.ExperimentalUuidApi
 import uk.co.kilfeder.damask.podcasts.core.model.GenreColour
 import uk.co.kilfeder.damask.podcasts.core.db.DamaskDatabase
 import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
@@ -15,6 +17,20 @@ class GenreSettings(private val db: DamaskDatabase, private val clock: DeviceClo
      * Oldest first needs every episode, so its shows' feeds are marked to download in full on
      * their next refresh (refresh them straight after, to bring the older episodes back).
      */
+    /** A new genre (Manage categories, or the show page's genre sheet), in [colour]. */
+    @OptIn(ExperimentalUuidApi::class)
+    fun create(name: String, colour: GenreColour): CategoryId = db.transactionWithResult {
+        val id = Uuid.random().toString()
+        db.categoryQueries.upsert(id = id, name = name.trim(), is_system = 0, deleted = 0, hlc = clock.issue().value)
+        db.categoryQueries.setColour(colour.storedName, clock.issue().value, id)
+        CategoryId(id)
+    }
+
+    fun rename(id: CategoryId, name: String) = db.categoryQueries.rename(name.trim(), clock.issue().value, id.value)
+
+    /** Its shows count as Uncategorised from now on (Library.effectiveCategory). */
+    fun delete(id: CategoryId) = db.categoryQueries.markDeleted(clock.issue().value, id.value)
+
     /** The user picked a colour for a genre (Manage categories, or when creating one). */
     fun setColour(id: CategoryId, colour: GenreColour) =
         db.categoryQueries.setColour(colour.storedName, clock.issue().value, id.value)
@@ -25,23 +41,19 @@ class GenreSettings(private val db: DamaskDatabase, private val clock: DeviceClo
      * into a new genre (import, moving a show).
      */
     fun assignMissingColours() = db.transaction {
-        val used = usedColours().toMutableMap()
+        val used = usedColours().toMutableList()
         db.categoryQueries.selectNeedingColour().executeAsList().forEach { id ->
-            val pick = leastUsed(used)
+            val pick = GenreColour.leastUsed(used)
             db.categoryQueries.setColour(pick.storedName, clock.issue().value, id)
-            used[pick] = (used[pick] ?: 0) + 1
+            used += pick
         }
     }
 
     /** The colour a new genre would get now. */
-    fun nextColour(): GenreColour = leastUsed(usedColours())
+    fun nextColour(): GenreColour = GenreColour.leastUsed(usedColours())
 
-    private fun usedColours(): Map<GenreColour, Int> = db.categoryQueries.selectUsedColours().executeAsList()
-        .mapNotNull { GenreColour.fromStored(it) }
-        .groupingBy { it }.eachCount()
-
-    private fun leastUsed(counts: Map<GenreColour, Int>): GenreColour =
-        GenreColour.entries.minBy { counts[it] ?: 0 }
+    private fun usedColours(): List<GenreColour> =
+        db.categoryQueries.selectUsedColours().executeAsList().mapNotNull { GenreColour.fromStored(it) }
 
     fun setOrder(id: CategoryId, order: GenreOrder) = db.transaction {
         db.categoryQueries.setEpisodeOrder(Columns.genreOrder(order), clock.issue().value, id.value)
