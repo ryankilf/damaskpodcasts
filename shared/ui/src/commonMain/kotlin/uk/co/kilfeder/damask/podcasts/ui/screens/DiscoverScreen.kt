@@ -1,5 +1,14 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.resources.discover_searching
+import uk.co.kilfeder.damask.podcasts.ui.resources.discover_updating
+import uk.co.kilfeder.damask.podcasts.ui.theme.Motion
+import uk.co.kilfeder.damask.podcasts.ui.components.SkeletonRows
+import androidx.compose.ui.draw.alpha
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.foundation.layout.fillMaxWidth
 import uk.co.kilfeder.damask.podcasts.ui.components.FadeThrough
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Arrangement
@@ -56,6 +65,12 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.DamaskTextStyles
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 
+/** Placeholder rows while a first search runs (a screenful). */
+private const val SKELETON_ROWS = 6
+
+/** The previous results' opacity while a refined search runs (design: 0.6). */
+private const val REFRESHING_ALPHA = 0.6f
+
 /** What a Discover row can ask for: subscribe, or open (a show you have, or one to preview). */
 private class DiscoverActions(
     val onSubscribe: (key: String) -> Unit,
@@ -85,12 +100,24 @@ internal fun DiscoverScreen(
         }
     }
     Column(modifier) {
-        SearchField(
-            query = state.query,
-            onQueryChange = viewModel::onQueryChange,
-            placeholder = stringResource(Res.string.home_search),
-            modifier = Modifier.padding(start = Spacing.Space4, end = Spacing.Space4, bottom = Spacing.Space3),
-        )
+        // The refining bar sits in the field's bottom margin, so nothing below moves when it shows.
+        Box(contentAlignment = Alignment.BottomCenter) {
+            SearchField(
+                query = state.query,
+                onQueryChange = viewModel::onQueryChange,
+                placeholder = stringResource(Res.string.home_search),
+                modifier = Modifier.padding(start = Spacing.Space4, end = Spacing.Space4, bottom = Spacing.Space3),
+            )
+            if ((state.results as? DiscoverResults.Found)?.refreshing == true) {
+                val label = stringResource(Res.string.discover_updating)
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.Space8, vertical = Spacing.Space1)
+                        .semantics { contentDescription = label },
+                )
+            }
+        }
         DiscoverBody(
             state = state,
             actions = DiscoverActions(viewModel::onSubscribe, viewModel::onOpen, onOpenShow),
@@ -112,13 +139,26 @@ private fun DiscoverBody(state: DiscoverUiState, actions: DiscoverActions, modif
                 body = stringResource(Res.string.discover_idle_body),
                 modifier = fill,
             )
-            DiscoverResults.Searching -> Loading(fill)
+            DiscoverResults.Searching -> SkeletonRows(
+                count = SKELETON_ROWS,
+                artwork = Sizes.ShowRowArtwork,
+                label = stringResource(Res.string.discover_searching),
+                modifier = fill,
+            )
             DiscoverResults.NoMatch ->
                 EmptyMessage(stringResource(Res.string.discover_no_match, state.query.trim()), fill)
             DiscoverResults.Busy -> EmptyMessage(stringResource(Res.string.discover_busy), fill)
             DiscoverResults.Failed -> EmptyMessage(stringResource(Res.string.discover_failed), fill)
-            is DiscoverResults.Found -> LazyColumn(fill) {
-                items(results.rows, key = { it.key }) { DiscoverRow(it, actions) }
+            is DiscoverResults.Found -> {
+                // Refining: the previous results stay, dimmed, until the new ones arrive.
+                val alpha by animateFloatAsState(
+                    targetValue = if (results.refreshing) REFRESHING_ALPHA else 1f,
+                    animationSpec = tween(Motion.FADE_IN_MS),
+                    label = "refreshing",
+                )
+                LazyColumn(fill.alpha(alpha)) {
+                    items(results.rows, key = { it.key }) { DiscoverRow(it, actions) }
+                }
             }
         }
     }

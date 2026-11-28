@@ -10,16 +10,17 @@ import uk.co.kilfeder.damask.podcasts.core.model.ShowId
 import uk.co.kilfeder.damask.podcasts.core.sync.ShowIds
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 
+/** What Apple told us about a show: enough for its page's header before its feed is read. */
+data class PreviewHeader(val title: String, val author: String, val artworkUrl: String?)
+
 /** A preview's progress, for its show page while the show isn't stored yet. */
 sealed interface PreviewState {
-    data object Loading : PreviewState
-
     /**
-     * Stored. The page keeps loading until the library actually has the show: the library
-     * re-emits a moment after the write, and without this the page would show "not found" for a
-     * frame, then cut (not fade) to the show.
+     * Its feed is being read, or it's stored and the library hasn't re-emitted yet (it does a
+     * moment after the write): either way the page shows [header] with placeholder episodes.
+     * It stays so until the library has the show, so the page never flashes "not found".
      */
-    data object Stored : PreviewState
+    data class Loading(val header: PreviewHeader) : PreviewState
 
     data class Failed(val reason: String) : PreviewState
 }
@@ -32,20 +33,22 @@ sealed interface PreviewState {
 internal class ShowPreviews(private val graph: AppGraph) {
     private val states = MutableStateFlow<Map<ShowId, PreviewState>>(emptyMap())
     val state: StateFlow<Map<ShowId, PreviewState>> = states.asStateFlow()
+    private val reading = mutableSetOf<ShowId>()
 
-    /** Starts reading [show]'s feed and returns the ID its page opens with. */
+    /** Starts reading [show]'s feed (once at a time) and returns the ID its page opens with. */
     fun open(show: DirectoryShow): ShowId {
         val id = ShowIds.fromFeedUrl(show.feedUrl)
-        if (states.value[id] == PreviewState.Loading) return id
-        states.update { it + (id to PreviewState.Loading) }
+        if (!reading.add(id)) return id
+        states.update { it + (id to PreviewState.Loading(PreviewHeader(show.title, show.author, show.artworkUrl))) }
         graph.scope.launch {
             val candidate = graph.onDbSuspend { graph.importer.prepareFeed(show.title, show.feedUrl, show.genres) }
             if (candidate.feed == null) {
                 states.update { it + (id to PreviewState.Failed(candidate.problem.orEmpty())) }
             } else {
+                // Left as Loading: the page switches to the stored show once the library has it.
                 graph.onDb { graph.importer.preview(candidate) }
-                states.update { it + (id to PreviewState.Stored) }
             }
+            reading.remove(id)
         }
         return id
     }

@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.presentation.shows
 
+import uk.co.kilfeder.damask.podcasts.presentation.discover.PreviewHeader
 import uk.co.kilfeder.damask.podcasts.presentation.genres.toColour
 import uk.co.kilfeder.damask.podcasts.presentation.genres.toHue
 import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreHue
@@ -49,6 +50,8 @@ data class ShowUiState(
     val nextHue: GenreHue = GenreHue.RED,
     /** Opened from Discover and its feed couldn't be read: why. */
     val problem: String? = null,
+    /** Opened from Discover and its feed is still being read: the header shows; episodes are placeholders. */
+    val episodesLoading: Boolean = false,
 )
 
 /**
@@ -62,15 +65,17 @@ class ShowViewModel internal constructor(private val graph: AppGraph, showId: St
     val uiState: StateFlow<ShowUiState> = combine(graph.rotation, graph.previews.state) { rotation, previews ->
         val library = rotation.library
         val show = library.showsById[id] ?: return@combine when (val preview = previews[id]) {
-            // Opened from Discover: its feed is still being read, or the library hasn't caught up.
-            PreviewState.Loading, PreviewState.Stored -> ShowUiState(loading = true)
+            // Opened from Discover: Apple's details now, the episodes once its feed is read.
+            is PreviewState.Loading ->
+                ShowUiState(loading = false, show = preview.header.page(), episodesLoading = true)
             is PreviewState.Failed -> ShowUiState(loading = false, problem = preview.reason)
             null -> ShowUiState(loading = false)
         }
-        state(show, library, rotation)
+        // Opened from Discover: Apple's artwork stays behind the feed's while that loads.
+        state(show, library, rotation, (previews[id] as? PreviewState.Loading)?.header?.artworkUrl)
     }.stateInUi(viewModelScope, ShowUiState())
 
-    private fun state(show: Show, library: Library, rotation: Rotation): ShowUiState {
+    private fun state(show: Show, library: Library, rotation: Rotation, previewArt: String?): ShowUiState {
         val now = graph.wallClockMs()
         val ordered = rotation.showOrder(id)
         val rows = ordered.map { episode ->
@@ -83,7 +88,7 @@ class ShowViewModel internal constructor(private val graph: AppGraph, showId: St
         val order = show.episodeOrder.toListOrder()
         return ShowUiState(
             loading = false,
-            show = page(show, library, rotation, now),
+            show = page(show, library, rotation, now, previewArt),
             episodes = rows,
             order = order,
             nextUp = next?.let { episode ->
@@ -95,7 +100,24 @@ class ShowViewModel internal constructor(private val graph: AppGraph, showId: St
         )
     }
 
-    private fun page(show: Show, library: Library, rotation: Rotation, now: Long): ShowPageUi {
+    /** The header Apple's details give, before the show's feed is read. */
+    private fun PreviewHeader.page() = ShowPageUi(
+        showId = id.value,
+        title = title,
+        author = author,
+        artworkUrl = artworkUrl,
+        fallback = ArtworkFallback.of(title, GenreHue.GREY),
+        subscribed = false,
+        genreId = "",
+        genre = null,
+        cadence = null,
+        usualDay = null,
+        lastPlayed = null,
+        description = "",
+        feedUrl = "",
+    )
+
+    private fun page(show: Show, library: Library, rotation: Rotation, now: Long, previewArt: String?): ShowPageUi {
         val episodes = library.episodesOf(id)
         val category = library.categoryOf(show)
         return ShowPageUi(
@@ -103,7 +125,7 @@ class ShowViewModel internal constructor(private val graph: AppGraph, showId: St
             title = show.title,
             author = show.author,
             artworkUrl = show.imageUrl,
-            fallback = ArtworkFallback.of(show.title, library.hueOf(show)),
+            fallback = ArtworkFallback.of(show.title, library.hueOf(show), previewArt),
             subscribed = show.subscribed,
             genreId = (category?.id ?: show.categoryId).value,
             genre = category?.name,

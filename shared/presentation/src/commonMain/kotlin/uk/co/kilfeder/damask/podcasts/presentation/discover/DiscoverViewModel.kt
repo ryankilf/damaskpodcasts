@@ -31,7 +31,8 @@ private const val TYPING_PAUSE_MS = 500L
 /** A search's raw outcome, before it's matched against your library. */
 private sealed interface Search {
     data object Idle : Search
-    data object Running : Search
+    /** [previous]: the last search's shows, kept on screen while this one runs (empty: none). */
+    data class Running(val previous: List<DirectoryShow>) : Search
     data class Done(val result: DirectoryResult) : Search
 }
 
@@ -64,9 +65,10 @@ class DiscoverViewModel internal constructor(private val graph: AppGraph) : View
         .flatMapLatest { (q, hideExplicit) ->
             flow {
                 if (q.isEmpty()) {
+                    lastShows = emptyList()
                     emit(Search.Idle)
                 } else {
-                    emit(Search.Running)
+                    emit(Search.Running(lastShows))
                     val result = graph.directory.search(q, deviceRegion(), hideExplicit)
                     // What Subscribe looks a row up in.
                     lastShows = (result as? DirectoryResult.Found)?.shows.orEmpty()
@@ -139,32 +141,44 @@ class DiscoverViewModel internal constructor(private val graph: AppGraph) : View
         problems: Map<String, String>,
     ): DiscoverResults = when (search) {
         Search.Idle -> DiscoverResults.Idle
-        Search.Running -> DiscoverResults.Searching
+        // Refining: keep the previous results (dimmed); a first search shows placeholders.
+        is Search.Running -> if (search.previous.isEmpty()) {
+            DiscoverResults.Searching
+        } else {
+            DiscoverResults.Found(rows(search.previous, library, fetching, problems), refreshing = true)
+        }
         is Search.Done -> when (val result = search.result) {
             DirectoryResult.Busy -> DiscoverResults.Busy
             is DirectoryResult.Failed -> DiscoverResults.Failed
-            is DirectoryResult.Found -> {
-                val subscribed = library.subscribedShows.associateBy { FeedUrl.normalise(it.feedUrl) }
-                result.shows
-                    .map { show ->
-                        val key = FeedUrl.normalise(show.feedUrl)
-                        val mine = subscribed[key]
-                        DiscoverRowUi(
-                            key = key,
-                            title = show.title,
-                            author = show.author,
-                            artworkUrl = show.artworkUrl,
-                            fallback = ArtworkFallback.of(show.title, GenreHue.GREY),
-                            state = when {
-                                mine != null -> DiscoverRowState.SUBSCRIBED
-                                else -> fetching[key] ?: DiscoverRowState.NEW
-                            },
-                            showId = mine?.id?.value,
-                            problem = problems[key]?.takeIf { mine == null },
-                        )
-                    }
-                    .let { if (it.isEmpty()) DiscoverResults.NoMatch else DiscoverResults.Found(it) }
-            }
+            is DirectoryResult.Found -> rows(result.shows, library, fetching, problems)
+                .let { if (it.isEmpty()) DiscoverResults.NoMatch else DiscoverResults.Found(it) }
+        }
+    }
+
+    /** [shows] as rows: which you have, which are being read, and any feed that couldn't be. */
+    private fun rows(
+        shows: List<DirectoryShow>,
+        library: Library,
+        fetching: Map<String, DiscoverRowState>,
+        problems: Map<String, String>,
+    ): List<DiscoverRowUi> {
+        val subscribed = library.subscribedShows.associateBy { FeedUrl.normalise(it.feedUrl) }
+        return shows.map { show ->
+            val key = FeedUrl.normalise(show.feedUrl)
+            val mine = subscribed[key]
+            DiscoverRowUi(
+                key = key,
+                title = show.title,
+                author = show.author,
+                artworkUrl = show.artworkUrl,
+                fallback = ArtworkFallback.of(show.title, GenreHue.GREY),
+                state = when {
+                    mine != null -> DiscoverRowState.SUBSCRIBED
+                    else -> fetching[key] ?: DiscoverRowState.NEW
+                },
+                showId = mine?.id?.value,
+                problem = problems[key]?.takeIf { mine == null },
+            )
         }
     }
 }

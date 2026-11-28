@@ -95,6 +95,12 @@ object Sizes {
 
     /** The empty state's damask tile, its icon circle and icon, and its text width (EmptyState artboard). */
     val DamaskPitchPanel = 16.dp
+
+    /** Skeleton rows (design: `.skel`): the title bar, the line under it, and the gap between. */
+    val SkeletonTitle = 14.dp
+    val SkeletonMeta = 12.dp
+    val SkeletonGap = 8.dp
+    val SkeletonButton = 40.dp
     val EmptyStateTile = 144.dp
     val EmptyStateIconCircle = 72.dp
     val EmptyStateIcon = 36.dp

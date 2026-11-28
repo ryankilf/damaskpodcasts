@@ -153,13 +153,19 @@ internal fun ShowActions(
     onPlayPause: (EpisodeId) -> Unit,
     onSubscribe: () -> Unit,
     modifier: Modifier = Modifier,
+    subscribeEnabled: Boolean = true,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(Spacing.Space3),
         modifier = modifier.fillMaxWidth().padding(Spacing.Space4),
     ) {
         when {
-            !show.subscribed -> Button(onClick = onSubscribe, modifier = Modifier.fillMaxWidth()) {
+            // Disabled while a preview's feed is read: there's nothing stored to subscribe to yet.
+            !show.subscribed -> Button(
+                onClick = onSubscribe,
+                enabled = subscribeEnabled,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
                 Icon(Icons.Rounded.Add, contentDescription = null)
                 Text(stringResource(Res.string.show_subscribe), modifier = Modifier.padding(start = Spacing.Space2))
             }

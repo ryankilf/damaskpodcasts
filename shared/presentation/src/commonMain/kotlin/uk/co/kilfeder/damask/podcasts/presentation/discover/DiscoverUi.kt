@@ -34,10 +34,14 @@ sealed interface DiscoverResults {
     /** Nothing typed yet. */
     data object Idle : DiscoverResults
 
+    /** A first search (nothing to show yet): placeholder rows. */
     data object Searching : DiscoverResults
 
-    /** At least one show; Apple's order. */
-    data class Found(val rows: List<DiscoverRowUi>) : DiscoverResults
+    /**
+     * At least one show; Apple's order. [refreshing]: a newer search is running, so these are
+     * the previous results, shown dimmed under a progress bar until the new ones arrive.
+     */
+    data class Found(val rows: List<DiscoverRowUi>, val refreshing: Boolean = false) : DiscoverResults
 
     data object NoMatch : DiscoverResults
 

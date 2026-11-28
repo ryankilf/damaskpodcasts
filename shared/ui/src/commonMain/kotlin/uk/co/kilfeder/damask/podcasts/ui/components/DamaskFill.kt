@@ -28,19 +28,27 @@ private const val HALF_HEIGHT = 7f / 9f
  * the repeat of its 18-unit tile, so
  * diamonds in a row are one pitch apart (9dp on 36–48dp buttons, 14dp on the 80dp Now Playing button).
  * Only filled play/pause buttons get it, so the pattern means "press here to listen". Clip the
- * button to its shape before this, so the pattern stays inside it.
+ * button to its shape before this, so the pattern stays inside it. [drift] (0..1, read while
+ * drawing) slides it sideways by up to two pitches, which repeats seamlessly: skeleton rows drift.
  */
-internal fun Modifier.damaskFill(color: Color, pitch: Dp, alpha: Float = DIAPER_ALPHA): Modifier = drawBehind {
+internal fun Modifier.damaskFill(
+    color: Color,
+    pitch: Dp,
+    alpha: Float = DIAPER_ALPHA,
+    drift: () -> Float = { 0f },
+): Modifier = drawBehind {
     val step = pitch.toPx() / 2
+    val shift = drift() * step * DRIFT_STEPS
     val halfWidth = step * HALF_WIDTH
     val halfHeight = step * HALF_HEIGHT
     val path = Path()
     val columns = (size.width / step).toInt() + 1
     val rows = (size.height / step).toInt() + 1
-    for (m in -1..columns) {
+    // Start far enough left that the drift (up to two pitches, four steps) never leaves a gap.
+    for (m in -DRIFT_STEPS - 1..columns) {
         for (n in -1..rows) {
             if ((m + n) % 2 != 0) continue
-            val centre = Offset(m * step, n * step)
+            val centre = Offset(m * step + shift, n * step)
             path.moveTo(centre.x, centre.y - halfHeight)
             path.lineTo(centre.x + halfWidth, centre.y)
             path.lineTo(centre.x, centre.y + halfHeight)
@@ -50,6 +58,9 @@ internal fun Modifier.damaskFill(color: Color, pitch: Dp, alpha: Float = DIAPER_
     }
     drawPath(path, color, alpha = alpha)
 }
+
+/** How many grid steps a full drift slides the pattern (two pitches: it then repeats exactly). */
+private const val DRIFT_STEPS = 2
 
 /** How far a play button's pattern moves from its fill towards its content colour. */
 internal const val DAMASK_TONE = 0.09f

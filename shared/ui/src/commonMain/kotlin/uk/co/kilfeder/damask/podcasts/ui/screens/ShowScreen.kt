@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.resources.show_episodes_loading
+import uk.co.kilfeder.damask.podcasts.ui.components.SkeletonRows
 import androidx.compose.foundation.layout.fillMaxSize
 import uk.co.kilfeder.damask.podcasts.ui.resources.discover_feed_problem
 import uk.co.kilfeder.damask.podcasts.ui.components.BarPlayButton
@@ -80,6 +82,10 @@ private const val ITEMS_BEFORE_EPISODES = 3
  * order it plays in. The episode the button plays is highlighted. Playing from here keeps the
  * show's context, so autoplay carries on through it.
  */
+
+/** Placeholder episodes while a preview's feed is read. */
+private const val EPISODE_SKELETON_ROWS = 4
+
 @Composable
 internal fun ShowScreen(
     graph: AppGraph,
@@ -171,6 +177,7 @@ private fun ShowList(
                 playing = next != null && rowPlayer.isPlaying(next.id),
                 onPlayPause = { rowPlayer.playPause(it, source) },
                 onSubscribe = intents.onSubscribe,
+                subscribeEnabled = !state.episodesLoading,
             )
         }
         item(key = "heading") {
@@ -181,8 +188,20 @@ private fun ShowList(
                 onOrderChange = intents.onOrderChange,
             )
         }
+        if (state.episodesLoading) {
+            item(key = "loading") {
+                SkeletonRows(
+                    count = EPISODE_SKELETON_ROWS,
+                    artwork = Sizes.RowArtwork,
+                    label = stringResource(Res.string.show_episodes_loading),
+                    withButton = true,
+                    modifier = Modifier.animateItem(),
+                )
+            }
+        }
         items(state.episodes, key = { it.id.guid }) { row ->
             val next = row.id == nextId
+            // Fades in as the placeholders fade out.
             EpisodeRow(
                 row = row,
                 player = rowPlayer,
@@ -191,6 +210,7 @@ private fun ShowList(
                 background = background,
                 dimPlayed = true,
                 playsNext = next,
+                modifier = Modifier.animateItem(),
             )
         }
     }

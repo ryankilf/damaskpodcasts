@@ -5,6 +5,9 @@ package uk.co.kilfeder.damask.podcasts.ui.theme
  * quickly, then the new one fades in, so the two never sit visibly on top of each other.
  */
 object Motion {
+    /** A skeleton row's damask drifting one repeat sideways (design: 2.4 s, linear, forever). */
+    const val SKELETON_DRIFT_MS = 2400
+
     /** The old screen fading out, in milliseconds. */
     const val FADE_OUT_MS = 90
 

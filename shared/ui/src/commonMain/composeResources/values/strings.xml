@@ -79,6 +79,7 @@
     <string name="show_unsubscribed_untitled">Unsubscribed</string>
     <string name="undo">Undo</string>
     <string name="show_subscribe">Subscribe</string>
+    <string name="show_episodes_loading">Loading episodes</string>
     <string name="show_resume">Resume</string>
     <string name="show_button_time">· %1$s</string>
     <string name="show_play_label">Play %1$s, %2$s</string>
@@ -117,6 +118,8 @@
     <string name="discover_idle_title">Find new shows</string>
     <string name="discover_idle_body">Search by a show’s name or its host.</string>
     <string name="discover_no_match">No shows match “%1$s”</string>
+    <string name="discover_searching">Searching</string>
+    <string name="discover_updating">Updating results</string>
     <string name="discover_busy">Search is busy right now. Try again in a minute.</string>
     <string name="discover_failed">Couldn’t search. Check your connection and try again.</string>
     <string name="discover_subscribe">Subscribe</string>
