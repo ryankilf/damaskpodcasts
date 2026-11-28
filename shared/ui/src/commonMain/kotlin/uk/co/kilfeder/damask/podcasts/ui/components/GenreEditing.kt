@@ -1,12 +1,13 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
+import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -50,16 +51,23 @@ internal fun rememberGenreEditState(): GenreEditState = remember { GenreEditStat
  * Uncategorised, which has none of these.
  */
 @Composable
-internal fun GenreMenu(genre: ManagedGenreUi, state: GenreEditState, modifier: Modifier = Modifier) {
+internal fun GenreMenu(
+    genre: ManagedGenreUi,
+    state: GenreEditState,
+    modifier: Modifier = Modifier,
+    target: DpSize = DpSize(Sizes.MinTouchTarget, Sizes.MinTouchTarget),
+) {
     var expanded by remember { mutableStateOf(false) }
     val pick = { edit: GenreEdit ->
         expanded = false
         state.open = edit
     }
     Box(modifier) {
-        IconButton(onClick = { expanded = true }) {
-            Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(Res.string.manage_options, genre.name))
-        }
+        RoomyIconButton(
+            onClick = { expanded = true },
+            label = stringResource(Res.string.manage_options, genre.name),
+            size = target,
+        ) { Icon(Icons.Rounded.MoreVert, contentDescription = null) }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
                 text = { Text(stringResource(Res.string.manage_colour)) },

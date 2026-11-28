@@ -167,7 +167,7 @@
     <!-- Manage genres and genre colours -->
     <string name="manage_genres">Manage genres</string>
     <string name="manage_new">New genre</string>
-    <string name="manage_options">%1$s options: rename, delete</string>
+    <string name="manage_options">%1$s options: change colour, rename, delete</string>
     <string name="manage_rename">Rename</string>
     <string name="manage_colour">Change colour</string>
     <string name="genre_options">%1$s options</string>

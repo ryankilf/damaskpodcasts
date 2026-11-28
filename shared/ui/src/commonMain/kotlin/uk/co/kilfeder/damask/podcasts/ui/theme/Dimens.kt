@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.theme
 
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes
@@ -137,6 +138,16 @@ object Sizes {
 
     /** A show row in Shows (ShowListPane artboard), and its artwork. */
     val ShowRowMinHeight = 64.dp
+
+    /** An icon button's ripple (its 40dp state layer), kept when its touch target is bigger. */
+    val IconRipple = 20.dp
+
+    /**
+     * Manage genres' row targets: the colour dot's fills the row's height out to the left edge,
+     * the ⋮'s out to the right; the dot and icon sit where a 48dp button with the row's margin had them.
+     */
+    val ManageDotTarget = DpSize(64.dp, 64.dp)
+    val ManageMenuTarget = DpSize(56.dp, 64.dp)
     val ShowRowArtwork = 48.dp
 
     /** The artwork at the top of a show's page. */

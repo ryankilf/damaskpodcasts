@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.components.RoomyIconButton
 import uk.co.kilfeder.damask.podcasts.ui.theme.genreSwatch
 import uk.co.kilfeder.damask.podcasts.ui.components.rememberGenreEditState
 import uk.co.kilfeder.damask.podcasts.ui.components.GenreMenu
@@ -7,7 +8,6 @@ import uk.co.kilfeder.damask.podcasts.ui.components.GenreEditDialogs
 import uk.co.kilfeder.damask.podcasts.ui.components.GenreEditIntents
 import uk.co.kilfeder.damask.podcasts.ui.components.GenreEditState
 import uk.co.kilfeder.damask.podcasts.ui.components.GenreEdit
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,7 +24,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -100,16 +99,16 @@ private fun ManageGenresContent(state: ManageGenresUiState, editing: GenreEditSt
 @Composable
 private fun CategoryRow(category: ManagedGenreUi, editing: GenreEditState, modifier: Modifier = Modifier) {
     val shows = pluralStringResource(Res.plurals.genres_shows, category.showCount, category.showCount)
+    // The dot's and ⋮'s touch targets fill the row's height and run to the screen edges.
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.Space3),
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = Sizes.ShowRowMinHeight)
-            .padding(start = Spacing.Space2, end = Spacing.Space1),
+        modifier = modifier.fillMaxWidth().heightIn(min = Sizes.ShowRowMinHeight),
     ) {
         ColourButton(category, enabled = !category.isSystem, onClick = { editing.open = GenreEdit.Colour(category) })
-        Column(verticalArrangement = Arrangement.spacedBy(Spacing.Space1 / 2), modifier = Modifier.weight(1f)) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(Spacing.Space1 / 2),
+            modifier = Modifier.weight(1f).padding(start = Spacing.Space1, end = Spacing.Space2),
+        ) {
             GenreChip(category.name, category.hue)
             Text(
                 text = if (category.isSystem) {
@@ -121,11 +120,15 @@ private fun CategoryRow(category: ManagedGenreUi, editing: GenreEditState, modif
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        if (category.isSystem) Spacer(Modifier.size(Sizes.MinTouchTarget)) else GenreMenu(category, editing)
+        if (category.isSystem) {
+            Spacer(Modifier.size(Sizes.ManageMenuTarget))
+        } else {
+            GenreMenu(category, editing, target = Sizes.ManageMenuTarget)
+        }
     }
 }
 
-/** The colour dot, a 48dp button that opens the colour sheet. */
+/** The colour dot, which opens the colour sheet; tappable across the row's whole left end. */
 @Composable
 private fun ColourButton(
     category: ManagedGenreUi,
@@ -134,8 +137,7 @@ private fun ColourButton(
     modifier: Modifier = Modifier,
 ) {
     val label = stringResource(Res.string.colour_change, category.name, hueName(category.hue))
-    val described = modifier.semantics { contentDescription = label }
-    IconButton(onClick = onClick, enabled = enabled, modifier = described) {
+    RoomyIconButton(onClick, label, Sizes.ManageDotTarget, modifier, enabled) {
         val edge = MaterialTheme.colorScheme.outlineVariant
         Box(Modifier.size(Sizes.SwatchDot).genreSwatch(genreTones(category.hue), edge, CircleShape))
     }
