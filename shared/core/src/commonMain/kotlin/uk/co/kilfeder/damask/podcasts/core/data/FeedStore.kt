@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.core.data
 
+import uk.co.kilfeder.damask.podcasts.core.model.KeepMode
+import uk.co.kilfeder.damask.podcasts.core.model.GenreOrder
 import uk.co.kilfeder.damask.podcasts.core.db.DamaskDatabase
 import uk.co.kilfeder.damask.podcasts.core.db.Feed_fetch_state
 import uk.co.kilfeder.damask.podcasts.core.feed.FeedDocument
@@ -108,8 +110,12 @@ class FeedStore(
 
     private fun prune(id: ShowId, type: ShowType) {
         val row = db.showRow(id) ?: return
+        // A genre listed oldest first keeps every episode of its shows, as a show listed so does.
+        val genreOrder = db.categoryQueries.selectEpisodeOrder(row.category_id).executeAsOneOrNull()?.episode_order
+        val genreOldestFirst = Columns.genreOrder(genreOrder) == GenreOrder.OLDEST_FIRST
+        val show = row.toModel(type).let { if (genreOldestFirst) it.copy(keepModeOverride = KeepMode.ALL) else it }
         val episodes = db.libraryQueries.selectFeedEpisodesForShow(id.value, ::episodeRow).executeAsList()
-        retention.episodesToPrune(row.toModel(type), episodes, clock.nowMs()).forEach { key ->
+        retention.episodesToPrune(show, episodes, clock.nowMs()).forEach { key ->
             db.feedQueries.deleteEpisode(key.showId.value, key.guid)
         }
     }

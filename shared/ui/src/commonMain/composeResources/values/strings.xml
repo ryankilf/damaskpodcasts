@@ -84,6 +84,7 @@
     <string name="show_more">More</string>
     <string name="show_more_label">Show description, tap to read all of it</string>
     <string name="show_episodes_heading">Episodes</string>
+    <string name="order_variety">Variety</string>
     <string name="show_order_newest">Newest first</string>
     <string name="show_order_oldest">Oldest first</string>
     <string name="show_order_label">Order: %1$s. This is also the order episodes play in. Change order</string>

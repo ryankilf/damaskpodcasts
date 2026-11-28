@@ -1,5 +1,11 @@
 package uk.co.kilfeder.damask.podcasts.presentation.shows
 
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.NextUpUi
+import uk.co.kilfeder.damask.podcasts.presentation.app.refreshShows
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.nextUpOf
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.toEpisodeOrder
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.toListOrder
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.ListOrder
 import kotlinx.coroutines.flow.map
 import uk.co.kilfeder.damask.podcasts.presentation.format.lastPlayed
 import uk.co.kilfeder.damask.podcasts.presentation.genres.categoryOptions
@@ -7,7 +13,6 @@ import uk.co.kilfeder.damask.podcasts.presentation.app.stateInUi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
 import uk.co.kilfeder.damask.podcasts.core.model.Show
@@ -26,7 +31,7 @@ data class ShowUiState(
     val show: ShowPageUi? = null,
     /** Every episode the app has, in the show's order; each row's first line is its date. */
     val episodes: List<EpisodeRowUi> = emptyList(),
-    val order: ShowOrder = ShowOrder.NEWEST_FIRST,
+    val order: ListOrder = ListOrder.NEWEST_FIRST,
     /** What the big button plays; highlighted in the list. null = everything's played. */
     val nextUp: NextUpUi? = null,
     /** Oldest first: open the list here (the first unplayed episode), played ones above it. */
@@ -59,17 +64,16 @@ class ShowViewModel internal constructor(private val graph: AppGraph, showId: St
         }
         val next = ordered.filter { rotation.isInProgress(it) }.maxByOrNull { it.position?.hlc?.value ?: 0 }
             ?: ordered.firstOrNull { !it.isPlayed }
-        val order = ShowFacts.order(show.episodeOrder)
+        val order = show.episodeOrder.toListOrder()
         return ShowUiState(
             loading = false,
             show = page(show, library, rotation, now),
             episodes = rows,
             order = order,
             nextUp = next?.let { episode ->
-                val row = rows.first { it.id.guid == episode.key.guid }
-                NextUpUi(row.id, resume = rotation.isInProgress(episode), title = row.title, length = row.length)
+                nextUpOf(episode, rows.first { it.id.guid == episode.key.guid }, rotation)
             },
-            startAt = if (order == ShowOrder.OLDEST_FIRST) rows.indexOfFirst { !it.played }.takeIf { it > 0 } else null,
+            startAt = if (order == ListOrder.OLDEST_FIRST) rows.indexOfFirst { !it.played }.takeIf { it > 0 } else null,
             genres = library.categoryOptions(),
         )
     }
@@ -100,7 +104,13 @@ class ShowViewModel internal constructor(private val graph: AppGraph, showId: St
     fun onGenreChange(genreId: String) = write { graph.showSettings.setCategory(id, CategoryId(genreId)) }
 
     /** The order chip: the list's order, and the order the show plays in. */
-    fun onOrderChange(order: ShowOrder) = write { graph.showSettings.setEpisodeOrder(id, ShowFacts.order(order)) }
+    fun onOrderChange(order: ListOrder) {
+        viewModelScope.launch {
+            graph.onDb { graph.showSettings.setEpisodeOrder(id, order.toEpisodeOrder()) }
+            // Oldest first keeps every episode: fetch the feed in full now to bring older ones back.
+            if (order == ListOrder.OLDEST_FIRST) graph.refreshShows(listOf(id))
+        }
+    }
 
     /** Subscribe again (a show you've just unsubscribed from), in the genre it had. */
     fun onSubscribe() = write { graph.showSettings.setSubscribed(id, true) }

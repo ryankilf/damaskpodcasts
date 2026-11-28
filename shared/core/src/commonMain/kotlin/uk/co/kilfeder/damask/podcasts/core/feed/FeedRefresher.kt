@@ -21,13 +21,15 @@ class FeedRefresher(
     private val fetcher: FeedFetcher,
     private val store: FeedStore,
 ) {
-    suspend fun refreshAll(concurrency: Int = DEFAULT_CONCURRENCY): Map<ShowId, RefreshOutcome> = coroutineScope {
-        val permits = Semaphore(concurrency)
-        store.subscribedShowIds()
-            .map { id -> async { id to permits.withPermit { refresh(id) } } }
-            .awaitAll()
-            .toMap()
-    }
+    suspend fun refreshAll(concurrency: Int = DEFAULT_CONCURRENCY): Map<ShowId, RefreshOutcome> =
+        refresh(store.subscribedShowIds(), concurrency)
+
+    /** Refreshes [ids], a few at a time. */
+    suspend fun refresh(ids: Collection<ShowId>, concurrency: Int = DEFAULT_CONCURRENCY): Map<ShowId, RefreshOutcome> =
+        coroutineScope {
+            val permits = Semaphore(concurrency)
+            ids.map { id -> async { id to permits.withPermit { refresh(id) } } }.awaitAll().toMap()
+        }
 
     suspend fun refresh(id: ShowId): RefreshOutcome {
         val show = store.show(id)?.takeIf { it.subscribed == 1L } ?: return RefreshOutcome.SKIPPED

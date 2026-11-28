@@ -3,8 +3,6 @@ package uk.co.kilfeder.damask.podcasts.presentation.shows
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import uk.co.kilfeder.damask.podcasts.core.model.Episode
-import uk.co.kilfeder.damask.podcasts.core.model.EpisodeOrder
-import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.ShowNotes
 import uk.co.kilfeder.damask.podcasts.presentation.format.ArtworkFallback
 import uk.co.kilfeder.damask.podcasts.presentation.format.Formats
@@ -14,9 +12,6 @@ import kotlin.time.Instant
 
 /** How often a show publishes, from the gaps between its recent episodes. */
 enum class Cadence { DAILY, WEEKLY, FORTNIGHTLY, MONTHLY }
-
-/** The order a show's page lists, and plays, its episodes in. */
-enum class ShowOrder { NEWEST_FIRST, OLDEST_FIRST }
 
 /** The show itself (design hand-off › Show): everything above the episode list. */
 data class ShowPageUi(
@@ -44,18 +39,6 @@ data class ShowPageUi(
     val feedUrl: String,
 )
 
-/**
- * The show page's big button: resume the episode in progress, else play the next unplayed one in
- * the show's order. It names no episode (feed titles are too unreliable to put in a button);
- * [title] is for the accessibility label and long press.
- */
-data class NextUpUi(
-    val id: EpisodeId,
-    val resume: Boolean,
-    val title: String,
-    /** "32 min left" or "47 min"; null when the length isn't known. */
-    val length: Summarised?,
-)
 
 internal object ShowFacts {
     private const val SAMPLE = 10
@@ -97,14 +80,4 @@ internal object ShowFacts {
 
     fun plainText(html: String): String =
         ShowNotes.parse(html).joinToString("\n\n") { block -> block.spans.joinToString("") { it.text }.trim() }
-
-    fun order(order: EpisodeOrder) = when (order) {
-        EpisodeOrder.NEWEST_FIRST -> ShowOrder.NEWEST_FIRST
-        EpisodeOrder.OLDEST_FIRST -> ShowOrder.OLDEST_FIRST
-    }
-
-    fun order(order: ShowOrder) = when (order) {
-        ShowOrder.NEWEST_FIRST -> EpisodeOrder.NEWEST_FIRST
-        ShowOrder.OLDEST_FIRST -> EpisodeOrder.OLDEST_FIRST
-    }
 }

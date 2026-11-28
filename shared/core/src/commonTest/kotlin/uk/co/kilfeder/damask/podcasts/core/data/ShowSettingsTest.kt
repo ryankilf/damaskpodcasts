@@ -4,6 +4,7 @@ import uk.co.kilfeder.damask.podcasts.core.NOW_MS
 import uk.co.kilfeder.damask.podcasts.core.db.DamaskDatabase
 import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
 import uk.co.kilfeder.damask.podcasts.core.model.EpisodeOrder
+import uk.co.kilfeder.damask.podcasts.core.model.GenreOrder
 import uk.co.kilfeder.damask.podcasts.core.model.ShowId
 import kotlin.test.AfterTest
 import kotlin.test.Test
@@ -56,5 +57,25 @@ class ShowSettingsTest {
     fun anUnknownShowIsIgnored() {
         settings.setCategory(ShowId("missing"), CategoryId("b"))
         assertEquals(1, LibraryRepository(db).load().subscribedShows.size)
+    }
+
+    @Test
+    fun oldestFirstDownloadsTheFeedInFullNextTime() {
+        db.feedFetchStateQueries.recordSuccess("s", "etag-1", "Mon", 1)
+        settings.setEpisodeOrder(id, EpisodeOrder.NEWEST_FIRST)
+        assertEquals("etag-1", db.feedFetchStateQueries.selectByShow("s").executeAsOne().etag)
+        settings.setEpisodeOrder(id, EpisodeOrder.OLDEST_FIRST)
+        assertEquals(null, db.feedFetchStateQueries.selectByShow("s").executeAsOne().etag)
+    }
+
+    @Test
+    fun aGenreSetToOldestFirstDownloadsItsShowsInFull() {
+        db.feedFetchStateQueries.recordSuccess("s", "etag-1", "Mon", 1)
+        val genres = GenreSettings(db, clock)
+        genres.setOrder(CategoryId("a"), GenreOrder.OLDEST_FIRST)
+        assertEquals(GenreOrder.OLDEST_FIRST, LibraryRepository(db).load().category(CategoryId("a"))?.order)
+        assertEquals(null, db.feedFetchStateQueries.selectByShow("s").executeAsOne().etag)
+        genres.setOrder(CategoryId("a"), GenreOrder.VARIETY)
+        assertEquals(GenreOrder.VARIETY, LibraryRepository(db).load().category(CategoryId("a"))?.order)
     }
 }

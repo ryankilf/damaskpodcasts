@@ -7,7 +7,8 @@ CREATE TABLE category (
   name        TEXT NOT NULL,               -- user-editable; seeded from Apple's top level
   is_system   INTEGER NOT NULL DEFAULT 0,  -- 1 = Uncategorised: can't be renamed or deleted
   deleted     INTEGER NOT NULL DEFAULT 0,  -- tombstone
-  hlc         INTEGER NOT NULL             -- last write wins, per record
+  hlc         INTEGER NOT NULL,            -- last write wins, per record
+  episode_order TEXT                       -- NEWEST | OLDEST; NULL = variety (shows by LRP, round-robin)
 );
 
 -- Uncategorised has a fixed ID so every device seeds the *same* row (no duplicates after sync).
@@ -22,6 +23,13 @@ ON CONFLICT (id) DO UPDATE SET
   deleted = excluded.deleted,
   hlc = excluded.hlc
 WHERE excluded.hlc > category.hlc;
+
+-- The genre's order (its queue, its Up Next picks, autoplay through it). A synced write.
+setEpisodeOrder:
+UPDATE category SET episode_order = :episode_order, hlc = :hlc WHERE id = :id AND :hlc > hlc;
+
+selectEpisodeOrder:
+SELECT episode_order FROM category WHERE id = :id;
 
 selectLive:
 SELECT * FROM category WHERE deleted = 0;

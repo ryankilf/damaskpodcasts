@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.presentation.app
 
+import uk.co.kilfeder.damask.podcasts.core.model.ShowId
+import uk.co.kilfeder.damask.podcasts.core.data.GenreSettings
 import app.cash.sqldelight.coroutines.asFlow
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineDispatcher
@@ -74,6 +76,7 @@ class AppGraph internal constructor(
     internal val userState = UserStateStore(db, clock)
     internal val feeds = FeedStore(db, clock, rules)
     internal val showSettings = ShowSettings(db, clock)
+    internal val genreSettings = GenreSettings(db, clock)
     internal val settings = Settings(db)
     internal val lookup = EpisodeLookup(db)
     internal val repository = LibraryRepository(db)
@@ -152,3 +155,7 @@ internal suspend fun AppGraph.freshRotation(): Rotation =
  * through the database thread because the whole run is confined to it.
  */
 internal suspend fun AppGraph.refreshFeeds() = withContext(dbDispatcher) { refresher.refreshAll() }
+
+/** Refreshes just these shows (after switching them to oldest first, say). */
+internal suspend fun AppGraph.refreshShows(ids: Collection<ShowId>) =
+    withContext(dbDispatcher) { refresher.refresh(ids) }

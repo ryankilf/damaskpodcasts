@@ -19,8 +19,11 @@ class ShowSettings(private val db: DamaskDatabase, private val clock: DeviceCloc
      * The order the show's page lists its episodes in, which is also the order they play in.
      * null = automatic (oldest first for serials, newest first otherwise).
      */
-    fun setEpisodeOrder(id: ShowId, order: EpisodeOrder?) =
+    fun setEpisodeOrder(id: ShowId, order: EpisodeOrder?) = db.transaction {
         update(id) { it.copy(episode_order = Columns.episodeOrder(order)) }
+        // Oldest first keeps every episode: download the feed in full next time (see GenreSettings).
+        if (order == EpisodeOrder.OLDEST_FIRST) db.feedFetchStateQueries.forgetValidators(id.value)
+    }
 
     /** Unsubscribing keeps the row (a tombstone), so Played keeps the show and undo is a write back. */
     fun setSubscribed(id: ShowId, subscribed: Boolean) =

@@ -10,6 +10,7 @@ import uk.co.kilfeder.damask.podcasts.core.rules.ListeningRules
 import uk.co.kilfeder.damask.podcasts.core.model.MINUTE_MS
 import uk.co.kilfeder.damask.podcasts.core.show
 import kotlin.test.Test
+import uk.co.kilfeder.damask.podcasts.core.model.EpisodeOrder
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -23,6 +24,12 @@ class RetentionTest {
     fun episodicKeepsTheLatestTen() {
         val pruned = retention.episodesToPrune(show("s", "c"), feed(12), NOW_MS)
         assertEquals(listOf("e11", "e12"), pruned.map { it.guid })
+    }
+
+    @Test
+    fun oldestFirstKeepsEverything() {
+        val oldestFirst = show("s", "c").copy(episodeOrderOverride = EpisodeOrder.OLDEST_FIRST)
+        assertTrue(retention.episodesToPrune(oldestFirst, feed(50), NOW_MS).isEmpty())
     }
 
     @Test

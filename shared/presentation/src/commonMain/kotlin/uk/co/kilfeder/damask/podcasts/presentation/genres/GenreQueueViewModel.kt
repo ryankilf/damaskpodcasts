@@ -1,5 +1,13 @@
 package uk.co.kilfeder.damask.podcasts.presentation.genres
 
+import kotlinx.coroutines.flow.first
+import uk.co.kilfeder.damask.podcasts.presentation.app.refreshShows
+import uk.co.kilfeder.damask.podcasts.core.model.GenreOrder
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.toGenreOrder
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.toListOrder
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.nextUpOf
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.NextUpUi
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.ListOrder
 import uk.co.kilfeder.damask.podcasts.presentation.format.lastPlayed
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.markPlayed
 import uk.co.kilfeder.damask.podcasts.presentation.app.PAGE_SIZE
@@ -25,9 +33,14 @@ data class GenreQueueUiState(
     val showCount: Int = 0,
     /** null = never listened. */
     val lastListened: Summarised? = null,
+    /** The shows next in the queue, for the stack at the top. */
+    val covers: List<CoverUi> = emptyList(),
+    /** What the big button plays: the start of the queue (resuming, if it's in progress). */
+    val nextUp: NextUpUi? = null,
+    val order: ListOrder = ListOrder.VARIETY,
     /** The queue's in-progress episodes (it starts with them), shown in their own panel. */
     val inProgress: List<EpisodeRowUi> = emptyList(),
-    /** The rest of the queue: one episode per show, round-robin. */
+    /** The rest of the queue, in the genre's [order]. */
     val upNext: List<EpisodeRowUi> = emptyList(),
     val canLoadMore: Boolean = false,
 )
@@ -53,7 +66,10 @@ class GenreQueueViewModel internal constructor(
         GenreQueueUiState(
             loading = false,
             name = library.category(id)?.name.orEmpty(),
-            showCount = library.showsByCategory[id].orEmpty().size,
+            showCount = library.showsIn(id).size,
+            covers = rotation.covers(id),
+            nextUp = queue.firstOrNull()?.let { nextUpOf(it, rows.first(), rotation) },
+            order = (library.category(id)?.order ?: GenreOrder.VARIETY).toListOrder(),
             lastListened = rotation.lastPlayed(id, now),
             inProgress = inProgress,
             upNext = upNext,
@@ -62,6 +78,17 @@ class GenreQueueViewModel internal constructor(
     }.stateInUi(viewModelScope, GenreQueueUiState())
 
     fun onLoadMore() = size.update { it + PAGE_SIZE }
+
+    /** The order chip: the queue's order, which is also what autoplay plays next in this genre. */
+    fun onOrderChange(order: ListOrder) {
+        viewModelScope.launch {
+            graph.onDb { graph.genreSettings.setOrder(id, order.toGenreOrder()) }
+            // Oldest first keeps every episode: fetch the genre's feeds in full now.
+            if (order == ListOrder.OLDEST_FIRST) graph.refreshShows(currentShows())
+        }
+    }
+
+    private suspend fun currentShows() = graph.rotation.first().library.showsIn(id).map { it.id }
 
     fun onMarkPlayed(id: EpisodeId) {
         viewModelScope.launch { graph.markPlayed(id) }

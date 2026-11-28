@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.resources.show_episodes_heading
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.ListOrder
 import uk.co.kilfeder.damask.podcasts.ui.components.BackButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -14,7 +16,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Podcasts
@@ -37,14 +38,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
-import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
 import uk.co.kilfeder.damask.podcasts.presentation.shows.ShowPageUi
 import uk.co.kilfeder.damask.podcasts.presentation.shows.ShowUiState
@@ -58,7 +56,6 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.episode_gone_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_copy_feed
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_feed_copied
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_options
-import uk.co.kilfeder.damask.podcasts.ui.resources.show_plays_next
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_unsubscribe
 import uk.co.kilfeder.damask.podcasts.ui.resources.shows_untitled
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
@@ -132,7 +129,6 @@ private fun ShowList(
     OpenAtFirstUnplayed(state.startAt, list)
     val source = PlaySource.Show(show.showId)
     val nextId = state.nextUp?.id
-    val playsNext = stringResource(Res.string.show_plays_next)
     LazyColumn(state = list, modifier = modifier) {
         item(key = "details") { ShowDetails(show, state.genres, intents.onGenreChange) }
         item(key = "actions") {
@@ -145,27 +141,25 @@ private fun ShowList(
                 onSubscribe = intents.onSubscribe,
             )
         }
-        item(key = "heading") { EpisodesHeading(state.order, intents.onOrderChange) }
+        item(key = "heading") {
+            OrderedHeading(
+                title = stringResource(Res.string.show_episodes_heading),
+                order = state.order,
+                options = listOf(ListOrder.NEWEST_FIRST, ListOrder.OLDEST_FIRST),
+                onOrderChange = intents.onOrderChange,
+            )
+        }
         items(state.episodes, key = { it.id.guid }) { row ->
             val next = row.id == nextId
-            val tint = if (next) MaterialTheme.colorScheme.secondaryContainer else background
-            // Full width, so the row lines up with the rows above and below (design hand-off › Show).
-            Box(
-                modifier = if (next) {
-                    Modifier.background(tint).semantics { stateDescription = playsNext }
-                } else {
-                    Modifier
-                },
-            ) {
-                EpisodeRow(
-                    row = row,
-                    player = rowPlayer,
-                    source = source,
-                    onClick = { actions.onOpenEpisode(row.id, source) },
-                    background = tint,
-                    dimPlayed = true,
-                )
-            }
+            EpisodeRow(
+                row = row,
+                player = rowPlayer,
+                source = source,
+                onClick = { actions.onOpenEpisode(row.id, source) },
+                background = background,
+                dimPlayed = true,
+                playsNext = next,
+            )
         }
     }
 }

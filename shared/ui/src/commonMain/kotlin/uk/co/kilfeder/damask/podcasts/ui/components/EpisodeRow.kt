@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
+import uk.co.kilfeder.damask.podcasts.ui.resources.show_plays_next
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,10 +12,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Done
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
@@ -88,7 +88,8 @@ internal fun EpisodeRow(
 
 /**
  * An episode in a list: [player] plays or pauses it in place, starting it from [source]; tapping
- * the row opens it ([onClick]). The open one is highlighted, as selected genres and shows are.
+ * the row opens it ([onClick]). The open one is highlighted, as selected genres and shows are, and
+ * so is the one the page's big button will play ([playsNext]).
  * Every episode list uses this.
  */
 @Composable
@@ -102,15 +103,25 @@ internal fun EpisodeRow(
     onSwipe: () -> Unit = {},
     background: Color = MaterialTheme.colorScheme.surface,
     dimPlayed: Boolean = false,
+    playsNext: Boolean = false,
 ) {
     val opened = player.isOpened(row.id)
-    val tint = if (opened) MaterialTheme.colorScheme.secondaryContainer else background
+    // Highlights run full width, so the row lines up with the rows around it.
+    val tint = if (opened || playsNext) MaterialTheme.colorScheme.secondaryContainer else background
+    val playsNextLabel = stringResource(Res.string.show_plays_next)
     EpisodeRow(
         row = row,
         playing = player.isPlaying(row.id),
         onClick = onClick,
         onPlayPause = { player.playPause(row.id, source) },
-        modifier = if (opened) modifier.background(tint).semantics { selected = true } else modifier,
+        modifier = if (opened || playsNext) {
+            modifier.background(tint).semantics {
+                selected = opened
+                if (playsNext) stateDescription = playsNextLabel
+            }
+        } else {
+            modifier
+        },
         swipeLabel = swipeLabel,
         onSwipe = onSwipe,
         background = tint,

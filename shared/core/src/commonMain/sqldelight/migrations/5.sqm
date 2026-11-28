@@ -1,0 +1,2 @@
+-- Schema 5 -> 6: each genre's episode order (NULL = variety, the rotation's default).
+ALTER TABLE category ADD COLUMN episode_order TEXT;

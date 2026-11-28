@@ -49,6 +49,9 @@ class Library(
 
     fun episodesOf(showId: ShowId): List<Episode> = episodesByShow[showId].orEmpty()
 
+    /** A genre's subscribed shows. */
+    fun showsIn(categoryId: CategoryId): List<Show> = showsByCategory[categoryId].orEmpty()
+
     private val categoriesById: Map<CategoryId, Category> = categories.associateBy { it.id }
 
     fun category(id: CategoryId): Category? = categoriesById[id]

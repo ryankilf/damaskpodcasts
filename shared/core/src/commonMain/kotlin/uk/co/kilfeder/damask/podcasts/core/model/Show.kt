@@ -15,6 +15,12 @@ enum class ShowType {
 
 enum class EpisodeOrder { NEWEST_FIRST, OLDEST_FIRST }
 
+/**
+ * A genre's order. [VARIETY] is the rotation: in-progress first, then one episode per show, shows
+ * least recently played first. The others list every unplayed episode in the genre by date.
+ */
+enum class GenreOrder { VARIETY, NEWEST_FIRST, OLDEST_FIRST }
+
 enum class KeepMode { LATEST, ALL }
 
 data class Show(
@@ -44,9 +50,15 @@ data class Show(
         get() = episodeOrderOverride
             ?: if (type == ShowType.SERIAL) EpisodeOrder.OLDEST_FIRST else EpisodeOrder.NEWEST_FIRST
 
-    /** Serial shows keep every episode; episodic shows keep the latest [keepCount]. */
+    /**
+     * Serial shows, and shows listed oldest first, keep every episode the feed has (oldest first
+     * means nothing without the old ones); others keep the latest [keepCount].
+     */
     val keepMode: KeepMode
-        get() = keepModeOverride ?: if (type == ShowType.SERIAL) KeepMode.ALL else KeepMode.LATEST
+        get() {
+            val keepAll = type == ShowType.SERIAL || episodeOrder == EpisodeOrder.OLDEST_FIRST
+            return keepModeOverride ?: if (keepAll) KeepMode.ALL else KeepMode.LATEST
+        }
 
     companion object {
         const val DEFAULT_KEEP_COUNT = 10
@@ -58,6 +70,7 @@ data class Category(
     val name: String,
     /** The built-in Uncategorised category: can't be renamed or deleted. */
     val isSystem: Boolean = false,
+    val order: GenreOrder = GenreOrder.VARIETY,
 ) {
     companion object {
         /** Fixed so every device seeds the same row (see Category.sq). */

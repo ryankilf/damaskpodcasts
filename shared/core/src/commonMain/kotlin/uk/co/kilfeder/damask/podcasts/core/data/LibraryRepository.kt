@@ -57,5 +57,6 @@ class LibraryRepository(private val db: DamaskDatabase) {
         played = listOfNotNull(a.played, b.played).maxByOrNull { it.hlc },
     )
 
-    private fun CategoryRow.toModel() = Category(CategoryId(id), name, isSystem = Columns.bool(is_system))
+    private fun CategoryRow.toModel() =
+        Category(CategoryId(id), name, isSystem = Columns.bool(is_system), order = Columns.genreOrder(episode_order))
 }

@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -31,15 +33,21 @@ private const val SHADE_PER_STEP = 0.18f
  * [Artwork].
  */
 @Composable
-internal fun CoverStack(covers: List<CoverUi>, maxCovers: Int, modifier: Modifier = Modifier) {
+internal fun CoverStack(
+    covers: List<CoverUi>,
+    maxCovers: Int,
+    modifier: Modifier = Modifier,
+    size: Dp = Sizes.RowArtwork,
+    shape: Shape = MaterialTheme.shapes.small,
+) {
     val shown = covers.take(maxCovers).ifEmpty { listOf(CoverUi(null, ArtworkFallback("", 0))) }
     val endOrigin = if (LocalLayoutDirection.current == LayoutDirection.Ltr) 1f else 0f
-    val peek = Sizes.CoverStackPeek
+    // The peek grows with the stack, so a big stack (a genre's page) looks like a small one (a row).
+    val peek = Sizes.CoverStackPeek * (size / Sizes.RowArtwork)
     val scrim = MaterialTheme.colorScheme.scrim
-    val shape = MaterialTheme.shapes.small
     Box(
         contentAlignment = Alignment.CenterStart,
-        modifier = modifier.size(DpSize(Sizes.RowArtwork + peek * (maxCovers - 1), Sizes.RowArtwork)),
+        modifier = modifier.size(DpSize(size + peek * (maxCovers - 1), size)),
     ) {
         // Back to front, so the front cover draws last.
         shown.indices.reversed().forEach { depth ->
@@ -47,6 +55,8 @@ internal fun CoverStack(covers: List<CoverUi>, maxCovers: Int, modifier: Modifie
             Artwork(
                 url = shown[depth].url,
                 fallback = shown[depth].fallback,
+                size = size,
+                shape = shape,
                 modifier = Modifier
                     .offset(x = peek * depth)
                     // Shrink towards the end edge, so each cover peeks out by exactly [peek].
@@ -58,7 +68,8 @@ internal fun CoverStack(covers: List<CoverUi>, maxCovers: Int, modifier: Modifie
                     .drawWithContent {
                         drawContent()
                         if (depth > 0) {
-                            drawOutline(shape.createOutline(size, layoutDirection, this), scrim, SHADE_PER_STEP * depth)
+                            val outline = shape.createOutline(this.size, layoutDirection, this)
+                            drawOutline(outline, scrim, SHADE_PER_STEP * depth)
                         }
                     },
             )
