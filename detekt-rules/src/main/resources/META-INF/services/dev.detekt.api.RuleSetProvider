@@ -1,1 +1,2 @@
 uk.co.kilfeder.damask.lint.DamaskA11yRuleSetProvider
+uk.co.kilfeder.damask.lint.DamaskSafetyRuleSetProvider

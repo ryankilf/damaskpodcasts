@@ -1,4 +1,4 @@
 # Layered on top of detekt.yml for :detekt-rules only. That module can't load its own rules as a
-# detekt plugin (it would depend on itself), so skip validating the DamaskA11y section there.
+# detekt plugin (it would depend on itself), so skip validating its rule sets' sections there.
 config:
-  excludes: ['DamaskA11y']
+  excludes: ['DamaskA11y', 'DamaskSafety']

@@ -103,4 +103,5 @@
     <string name="settings_hide_explicit_body">Hide shows and episodes marked as explicit.</string>
     <string name="settings_wallpaper">Use wallpaper colours</string>
     <string name="settings_wallpaper_body">Match Damask to your wallpaper.</string>
+    <string name="no_app_for_action">Couldn’t find an app to open that.</string>
 </resources>

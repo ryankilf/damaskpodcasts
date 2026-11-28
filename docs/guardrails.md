@@ -4,7 +4,7 @@ Everything here runs as part of `./gradlew check`. A failure in any of them fail
 
 ## Lint (detekt)
 
-Config: [`config/detekt/detekt.yml`](../config/detekt/detekt.yml), on top of detekt's defaults. Custom rules: [`detekt-rules`](../detekt-rules), rule set `DamaskA11y`.
+Config: [`config/detekt/detekt.yml`](../config/detekt/detekt.yml), on top of detekt's defaults. Custom rules: [`detekt-rules`](../detekt-rules), rule sets `DamaskA11y` and `DamaskSafety`. After changing a rule, run `./gradlew --stop` once: the Gradle daemon caches detekt's plugin classes.
 
 | Rule | Enforces |
 |---|---|
@@ -16,6 +16,7 @@ Config: [`config/detekt/detekt.yml`](../config/detekt/detekt.yml), on top of det
 | `NoHardcodedColors` | No `Color(0x…)`/`Color.Red` outside `ui.theme`; use `MaterialTheme.colorScheme` roles |
 | `DefaultFontsOnly` | Platform fonts only (`FontFamily.Default`) |
 | `NoHardcodedUiStrings` | No string literals in `Text`, `contentDescription`, `onClickLabel`, …; previews and tests exempt |
+| `UnsafeIntentLaunch` (rule set `DamaskSafety`) | Other apps are only opened through `rememberSafeIntent()`: no `startActivity…`, `openUri` or `LocalUriHandler` elsewhere. With no app to handle it (no mail client, no browser), the user gets a snackbar instead of a crash |
 | compose-rules (`Compose:` section) | ViewModels only at the top-level screen and never forwarded; hoisted state; modifier conventions |
 
 `MinimumTouchTarget` can only see literal sizes, and literals are banned outside the theme, so touch targets also need a runtime check. Add Compose UI tests with accessibility checks when the first real screens land.

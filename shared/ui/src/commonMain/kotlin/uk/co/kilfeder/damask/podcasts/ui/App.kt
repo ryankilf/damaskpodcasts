@@ -9,6 +9,10 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import uk.co.kilfeder.damask.podcasts.ui.components.LocalShowMessage
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -96,6 +100,25 @@ private fun Shell(state: AppUiState, graph: AppGraph, intents: AppIntents, modif
     val snackbars = remember { SnackbarHostState() }
     ShowMessages(state.message, snackbars, intents.onMessageShow)
     BackHandler(enabled = top != null) { intents.onBack() }
+    val scope = rememberCoroutineScope()
+    val showMessage: (String) -> Unit = remember(snackbars, scope) {
+        { text -> scope.launch { snackbars.showSnackbar(text) } }
+    }
+    CompositionLocalProvider(LocalShowMessage provides showMessage) {
+        ShellLayout(state, graph, intents, snackbars, modifier)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ShellLayout(
+    state: AppUiState,
+    graph: AppGraph,
+    intents: AppIntents,
+    snackbars: SnackbarHostState,
+    modifier: Modifier = Modifier,
+) {
+    val top = state.nav.top
     BoxWithConstraints(modifier.fillMaxSize()) {
         val width = widthClassOf(maxWidth)
         val actions = ShellActions(

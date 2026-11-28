@@ -28,8 +28,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -58,6 +56,7 @@ import uk.co.kilfeder.damask.podcasts.ui.components.Artwork
 import uk.co.kilfeder.damask.podcasts.ui.components.PlayButton
 import uk.co.kilfeder.damask.podcasts.ui.components.PositionBar
 import uk.co.kilfeder.damask.podcasts.ui.components.SkipButton
+import uk.co.kilfeder.damask.podcasts.ui.components.rememberSafeIntent
 import uk.co.kilfeder.damask.podcasts.ui.components.SpeedButton
 import uk.co.kilfeder.damask.podcasts.ui.components.sheetDrag
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
@@ -127,8 +126,8 @@ private fun ShowNotesContent(
  */
 @Composable
 internal fun NotesSheet(state: EpisodeUiState, onClose: (() -> Unit)?, modifier: Modifier = Modifier) {
-    val uriHandler = LocalUriHandler.current
-    val links = remember(uriHandler) { SafeLinks(uriHandler) }
+    val open = rememberSafeIntent()
+    val links = remember(open) { SafeLinks(open) }
     Column(
         verticalArrangement = Arrangement.spacedBy(Spacing.Space4),
         modifier = modifier
@@ -321,13 +320,13 @@ private fun NotesBlock.toAnnotatedString(linkStyles: TextLinkStyles, listener: L
     }
 
 /** Opens show-notes links. Presentation only passes http, https and mailto; check again here. */
-private class SafeLinks(private val uriHandler: UriHandler) : LinkInteractionListener {
+private class SafeLinks(private val openLink: (String) -> Unit) : LinkInteractionListener {
     override fun onClick(link: LinkAnnotation) {
         (link as? LinkAnnotation.Url)?.url?.let(::open)
     }
 
     fun open(url: String) {
         val scheme = url.substringBefore(':', missingDelimiterValue = "").lowercase()
-        if (scheme in OPENABLE_SCHEMES) runCatching { uriHandler.openUri(url) }
+        if (scheme in OPENABLE_SCHEMES) openLink(url)
     }
 }
