@@ -24,6 +24,7 @@ import uk.co.kilfeder.damask.podcasts.core.data.UserStateStore
 import uk.co.kilfeder.damask.podcasts.core.data.createDatabase
 import uk.co.kilfeder.damask.podcasts.core.db.DamaskDatabase
 import uk.co.kilfeder.damask.podcasts.core.feed.FeedFetcher
+import uk.co.kilfeder.damask.podcasts.core.feed.HttpClients
 import uk.co.kilfeder.damask.podcasts.core.feed.FeedRefresher
 import uk.co.kilfeder.damask.podcasts.core.importer.OpmlImporter
 import uk.co.kilfeder.damask.podcasts.core.rotation.Library
@@ -73,8 +74,8 @@ class AppGraph internal constructor(
     internal val importer = OpmlImporter(fetcher, feeds, CategoryPrefill(db))
     internal val refresher = FeedRefresher(fetcher, feeds)
 
-    /** Artwork client: the platform engine with the same http -> https upgrade as feeds. */
-    val imageHttpClient: HttpClient by lazy { FeedFetcher.createImageClient() }
+    /** Artwork client: the shared HTTP client (retries, timeouts, http -> https), following redirects. */
+    val imageHttpClient: HttpClient get() = HttpClients.images
 
     /** Runs [block] on the database thread. */
     internal suspend fun <T> onDb(block: () -> T): T = withContext(dbDispatcher) { block() }

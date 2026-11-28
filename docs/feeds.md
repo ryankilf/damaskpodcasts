@@ -30,6 +30,18 @@ sequenceDiagram
 
 `ShowIds.fromFeedUrl` is the UUIDv5 (URL namespace) of the *normalised* feed URL (see [decisions](decisions.md)). `FeedUrl.normalise` lowercases the scheme and host, drops default ports, treats `http` as `https` and removes a trailing slash. It never touches the query string, because private feed tokens live there.
 
+## HTTP clients: `HttpClients`
+
+One base Ktor client for the whole app (one platform engine and connection pool: OkHttp on Android and desktop, Apple's networking on iOS), with the shared rules: 30-second timeouts, an honest `Damask` User-Agent, no exceptions for error statuses, and retries. Each use is a thin variation on it (`HttpClient.config` shares the engine), plus the http → https upgrade:
+
+- `HttpClients.feeds` follows redirects by hand (below), so a permanent move can update the stored URL.
+- `HttpClients.images` follows redirects itself; Coil only wants the bytes.
+- The search API client will be another variation.
+
+Caching isn't done in the clients: feeds use the ETag / Last-Modified stored with each show, and artwork uses Coil's disk cache.
+
+**Retries** use Ktor's built-in `HttpRequestRetry` (`retryTransientFailures`). Server errors (5xx) and 429 are retried, honouring Retry-After, and so are network failures such as timeouts, dropped connections and DNS hiccups. There are two retries, about 1 s then 3 s apart. Other 4xx responses aren't retried, and neither are certificate or TLS failures, which fail the same way every time. OkHttp's own `retryOnConnectionFailure` (on by default) only covers a stale pooled connection or trying the host's next address, so it doesn't replace this.
+
 ## Fetching: `FeedFetcher`
 
 - Sends `If-None-Match` / `If-Modified-Since` from `feed_fetch_state`, so an unchanged feed costs a 304.
