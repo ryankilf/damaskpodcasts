@@ -36,6 +36,8 @@ data class AppUiState(
     val stage: Stage = Stage.LOADING,
     val nav: NavState = NavState(),
     val useWallpaperColours: Boolean = false,
+    /** Light, dark, or follow the system. */
+    val themeMode: ThemeMode = ThemeMode.AUTOMATIC,
     /** Show once, then call [AppViewModel.onMessageShown]. */
     val message: AppMessage? = null,
     /** The episode loaded in the player, if any (wide layouts show it in a pane). */
@@ -55,7 +57,15 @@ class AppViewModel internal constructor(private val graph: AppGraph) : ViewModel
         message,
         graph.playback.state.map { it?.id to (it?.isPlaying == true) }.distinctUntilChanged(),
     ) { settings, nav, message, (playing, playingNow) ->
-        AppUiState(Stage.MAIN, nav, settings.useWallpaperColours, message, playing, playingNow)
+        AppUiState(
+            stage = Stage.MAIN,
+            nav = nav,
+            useWallpaperColours = settings.useWallpaperColours,
+            themeMode = settings.themeMode,
+            message = message,
+            playing = playing,
+            playingNow = playingNow,
+        )
     }.stateInUi(viewModelScope, AppUiState())
 
     fun onSelectTab(tab: Tab) = nav.update { it.select(tab) }

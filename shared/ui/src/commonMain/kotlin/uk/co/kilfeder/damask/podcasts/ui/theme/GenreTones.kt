@@ -1,9 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui.theme
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreHue
 
 /**
@@ -13,14 +11,11 @@ import uk.co.kilfeder.damask.podcasts.presentation.genres.GenreHue
  */
 data class GenreTones(val stripe: Color, val container: Color, val onContainer: Color)
 
-/** Above this the page is light (the genre colours are fixed; they don't follow Material You). */
-private const val LIGHT_SURFACE_LUMINANCE = 0.5f
-
 /** The tones of [hue] for the current theme, light or dark. */
 @Composable
 fun genreTones(hue: GenreHue): GenreTones {
-    val light = MaterialTheme.colorScheme.surface.luminance() > LIGHT_SURFACE_LUMINANCE
-    return (if (light) GenreTonesLight else GenreTonesDark).getValue(hue)
+    // Fixed colours: they follow light and dark, not Material You.
+    return (if (isDarkTheme()) GenreTonesDark else GenreTonesLight).getValue(hue)
 }
 
 /** Light theme: stripe, container (tone 90), on-container (tone 10). Brown is 85/25. */

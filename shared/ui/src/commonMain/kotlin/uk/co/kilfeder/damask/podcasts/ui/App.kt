@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui
 
+import uk.co.kilfeder.damask.podcasts.presentation.app.ThemeMode
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,7 +65,12 @@ fun App(
             .build()
     }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    DamaskTheme(useWallpaperColours = state.useWallpaperColours) {
+    val dark = when (state.themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.AUTOMATIC -> isSystemInDarkTheme()
+    }
+    DamaskTheme(darkTheme = dark, useWallpaperColours = state.useWallpaperColours) {
         Surface(modifier.fillMaxSize()) {
             when (state.stage) {
                 Stage.LOADING -> Loading()

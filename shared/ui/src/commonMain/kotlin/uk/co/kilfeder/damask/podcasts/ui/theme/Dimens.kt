@@ -161,6 +161,12 @@ object Sizes {
 
     /** A genre's colour beside its name in the genre sheet. */
     val GenreSquare = 16.dp
+
+    /** A colour tile's swatch dots in Theme and colours. */
+    val ThemeDot = 24.dp
+
+    /** The heart in the Settings footer. */
+    val FooterHeart = 16.dp
     val SwatchCheck = 24.dp
 
     /** No space (a padding that's only there sometimes). */

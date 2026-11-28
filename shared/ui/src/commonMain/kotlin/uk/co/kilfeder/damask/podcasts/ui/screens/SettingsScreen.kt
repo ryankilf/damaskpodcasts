@@ -1,5 +1,18 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.resources.row_meta
+import uk.co.kilfeder.damask.podcasts.ui.resources.settings_footer_love
+import uk.co.kilfeder.damask.podcasts.ui.resources.settings_footer_by
+import uk.co.kilfeder.damask.podcasts.ui.resources.settings_footer_built
+import uk.co.kilfeder.damask.podcasts.ui.resources.theme_damask
+import uk.co.kilfeder.damask.podcasts.ui.resources.theme_your_colours
+import uk.co.kilfeder.damask.podcasts.ui.resources.theme_and_colours
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.foundation.layout.BoxWithConstraints
 import uk.co.kilfeder.damask.podcasts.ui.resources.settings_import_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.settings_group_search
 import uk.co.kilfeder.damask.podcasts.ui.resources.settings_group_library
@@ -41,8 +54,6 @@ import uk.co.kilfeder.damask.podcasts.presentation.settings.SettingsViewModel
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.settings_hide_explicit
 import uk.co.kilfeder.damask.podcasts.ui.resources.settings_hide_explicit_body
-import uk.co.kilfeder.damask.podcasts.ui.resources.settings_wallpaper
-import uk.co.kilfeder.damask.podcasts.ui.resources.settings_wallpaper_body
 import uk.co.kilfeder.damask.podcasts.ui.theme.DamaskTextStyles
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
@@ -56,54 +67,100 @@ internal fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel { graph.settingsViewModel() },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    var themeOpen by remember { mutableStateOf(false) }
     SettingsContent(
         state = state,
         onHideExplicitChange = viewModel::onHideExplicitChanged,
-        onWallpaperChange = viewModel::onUseWallpaperColoursChanged,
         onImport = onImport,
+        onOpenTheme = { themeOpen = true },
         modifier = modifier,
     )
+    if (themeOpen) {
+        ThemeSheet(
+            mode = state.themeMode,
+            yourColours = state.useWallpaperColours,
+            onModeChange = viewModel::onThemeModeChanged,
+            onYourColoursChange = viewModel::onUseWallpaperColoursChanged,
+            onDismiss = { themeOpen = false },
+        )
+    }
 }
 
 /**
- * Settings in groups (design hand-off › Settings): Appearance, Library, Search. Account (sync,
- * subscription) and About (licences, version) join when those exist.
+ * Settings in groups (design hand-off › Settings): Appearance (Theme and colours, a sheet),
+ * Library, Search; then the footer, pinned to the bottom while Settings fits on one screen.
+ * Account (sync, subscription) and About (licences, version) join when those exist.
  */
 @Composable
 private fun SettingsContent(
     state: SettingsUiState,
     onHideExplicitChange: (Boolean) -> Unit,
-    onWallpaperChange: (Boolean) -> Unit,
     onImport: () -> Unit,
+    onOpenTheme: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.verticalScroll(rememberScrollState())) {
-        // Hidden where the platform has no dynamic colour (spec › Decisions › Colour and Material You).
-        if (supportsWallpaperColours) {
-            GroupHeading(stringResource(Res.string.settings_group_appearance))
-            SwitchRow(
-                icon = Icons.Rounded.Palette,
-                title = stringResource(Res.string.settings_wallpaper),
-                body = stringResource(Res.string.settings_wallpaper_body),
-                checked = state.useWallpaperColours,
-                onCheckedChange = onWallpaperChange,
-            )
+    BoxWithConstraints(modifier) {
+        Column(
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.verticalScroll(rememberScrollState()).heightIn(min = maxHeight),
+        ) {
+            Column {
+                GroupHeading(stringResource(Res.string.settings_group_appearance))
+                LinkRow(
+                    icon = Icons.Rounded.Palette,
+                    title = stringResource(Res.string.theme_and_colours),
+                    body = themeSummary(state),
+                    onClick = onOpenTheme,
+                )
+                GroupHeading(stringResource(Res.string.settings_group_library))
+                LinkRow(
+                    icon = Icons.Rounded.FileUpload,
+                    title = stringResource(Res.string.import_subscriptions),
+                    body = stringResource(Res.string.settings_import_body),
+                    onClick = onImport,
+                )
+                GroupHeading(stringResource(Res.string.settings_group_search))
+                SwitchRow(
+                    icon = Icons.Rounded.Explicit,
+                    title = stringResource(Res.string.settings_hide_explicit),
+                    body = stringResource(Res.string.settings_hide_explicit_body),
+                    checked = state.hideExplicit,
+                    onCheckedChange = onHideExplicitChange,
+                )
+            }
+            Footer()
         }
-        GroupHeading(stringResource(Res.string.settings_group_library))
-        LinkRow(
-            icon = Icons.Rounded.FileUpload,
-            title = stringResource(Res.string.import_subscriptions),
-            body = stringResource(Res.string.settings_import_body),
-            onClick = onImport,
+    }
+}
+
+/** "Automatic · Your colours" (Your colours only where the device has them). */
+@Composable
+private fun themeSummary(state: SettingsUiState): String {
+    val mode = stringResource(state.themeMode.label)
+    if (!supportsWallpaperColours) return mode
+    val colours = stringResource(
+        if (state.useWallpaperColours) Res.string.theme_your_colours else Res.string.theme_damask,
+    )
+    return stringResource(Res.string.row_meta, mode, colours)
+}
+
+/** "Built with ♥ by Damask Engineering", small, at the foot of Settings. */
+@Composable
+private fun Footer(modifier: Modifier = Modifier) {
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(Spacing.Space1, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.fillMaxWidth().padding(Spacing.Space6),
+    ) {
+        Text(stringResource(Res.string.settings_footer_built), style = DamaskTextStyles.BodySmall, color = muted)
+        Icon(
+            Icons.Rounded.Favorite,
+            contentDescription = stringResource(Res.string.settings_footer_love),
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(Sizes.FooterHeart),
         )
-        GroupHeading(stringResource(Res.string.settings_group_search))
-        SwitchRow(
-            icon = Icons.Rounded.Explicit,
-            title = stringResource(Res.string.settings_hide_explicit),
-            body = stringResource(Res.string.settings_hide_explicit_body),
-            checked = state.hideExplicit,
-            onCheckedChange = onHideExplicitChange,
-        )
+        Text(stringResource(Res.string.settings_footer_by), style = DamaskTextStyles.BodySmall, color = muted)
     }
 }
 
