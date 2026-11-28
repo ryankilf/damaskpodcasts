@@ -1,8 +1,9 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
@@ -29,8 +30,9 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 
 /**
  * The big heading → small sticky heading pattern (show and genre pages): a bar that stays put
- * with back and actions; once the page's big title has scrolled under it, the bar takes a
- * container tint and shows [title] small. Screen readers already have the big title, so the
+ * with back and actions; once the page's big title has scrolled under it, the bar shows [title]
+ * small, in the same colour as the big one, and a hairline appears under it. The bar never
+ * changes colour. Screen readers already have the big title, so the
  * small one is hidden from them.
  */
 @Composable
@@ -43,11 +45,7 @@ internal fun CollapsingTopBar(
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     val collapsed = state.collapsed
-    val tint by animateColorAsState(
-        targetValue = if (collapsed) MaterialTheme.colorScheme.surfaceContainer else background,
-        animationSpec = tween(Motion.FADE_IN_MS),
-        label = "barTint",
-    )
+    val edge = MaterialTheme.colorScheme.outlineVariant
     val titleAlpha by animateFloatAsState(
         targetValue = if (collapsed) 1f else 0f,
         animationSpec = tween(if (collapsed) Motion.FADE_IN_MS else Motion.FADE_OUT_MS),
@@ -57,7 +55,15 @@ internal fun CollapsingTopBar(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .background(tint)
+            // The page's own colour throughout; only a hairline under it fades in once collapsed,
+            // to separate the bar from what scrolls beneath.
+            .background(background)
+            .drawWithContent {
+                drawContent()
+                val stroke = Sizes.ArtworkHairline.toPx()
+                val y = size.height - stroke / 2
+                drawLine(edge.copy(alpha = edge.alpha * titleAlpha), Offset(0f, y), Offset(size.width, y), stroke)
+            }
             .heightIn(min = Sizes.PaneHeaderHeight)
             .padding(horizontal = Spacing.Space1),
     ) {
