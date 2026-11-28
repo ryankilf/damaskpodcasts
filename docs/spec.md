@@ -1,6 +1,6 @@
 # Podcast App — v1 Spec
 
-Nov 26, 2026 (search and compliance revised Nov 27) · @Ryan Kilfedder
+Nov 26, 2026 (search and compliance revised Nov 27; sign-in, trial and pricing revised Nov 28) · @Ryan Kilfedder
 
 ## Purpose
 
@@ -12,12 +12,12 @@ A paid, closed-source podcast player that brings neglected genres back into rota
 
 ## Scope
 
-Nothing is released publicly until sync exists. The private build is local-only and has no account, and it's for dogfooding. v1, the first public release, adds Supabase sync and sign-in. iOS comes in v2.
+Nothing is released publicly until sync exists. The private build is local-only and has no account, and it's for dogfooding. v1, the first public release, adds sign-in (required), a free trial, the subscription and Supabase sync. iOS comes in v2.
 
 | Release | In scope |
 | --- | --- |
 | Private build (Android, desktop) | OPML import from Pocket Casts; genre assignment; Up Next, Genres, genre queues; In Progress, Now Playing, Played; stream and download; resume position; search through our search gateway (private token); local storage with SQLDelight; Android Auto (Media3 browse tree) |
-| v1: first public release | Everything in the private build, plus Supabase sync and Google sign-in; search for every install, anonymous sessions included; daily background sync; 18+ store rating with store age signals; store billing; UK launch first |
+| v1: first public release | Everything in the private build, plus Google sign-in (required: no anonymous use), a 1-month free trial recorded on the server, the subscription, Supabase sync; search for trial and paying users; daily background sync; 18+ store rating with store age signals; store billing; UK launch first |
 | v2 | Android Automotive OS (standalone, using sync); iOS player with Sign in with Apple and CarPlay (requires Apple's CarPlay audio entitlement). iOS platform pieces (audio, billing, CarPlay) are written in Swift behind small Kotlin interfaces |
 | Later | Chapters; skip-silence |
 
@@ -278,7 +278,7 @@ CREATE TABLE outbox (
 
 ## Sync
 
-Devices sync through Supabase. Each device works from its local database and outbox, so sync can always lag or fail without losing data. The private build is local-only and has no account. Sync and sign-in are part of v1, the first public release.
+Devices sync through Supabase, for users with access (see Pricing and billing › Access). Each device works from its local database and outbox, so sync can always lag or fail without losing data. The private build is local-only and has no account. Sync and sign-in are part of v1, the first public release.
 
 | Data | Rule |
 | --- | --- |
@@ -324,7 +324,7 @@ The query string is **never** touched, because premium tokens live in it. When t
 
 **Same GUID, same show.** `show.podcast_guid` is filled from the feed's `podcast:guid`. Two subscribed shows with the same GUID are the same show and are aliased exactly as above. URL normalisation stays the fallback when either show has no GUID.
 
-**Auth.** Social sign-in only: Google on Android, Automotive OS and desktop, and Sign in with Apple on iOS (required alongside Google). There's no email/password and no magic links, so no SMTP is needed. Phones get the native account picker through supabase-kt Compose Auth; desktop uses supabase-kt's localhost callback. Every server table has `user_id UUID NOT NULL DEFAULT auth.uid()` with the row-level security policy `user_id = auth.uid()`, so the publishable key can ship in the app.
+**Auth.** Signing in is required in the public app: the first screen after the age gate is sign-in, and nothing else works until you have (the private build has no account). There are no anonymous sessions. Social sign-in only: Google on Android, Automotive OS and desktop, and Sign in with Apple on iOS (required alongside Google). There's no email/password and no magic links, so no SMTP is needed. Phones get the native account picker through supabase-kt Compose Auth; desktop uses supabase-kt's localhost callback. Every server table has `user_id UUID NOT NULL DEFAULT auth.uid()` with the row-level security policy `user_id = auth.uid()`, so the publishable key can ship in the app.
 
 ## Search
 
@@ -356,9 +356,9 @@ Meilisearch's indexing memory is capped, so an import can't starve the gateway.
 
 A hit carries raw facts only: Podcast Index ID, podcast GUID, title, author, artwork, feed URL, language, categories and their top-level keys, `itunesType`, explicit flag, episode count and newest item date. The client decides labels such as "Ended".
 
-**Auth.** Every install has a Supabase session, anonymous until the user subscribes, so the gateway accepts any valid Supabase access token, anonymous ones included. Search isn't gated on entitlement. Tokens are verified locally against Supabase's published keys (ES256 by default): expiry, issuer and audience are checked, and the keys are cached, refreshed hourly or when an unknown key ID appears. The gateway never calls Supabase per request and holds no shared JWT secret. The private build has no account, so it sends a private token instead, compared in constant time and disabled when the server doesn't set one.
+**Auth.** Search is for signed-in users with access (in their trial, subscribed, or granted time; see Pricing and billing › Access). The gateway accepts a Supabase access token only if it isn't anonymous (`is_anonymous` false) and its `access_until` claim is in the future; otherwise it's a 401 (no or bad token) or 403 (no access). Tokens are verified locally against Supabase's published keys (ES256 by default): expiry, issuer and audience are checked, and the keys are cached, refreshed hourly or when an unknown key ID appears. The gateway never calls Supabase per request and holds no shared JWT secret. The private build has no account, so it sends a private token instead, compared in constant time and disabled when the server doesn't set one.
 
-**Limits.** Per user (the token's `sub`): search allows bursts of 20, refilling at 1 a second. Over the limit is a 429 with `Retry-After`. There's no per-IP limit, because shared IPs would knock out legitimate users; if anonymous accounts are abused, the fallback is an IP-based limit for anonymous tokens and the per-user limit for signed-in ones. Logs record method, path, status, latency and a hash of `sub`, never query text. Meilisearch errors are a 503, never a stack trace.
+**Limits.** Per user (the token's `sub`): search allows bursts of 20, refilling at 1 a second. Over the limit is a 429 with `Retry-After`. There's no per-IP limit, because shared IPs would knock out legitimate users; every caller is a signed-in account with access, so per-user limits are real limits. A gateway-wide cap (searches a minute across all users) protects the VPS from a sudden pile-in. Logs record method, path, status, latency and a hash of `sub`, never query text. Meilisearch errors are a 503, never a stack trace.
 
 **Private-build passthrough.** Search sits behind a `SearchSource` interface. An optional source calls the Podcast Index API with the key and secret held on the server (environment only) and an honest `Damask/<version>` User-Agent. It's on only when `PI_PASSTHROUGH=true`, for the private build before the first import exists, and never for public users unless Podcast Index agree in writing.
 
@@ -499,40 +499,64 @@ Each platform's mapping gets its own tests.
 
 ## Pricing and billing
 
-The app is free on a single device and charges a subscription for sync. Sync is the only part with an ongoing cost, so it's the part that's charged for.
+Everyone signs in, gets a free trial of the whole app, then subscribes. There's no free tier with server features and no ads: anything that runs on our servers (search, sync) is for people in their trial or paying, so costs grow with revenue, not downloads. What a lapsed user can still do runs entirely on their device and costs us nothing.
 
-| Tier | What it includes | Price (starting point) |
+| State | What it means | What works |
 | --- | --- | --- |
-| Free | The whole app on one device: rotation, queues, playback, downloads | £0 |
-| Sync | Cross-device sync, continuity between desktop and car, backup | £1.49/month or £12.99/year |
+| Not signed in | Installed, never signed in | The sign-in screen only |
+| In trial | Signed in, trial (plus any granted days) not over | Everything |
+| Trial over | Trial ended, never subscribed | On the device only: play what's already in the library and downloaded; rotation and queues. No search, sync, adding shows or feed refresh |
+| Subscribed | An active subscription from any store or the web (including the store's billing grace period) | Everything, on every device |
+| Lapsed | Had a subscription that ended | As Trial over; their synced data stays on the server for when they come back |
 
-- **Trial:** a 1-month store introductory offer. Apple's "1 month" is a calendar month, 28 to 31 days. Google allows any length.
-- **No lifetime purchase.** Sync costs money every month.
+- **Price (starting point):** £1.49/month or £12.99/year, for the whole app including sync.
+- **No lifetime purchase**, and **no ads**: ad income from a mostly screen-off audio app is pennies per user, ad SDKs bring tracking and consent prompts, there's nothing good for desktop, and ads beside the shows' own ads push people away.
 - **What you keep from a £12.99 annual sale:** about £9.20 through the stores (after 20% VAT and the 15% small-developer commission), or about £9.78 through Paddle. Monthly plans go through the stores only, because Paddle's fixed fee eats a third of £1.49.
-- **Fixed costs:** roughly £360–470 a year (Supabase Pro, the search VPS, the Apple Developer Program, Google Play's one-off fee). That's covered by about 50 annual subscribers. The cost per user is close to zero, because audio and artwork never pass through our servers.
+- **Fixed costs:** roughly £360–470 a year (Supabase Pro, the search VPS, the Apple Developer Program, Google Play's one-off fee). That's covered by about 50 annual subscribers. The cost per user is close to zero, because audio, artwork and feeds never pass through our servers.
 
-**Entitlements.** RevenueCat is the source of truth for purchases. It wraps Play Billing, StoreKit and web checkout, and is free below $2,500 monthly tracked revenue, then 1%. Its webhooks write an `entitlement` row to Supabase:
+**The trial.** One month of everything, starting at first sign-in, by the server's clock: nothing on the device can reset or extend it (reinstalling, clearing data or changing the clock does nothing). No card is needed. One trial per account. It isn't a store introductory offer, so it works the same on desktop, which has no store.
+
+**Granted time.** Extra days (testers, goodwill, an outage) are rows, not edits to the trial date, so there's a record of who got what and why, and a grant can be undone. A grant with no end date is complimentary access.
 
 ```sql
-CREATE TABLE entitlement (              -- server; RLS on user_id
+CREATE TABLE trial (                    -- server; one row per user, written at first sign-in
+  user_id     UUID PRIMARY KEY REFERENCES auth.users,
+  started_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  ends_at     TIMESTAMPTZ NOT NULL      -- started_at + 1 month
+);
+
+CREATE TABLE access_grant (             -- server; written by us, never by the app
+  id          BIGSERIAL PRIMARY KEY,
+  user_id     UUID NOT NULL REFERENCES auth.users,
+  days        INT,                      -- NULL: complimentary, no end
+  reason      TEXT NOT NULL,
+  granted_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  revoked_at  TIMESTAMPTZ
+);
+```
+
+**Purchases.** RevenueCat is the source of truth for purchases. It wraps Play Billing, StoreKit and web checkout, and is free below $2,500 monthly tracked revenue, then 1%.
+
+- **One user ID.** After sign-in the app calls RevenueCat's `logIn` with the Supabase user ID, so a purchase on any store belongs to that account.
+- **Webhook.** RevenueCat's webhooks (purchase, renewal, cancellation, expiry, refund, billing issue) go to a Supabase Edge Function, which checks RevenueCat's shared secret and writes the `entitlement` row. Webhooks can be late or, rarely, missed, so the function can also ask RevenueCat's REST API for a user's current state, and straight after a purchase the app trusts the RevenueCat SDK's own answer rather than waiting.
+- **SDKs.** Android uses RevenueCat's Kotlin Multiplatform SDK behind a common `Billing` interface. iOS implements `Billing` in Swift with RevenueCat's native SDK (see decisions: iOS platform code is Swift). That SDK doesn't support desktop: **desktop never sells anything** and reads access when you sign in.
+
+```sql
+CREATE TABLE entitlement (              -- server; RLS on user_id; written only by the webhook
   user_id     UUID PRIMARY KEY,
-  product     TEXT NOT NULL,            -- SYNC
-  source      TEXT NOT NULL,            -- PLAY | APPLE | WEB | PROMO
+  product     TEXT NOT NULL,            -- DAMASK
+  source      TEXT NOT NULL,            -- PLAY | APPLE | WEB
   expires_at  TIMESTAMPTZ NOT NULL,     -- the store's date, mirrored; never computed by us
   updated_at  TIMESTAMPTZ NOT NULL
 );
 ```
 
-- An active entitlement from any source unlocks sync on every device.
-- **Desktop never sells anything.** It reads the entitlement when you sign in.
-- `PROMO` covers free time for beta testers or goodwill credit.
+**Access.** One rule, worked out on the server: a user has access until the latest of their subscription's `expires_at`, their trial's `ends_at` plus all unrevoked granted days, or forever with an unrevoked complimentary grant. Supabase puts that date in the access token as an `access_until` claim (a custom access token hook), so the gateway checks it without a database call, and sync's row-level security checks it too. The app caches the latest answer, so a short spell offline doesn't lock anyone out; it stops server features only once `access_until` has passed.
+
 - **Web checkout (later, annual plans only):** Paddle as merchant of record, connected through RevenueCat's Paddle integration. It's for desktop-only users and anyone who'd rather pay on the web. The mobile apps don't point users to it while UK steering is restricted. Revisit when the CMA's steering rules take effect.
+- **To check before iOS (v2):** that a server-side trial without an App Store introductory offer passes App Review.
 
-**Protecting search.** Free users search too, so the gateway must not be open to anyone:
-
-- Every install signs in anonymously with Supabase, silently and with no account screen. When the user subscribes, the anonymous account is upgraded to Google or Apple sign-in, keeping its data.
-- The gateway accepts only valid Supabase tokens and rate-limits each user (see Search).
-- Play Integrity (Android) and App Attest (iOS) prove that requests come from the genuine app.
+**Protecting the servers.** Every server request carries a signed-in user's token with access, so per-user rate limits are real limits (see Search). Play Integrity (Android) and App Attest (iOS) prove that requests come from the genuine app. Supabase Pro's spend cap stays on, so going over a limit pauses things rather than running up a bill.
 
 ## Licences
 
