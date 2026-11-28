@@ -62,8 +62,8 @@ class ShowViewModel internal constructor(private val graph: AppGraph, showId: St
     val uiState: StateFlow<ShowUiState> = combine(graph.rotation, graph.previews.state) { rotation, previews ->
         val library = rotation.library
         val show = library.showsById[id] ?: return@combine when (val preview = previews[id]) {
-            // Opened from Discover: its feed is still being read.
-            PreviewState.Loading -> ShowUiState(loading = true)
+            // Opened from Discover: its feed is still being read, or the library hasn't caught up.
+            PreviewState.Loading, PreviewState.Stored -> ShowUiState(loading = true)
             is PreviewState.Failed -> ShowUiState(loading = false, problem = preview.reason)
             null -> ShowUiState(loading = false)
         }

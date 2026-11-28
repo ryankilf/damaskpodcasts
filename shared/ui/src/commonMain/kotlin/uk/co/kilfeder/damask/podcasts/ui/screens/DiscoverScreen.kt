@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.components.FadeThrough
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -99,20 +101,25 @@ internal fun DiscoverScreen(
 
 @Composable
 private fun DiscoverBody(state: DiscoverUiState, actions: DiscoverActions, modifier: Modifier = Modifier) {
-    when (val results = state.results) {
-        DiscoverResults.Idle -> EmptyState(
-            icon = Icons.Rounded.Explore,
-            title = stringResource(Res.string.discover_idle_title),
-            body = stringResource(Res.string.discover_idle_body),
-            modifier = modifier,
-        )
-        DiscoverResults.Searching -> Loading(modifier)
-        DiscoverResults.NoMatch ->
-            EmptyMessage(stringResource(Res.string.discover_no_match, state.query.trim()), modifier)
-        DiscoverResults.Busy -> EmptyMessage(stringResource(Res.string.discover_busy), modifier)
-        DiscoverResults.Failed -> EmptyMessage(stringResource(Res.string.discover_failed), modifier)
-        is DiscoverResults.Found -> LazyColumn(modifier) {
-            items(results.rows, key = { it.key }) { DiscoverRow(it, actions) }
+    // Fades between searching, results and messages, like every loading area (Loadable); new
+    // rows within a set of results redraw in place.
+    FadeThrough(state.results, screenOf = { it::class }, modifier = modifier.fillMaxSize()) { results ->
+        val fill = Modifier.fillMaxSize()
+        when (results) {
+            DiscoverResults.Idle -> EmptyState(
+                icon = Icons.Rounded.Explore,
+                title = stringResource(Res.string.discover_idle_title),
+                body = stringResource(Res.string.discover_idle_body),
+                modifier = fill,
+            )
+            DiscoverResults.Searching -> Loading(fill)
+            DiscoverResults.NoMatch ->
+                EmptyMessage(stringResource(Res.string.discover_no_match, state.query.trim()), fill)
+            DiscoverResults.Busy -> EmptyMessage(stringResource(Res.string.discover_busy), fill)
+            DiscoverResults.Failed -> EmptyMessage(stringResource(Res.string.discover_failed), fill)
+            is DiscoverResults.Found -> LazyColumn(fill) {
+                items(results.rows, key = { it.key }) { DiscoverRow(it, actions) }
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.graphics.Color
 import uk.co.kilfeder.damask.podcasts.ui.components.panelColor
 import androidx.compose.foundation.background
@@ -85,13 +86,11 @@ internal fun InProgressScreen(
     viewModel: HomeViewModel = viewModel { graph.homeViewModel() },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    if (state.loading) {
-        Loading(modifier)
-        return
-    }
-    LazyColumn(modifier) {
-        items(state.inProgress, key = { "p-${it.id.key}" }) { row ->
-            ResumeRow(row, onOpenEpisode, rowPlayer)
+    Loadable(state.loading, modifier) {
+        LazyColumn(Modifier.fillMaxSize()) {
+            items(state.inProgress, key = { "p-${it.id.key}" }) { row ->
+                ResumeRow(row, onOpenEpisode, rowPlayer)
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import androidx.compose.foundation.layout.fillMaxSize
 import uk.co.kilfeder.damask.podcasts.ui.resources.shows_order_label
 import uk.co.kilfeder.damask.podcasts.ui.resources.shows_order_least_recent
 import uk.co.kilfeder.damask.podcasts.ui.resources.shows_order_recent
@@ -87,26 +88,24 @@ private fun ShowsContent(
     selectedId: String?,
     modifier: Modifier = Modifier,
 ) {
-    if (state.loading) {
-        Loading(modifier)
-        return
-    }
-    if (state.total == 0) {
-        EmptyState(
-            icon = Icons.Rounded.Podcasts,
-            title = stringResource(Res.string.home_no_shows_title),
-            body = stringResource(Res.string.home_no_shows_body),
-            modifier = modifier,
-        ) {
-            Button(onClick = intents.onSearch) { Text(stringResource(Res.string.home_search)) }
+    Loadable(state.loading, modifier) {
+        if (state.total == 0) {
+            EmptyState(
+                icon = Icons.Rounded.Podcasts,
+                title = stringResource(Res.string.home_no_shows_title),
+                body = stringResource(Res.string.home_no_shows_body),
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                Button(onClick = intents.onSearch) { Text(stringResource(Res.string.home_search)) }
+            }
+            return@Loadable
         }
-        return
-    }
-    LazyColumn(modifier) {
-        item(key = "filter") { ShowsFilter(state.query, intents.onQueryChange) }
-        item(key = "count") { ShowsCountAndOrder(state, intents.onOrderChange) }
-        items(state.shows, key = { it.showId }) { show ->
-            ShowRow(show, selected = show.showId == selectedId, onClick = { intents.onOpenShow(show.showId) })
+        LazyColumn(Modifier.fillMaxSize()) {
+            item(key = "filter") { ShowsFilter(state.query, intents.onQueryChange) }
+            item(key = "count") { ShowsCountAndOrder(state, intents.onOrderChange) }
+            items(state.shows, key = { it.showId }) { show ->
+                ShowRow(show, selected = show.showId == selectedId, onClick = { intents.onOpenShow(show.showId) })
+            }
         }
     }
 }

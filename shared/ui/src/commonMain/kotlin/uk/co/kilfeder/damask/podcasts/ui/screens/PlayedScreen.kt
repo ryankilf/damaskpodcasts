@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -43,31 +44,29 @@ private fun PlayedContent(
     rowPlayer: RowPlayer,
     modifier: Modifier = Modifier,
 ) {
-    if (state.loading) {
-        Loading(modifier)
-        return
-    }
-    if (state.rows.isEmpty()) {
-        EmptyState(
-            icon = Icons.Rounded.History,
-            title = stringResource(Res.string.played_empty_title),
-            body = stringResource(Res.string.played_empty),
-            modifier = modifier,
-        )
-        return
-    }
-    val markUnplayed = stringResource(Res.string.mark_unplayed)
-    LazyColumn(modifier) {
-        items(state.rows, key = { it.episode.id.key }) { row ->
-            // Only played episodes can be marked unplayed; in-progress ones are just listed.
-            EpisodeRow(
-                row = row.episode,
-                player = rowPlayer,
-                source = PlaySource.Played,
-                onClick = { onOpenEpisode(row.episode.id) },
-                swipeLabel = markUnplayed.takeIf { row.isPlayed },
-                onSwipe = { onRestoreEpisode(row.episode.id) },
+    Loadable(state.loading, modifier) {
+        if (state.rows.isEmpty()) {
+            EmptyState(
+                icon = Icons.Rounded.History,
+                title = stringResource(Res.string.played_empty_title),
+                body = stringResource(Res.string.played_empty),
+                modifier = Modifier.fillMaxSize(),
             )
+            return@Loadable
+        }
+        val markUnplayed = stringResource(Res.string.mark_unplayed)
+        LazyColumn(Modifier.fillMaxSize()) {
+            items(state.rows, key = { it.episode.id.key }) { row ->
+                // Only played episodes can be marked unplayed; in-progress ones are just listed.
+                EpisodeRow(
+                    row = row.episode,
+                    player = rowPlayer,
+                    source = PlaySource.Played,
+                    onClick = { onOpenEpisode(row.episode.id) },
+                    swipeLabel = markUnplayed.takeIf { row.isPlayed },
+                    onSwipe = { onRestoreEpisode(row.episode.id) },
+                )
+            }
         }
     }
 }

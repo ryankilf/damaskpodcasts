@@ -131,15 +131,17 @@ internal fun EpisodeLoaded(
     content: @Composable (EpisodeRowUi) -> Unit,
 ) {
     val episode = state.episode
-    when {
-        state.loading -> Loading(modifier)
-        episode == null -> EmptyState(
-            icon = Icons.Rounded.Podcasts,
-            title = stringResource(Res.string.episode_gone_title),
-            body = stringResource(Res.string.episode_gone_body),
-            modifier = modifier,
-        )
-        else -> content(episode)
+    Loadable(state.loading, modifier) {
+        if (episode == null) {
+            EmptyState(
+                icon = Icons.Rounded.Podcasts,
+                title = stringResource(Res.string.episode_gone_title),
+                body = stringResource(Res.string.episode_gone_body),
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            content(episode)
+        }
     }
 }
 

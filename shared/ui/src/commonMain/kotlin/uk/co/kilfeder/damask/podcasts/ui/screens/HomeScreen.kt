@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.padding
@@ -113,43 +114,41 @@ private fun HomeContent(
     rowPlayer: RowPlayer,
     modifier: Modifier = Modifier,
 ) {
-    if (state.loading) {
-        Loading(modifier)
-        return
-    }
-    if (!state.hasSubscriptions || (state.inProgress.isEmpty() && state.upNext.isEmpty())) {
-        HomeEmpty(state.hasSubscriptions, onSearch, onImport, onRefresh, modifier)
-        return
-    }
-    val markPlayed = stringResource(Res.string.mark_played)
-    PullToRefreshBox(isRefreshing = state.refreshing, onRefresh = onRefresh, modifier = modifier) {
-        LazyColumn {
-            if (state.inProgress.isNotEmpty()) {
-                item(key = "in-progress") {
-                    InProgressPanel(
-                        rows = state.inProgress,
-                        onOpenEpisode = onOpenEpisode,
-                        onSeeAll = onSeeAllInProgress,
-                        rowPlayer = rowPlayer,
-                        modifier = Modifier.padding(top = Spacing.Space4),
+    Loadable(state.loading, modifier) {
+        if (!state.hasSubscriptions || (state.inProgress.isEmpty() && state.upNext.isEmpty())) {
+            HomeEmpty(state.hasSubscriptions, onSearch, onImport, onRefresh, Modifier.fillMaxSize())
+            return@Loadable
+        }
+        val markPlayed = stringResource(Res.string.mark_played)
+        PullToRefreshBox(isRefreshing = state.refreshing, onRefresh = onRefresh, modifier = Modifier.fillMaxSize()) {
+            LazyColumn {
+                if (state.inProgress.isNotEmpty()) {
+                    item(key = "in-progress") {
+                        InProgressPanel(
+                            rows = state.inProgress,
+                            onOpenEpisode = onOpenEpisode,
+                            onSeeAll = onSeeAllInProgress,
+                            rowPlayer = rowPlayer,
+                            modifier = Modifier.padding(top = Spacing.Space4),
+                        )
+                    }
+                }
+                sectionHeader("up-next", stringResourceKey = Res.string.home_up_next)
+                if (state.upNext.isEmpty()) {
+                    item(key = "empty") { EmptyMessage(stringResource(Res.string.home_empty)) }
+                }
+                items(state.upNext, key = { "u-${it.id.key}" }) { row ->
+                    EpisodeRow(
+                        row = row,
+                        player = rowPlayer,
+                        source = PlaySource.UpNext,
+                        onClick = { onOpenEpisode(row.id, PlaySource.UpNext) },
+                        swipeLabel = markPlayed,
+                        onSwipe = { onDismissEpisode(row.id) },
                     )
                 }
+                loadMore(state.canLoadMore, onLoadMore)
             }
-            sectionHeader("up-next", stringResourceKey = Res.string.home_up_next)
-            if (state.upNext.isEmpty()) {
-                item(key = "empty") { EmptyMessage(stringResource(Res.string.home_empty)) }
-            }
-            items(state.upNext, key = { "u-${it.id.key}" }) { row ->
-                EpisodeRow(
-                    row = row,
-                    player = rowPlayer,
-                    source = PlaySource.UpNext,
-                    onClick = { onOpenEpisode(row.id, PlaySource.UpNext) },
-                    swipeLabel = markPlayed,
-                    onSwipe = { onDismissEpisode(row.id) },
-                )
-            }
-            loadMore(state.canLoadMore, onLoadMore)
         }
     }
 }

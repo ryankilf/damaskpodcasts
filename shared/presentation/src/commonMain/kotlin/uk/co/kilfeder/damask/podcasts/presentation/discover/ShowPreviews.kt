@@ -14,6 +14,13 @@ import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 sealed interface PreviewState {
     data object Loading : PreviewState
 
+    /**
+     * Stored. The page keeps loading until the library actually has the show: the library
+     * re-emits a moment after the write, and without this the page would show "not found" for a
+     * frame, then cut (not fade) to the show.
+     */
+    data object Stored : PreviewState
+
     data class Failed(val reason: String) : PreviewState
 }
 
@@ -37,7 +44,7 @@ internal class ShowPreviews(private val graph: AppGraph) {
                 states.update { it + (id to PreviewState.Failed(candidate.problem.orEmpty())) }
             } else {
                 graph.onDb { graph.importer.preview(candidate) }
-                states.update { it - id }
+                states.update { it + (id to PreviewState.Stored) }
             }
         }
         return id

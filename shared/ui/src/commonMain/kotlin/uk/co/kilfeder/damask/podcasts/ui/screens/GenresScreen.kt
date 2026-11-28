@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import androidx.compose.foundation.layout.fillMaxSize
 import uk.co.kilfeder.damask.podcasts.ui.theme.genreTones
 import androidx.compose.ui.graphics.compositeOver
 import uk.co.kilfeder.damask.podcasts.ui.components.SelectableListRow
@@ -58,22 +59,20 @@ private fun GenresContent(
     selectedId: String?,
     modifier: Modifier = Modifier,
 ) {
-    if (state.loading) {
-        Loading(modifier)
-        return
-    }
-    if (state.genres.isEmpty()) {
-        EmptyState(
-            icon = Icons.Rounded.Category,
-            title = stringResource(Res.string.genres_empty_title),
-            body = stringResource(Res.string.genres_empty_body),
-            modifier = modifier,
-        )
-        return
-    }
-    LazyColumn(modifier) {
-        items(state.genres, key = { it.categoryId }) { genre ->
-            GenreRow(genre, selected = genre.categoryId == selectedId, onClick = { onOpenGenre(genre.categoryId) })
+    Loadable(state.loading, modifier) {
+        if (state.genres.isEmpty()) {
+            EmptyState(
+                icon = Icons.Rounded.Category,
+                title = stringResource(Res.string.genres_empty_title),
+                body = stringResource(Res.string.genres_empty_body),
+                modifier = Modifier.fillMaxSize(),
+            )
+            return@Loadable
+        }
+        LazyColumn(Modifier.fillMaxSize()) {
+            items(state.genres, key = { it.categoryId }) { genre ->
+                GenreRow(genre, selected = genre.categoryId == selectedId, onClick = { onOpenGenre(genre.categoryId) })
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import androidx.compose.foundation.layout.fillMaxSize
 import uk.co.kilfeder.damask.podcasts.ui.resources.discover_feed_problem
 import uk.co.kilfeder.damask.podcasts.ui.components.BarPlayButton
 import uk.co.kilfeder.damask.podcasts.ui.components.BarArtwork
@@ -112,26 +113,27 @@ private fun ShowContent(
     val titleState = rememberCollapsingTitleState()
     Column(modifier) {
         ShowTopBar(state, actions, titleState, background, rowPlayer)
-        when {
-            state.loading -> Loading(Modifier.weight(1f))
-            show == null -> EmptyState(
-                icon = Icons.Rounded.Podcasts,
-                title = stringResource(Res.string.shows_untitled),
-                // Opened from Discover and its feed couldn't be read: say why.
-                body = state.problem?.let { stringResource(Res.string.discover_feed_problem, it) }
-                    ?: stringResource(Res.string.episode_gone_body),
-                modifier = Modifier.weight(1f),
-            )
-            else -> ShowList(
-                state = state,
-                show = show,
-                actions = actions,
-                intents = intents,
-                rowPlayer = rowPlayer,
-                background = background,
-                titleState = titleState,
-                modifier = Modifier.weight(1f).collapsingListTop(titleState),
-            )
+        Loadable(
+            isLoading = state.loading,
+            modifier = Modifier.weight(1f),
+            // Opened from Discover and its feed couldn't be read: say why.
+            problem = state.problem,
+            failed = { ShowMissing(stringResource(Res.string.discover_feed_problem, it)) },
+        ) {
+            if (show == null) {
+                ShowMissing(stringResource(Res.string.episode_gone_body))
+            } else {
+                ShowList(
+                    state = state,
+                    show = show,
+                    actions = actions,
+                    intents = intents,
+                    rowPlayer = rowPlayer,
+                    background = background,
+                    titleState = titleState,
+                    modifier = Modifier.fillMaxSize().collapsingListTop(titleState),
+                )
+            }
         }
     }
 }
@@ -269,4 +271,15 @@ private fun ShowMenu(show: ShowPageUi, onUnsubscribe: (String, String) -> Unit, 
             )
         }
     }
+}
+
+/** The page of a show that isn't there: gone from the library, or its feed couldn't be read ([why]). */
+@Composable
+private fun ShowMissing(why: String, modifier: Modifier = Modifier) {
+    EmptyState(
+        icon = Icons.Rounded.Podcasts,
+        title = stringResource(Res.string.shows_untitled),
+        body = why,
+        modifier = modifier.fillMaxSize(),
+    )
 }

@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import androidx.compose.foundation.layout.fillMaxSize
 import uk.co.kilfeder.damask.podcasts.presentation.genres.ManagedGenreUi
 import uk.co.kilfeder.damask.podcasts.ui.components.rememberGenreEditState
 import uk.co.kilfeder.damask.podcasts.ui.components.GenreMenu
@@ -125,43 +126,44 @@ private fun GenreQueueContent(
     editing: GenreEditState,
     modifier: Modifier = Modifier,
 ) {
-    if (state.loading) {
-        Loading(modifier)
-        return
-    }
-    // On wide layouts the queue sits on the tinted detail card (no back); rows and bar match it.
-    val colors = MaterialTheme.colorScheme
-    val listBackground = if (showHeader && onBack == null) colors.surfaceContainerLow else colors.surface
-    val titleState = rememberCollapsingTitleState()
-    Column(modifier) {
-        if (showHeader) {
-            GenreTopBar(
+    Loadable(state.loading, modifier) {
+        // On wide layouts the queue sits on the tinted detail card (no back); rows and bar match it.
+        val colors = MaterialTheme.colorScheme
+        val listBackground = if (showHeader && onBack == null) colors.surfaceContainerLow else colors.surface
+        val titleState = rememberCollapsingTitleState()
+        Column(Modifier.fillMaxSize()) {
+            if (showHeader) {
+                GenreTopBar(
+                    state = state,
+                    titleState = titleState,
+                    background = listBackground,
+                    onBack = onBack,
+                    rowPlayer = rowPlayer,
+                    source = PlaySource.Genre(categoryId),
+                    menu = if (state.isSystem) {
+                        null
+                    } else {
+                        {
+                            val genre = ManagedGenreUi(categoryId, state.name, state.hue, state.showCount, false)
+                            GenreMenu(genre, editing)
+                        }
+                    },
+                )
+            }
+            GenreQueueList(
                 state = state,
-                titleState = titleState,
-                background = listBackground,
-                onBack = onBack,
+                onDismissEpisode = onDismissEpisode,
+                onLoadMore = onLoadMore,
+                onOrderChange = onOrderChange,
+                onOpenEpisode = onOpenEpisode,
                 rowPlayer = rowPlayer,
-                source = PlaySource.Genre(categoryId),
-                menu = if (state.isSystem) {
-                    null
-                } else {
-                    { GenreMenu(ManagedGenreUi(categoryId, state.name, state.hue, state.showCount, false), editing) }
-                },
+                categoryId = categoryId,
+                showHeader = showHeader,
+                titleState = titleState,
+                listBackground = listBackground,
+                modifier = Modifier.weight(1f).collapsingListTop(titleState),
             )
         }
-        GenreQueueList(
-            state = state,
-            onDismissEpisode = onDismissEpisode,
-            onLoadMore = onLoadMore,
-            onOrderChange = onOrderChange,
-            onOpenEpisode = onOpenEpisode,
-            rowPlayer = rowPlayer,
-            categoryId = categoryId,
-            showHeader = showHeader,
-            titleState = titleState,
-            listBackground = listBackground,
-            modifier = Modifier.weight(1f).collapsingListTop(titleState),
-        )
     }
 }
 

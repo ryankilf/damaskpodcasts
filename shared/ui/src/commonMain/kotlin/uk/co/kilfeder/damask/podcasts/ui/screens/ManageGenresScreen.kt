@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import androidx.compose.foundation.layout.fillMaxSize
 import uk.co.kilfeder.damask.podcasts.ui.components.RoomyIconButton
 import uk.co.kilfeder.damask.podcasts.ui.theme.genreSwatch
 import uk.co.kilfeder.damask.podcasts.ui.components.rememberGenreEditState
@@ -80,17 +81,15 @@ internal fun ManageGenresScreen(
 
 @Composable
 private fun ManageGenresContent(state: ManageGenresUiState, editing: GenreEditState, modifier: Modifier = Modifier) {
-    if (state.loading) {
-        Loading(modifier)
-        return
-    }
-    LazyColumn(modifier) {
-        items(state.categories, key = { it.id }) { CategoryRow(it, editing) }
-        item(key = "new") {
-            val padding = Modifier.padding(horizontal = Spacing.Space4, vertical = Spacing.Space2)
-            OutlinedButton(onClick = { editing.open = GenreEdit.New(state.nextHue) }, modifier = padding) {
-                Icon(Icons.Rounded.Add, contentDescription = null)
-                Text(stringResource(Res.string.manage_new), modifier = Modifier.padding(start = Spacing.Space2))
+    Loadable(state.loading, modifier) {
+        LazyColumn(Modifier.fillMaxSize()) {
+            items(state.categories, key = { it.id }) { CategoryRow(it, editing) }
+            item(key = "new") {
+                val padding = Modifier.padding(horizontal = Spacing.Space4, vertical = Spacing.Space2)
+                OutlinedButton(onClick = { editing.open = GenreEdit.New(state.nextHue) }, modifier = padding) {
+                    Icon(Icons.Rounded.Add, contentDescription = null)
+                    Text(stringResource(Res.string.manage_new), modifier = Modifier.padding(start = Spacing.Space2))
+                }
             }
         }
     }
