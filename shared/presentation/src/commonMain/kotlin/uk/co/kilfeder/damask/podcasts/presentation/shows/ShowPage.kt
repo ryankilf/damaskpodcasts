@@ -29,9 +29,6 @@ data class ShowPageUi(
     val cadence: Cadence?,
     /** "Thursdays", when most recent episodes came out on the same day. */
     val usualDay: String?,
-    val episodeCount: Int,
-    /** "Mar 2023": the oldest episode the app has. */
-    val since: String?,
     /** null = never played. */
     val lastPlayed: Summarised?,
     /** Plain text, paragraphs separated by blank lines. */
@@ -74,9 +71,6 @@ internal object ShowFacts {
         val (day, count) = days.groupingBy { it }.eachCount().maxBy { it.value }
         return if (count >= days.size * DAY_SHARE) Formats.weekdays(day) else null
     }
-
-    fun since(episodes: List<Episode>, zone: TimeZone = TimeZone.currentSystemDefault()): String? =
-        dated(episodes).lastOrNull()?.let { Formats.monthYear(it, zone) }
 
     fun plainText(html: String): String =
         ShowNotes.parse(html).joinToString("\n\n") { block -> block.spans.joinToString("") { it.text }.trim() }

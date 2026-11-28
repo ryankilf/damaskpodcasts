@@ -31,12 +31,6 @@ object Formats {
         listOf("Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays", "Sundays")
     private val MONTHS = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
-    /** "Mar 2023". */
-    fun monthYear(epochMs: Long, zone: TimeZone = TimeZone.currentSystemDefault()): String {
-        val date = Instant.fromEpochMilliseconds(epochMs).toLocalDateTime(zone)
-        return "${MONTHS[date.month.ordinal]} ${date.year}"
-    }
-
     /** "Thursdays", for "Usually publishes Thursdays". */
     fun weekdays(day: kotlinx.datetime.DayOfWeek): String = WEEKDAYS_PLURAL[day.ordinal]
 

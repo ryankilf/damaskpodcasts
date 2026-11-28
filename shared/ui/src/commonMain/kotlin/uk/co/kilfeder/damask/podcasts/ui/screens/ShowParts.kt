@@ -30,7 +30,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
-import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.format.Summarised
@@ -45,8 +44,6 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.show_cadence_daily
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_cadence_fortnightly
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_cadence_monthly
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_cadence_weekly
-import uk.co.kilfeder.damask.podcasts.ui.resources.show_episodes
-import uk.co.kilfeder.damask.podcasts.ui.resources.show_episodes_since
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_genre_label
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_last_exact
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_meta_sep
@@ -97,13 +94,19 @@ internal fun ShowDetails(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            ExactValueText(value = showFacts(show), style = DamaskTextStyles.BodySmall, color = muted)
+            val facts = showFacts(show)
+            if (facts.summary.isNotEmpty()) {
+                ExactValueText(value = facts, style = DamaskTextStyles.BodySmall, color = muted)
+            }
             if (show.subscribed) GenreMenuChip(show, genres, onGenreChange)
         }
     }
 }
 
-/** The facts line, with the exact values for long press (publish day, count since, last played). */
+/**
+ * The facts line, with the exact values for long press (publish day, last played). No episode
+ * count: we only know what the feed lists and what we keep, neither of which is the show's.
+ */
 @Composable
 private fun showFacts(show: ShowPageUi): Summarised {
     val cadence = when (show.cadence) {
@@ -113,14 +116,10 @@ private fun showFacts(show: ShowPageUi): Summarised {
         Cadence.MONTHLY -> stringResource(Res.string.show_cadence_monthly)
         null -> null
     }
-    val count = pluralStringResource(Res.plurals.show_episodes, show.episodeCount, show.episodeCount)
     val last = show.lastPlayed.takeIf { show.subscribed }
-    val summary = listOfNotNull(cadence, count, last?.let { stringResource(Res.string.genres_last, it.summary) })
+    val summary = listOfNotNull(cadence, last?.let { stringResource(Res.string.genres_last, it.summary) })
     val exact = listOfNotNull(
         show.usualDay?.let { stringResource(Res.string.show_usual_day, it) } ?: cadence,
-        show.since?.let {
-            pluralStringResource(Res.plurals.show_episodes_since, show.episodeCount, show.episodeCount, it)
-        } ?: count,
         last?.let { stringResource(Res.string.show_last_exact, it.exact) },
     )
     val sep = stringResource(Res.string.show_meta_sep)

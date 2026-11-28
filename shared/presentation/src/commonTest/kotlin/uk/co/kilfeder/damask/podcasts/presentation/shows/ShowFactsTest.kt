@@ -34,10 +34,4 @@ class ShowFactsTest {
         assertEquals("Thursdays", ShowFacts.usualDay(episodes(0, 7, 14, 21, 28), utc))
         assertNull(ShowFacts.usualDay(episodes(0, 1, 2, 3, 4), utc))
     }
-
-    @Test
-    fun undatedEpisodesAreIgnored() {
-        val undated = Episode(EpisodeKey(ShowId("s"), "x"), publishedAt = 0)
-        assertEquals("Oct 2026", ShowFacts.since(episodes(0, 7, 30) + undated, TimeZone.UTC))
-    }
 }

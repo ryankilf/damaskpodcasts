@@ -92,8 +92,6 @@ class ShowViewModel internal constructor(private val graph: AppGraph, showId: St
             genre = category?.name,
             cadence = ShowFacts.cadence(episodes),
             usualDay = ShowFacts.usualDay(episodes),
-            episodeCount = episodes.size,
-            since = ShowFacts.since(episodes),
             lastPlayed = rotation.lastPlayed(id, now),
             description = ShowFacts.plainText(show.description),
             feedUrl = show.feedUrl,

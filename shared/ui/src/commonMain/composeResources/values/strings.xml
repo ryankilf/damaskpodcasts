@@ -34,10 +34,6 @@
     <string name="shows_no_match">No shows match “%1$s”.</string>
     <string name="show_pick_title">Pick a show</string>
     <string name="show_pick_body">Its episodes show here, in the show’s own order.</string>
-    <plurals name="show_episodes">
-        <item quantity="one">%1$d episode</item>
-        <item quantity="other">%1$d episodes</item>
-    </plurals>
     <string name="tab_shows">Shows</string>
     <string name="genre_queue_empty_title">Nothing left in %1$s</string>
     <string name="genre_queue_empty_body">%1$s drops out of Up next until one of its shows publishes a new episode.</string>
@@ -95,10 +91,6 @@
     <string name="show_cadence_fortnightly">Every two weeks</string>
     <string name="show_cadence_monthly">Monthly</string>
     <string name="show_usual_day">Usually publishes %1$s</string>
-    <plurals name="show_episodes_since">
-        <item quantity="one">%1$d episode since %2$s</item>
-        <item quantity="other">%1$d episodes since %2$s</item>
-    </plurals>
     <string name="show_last_exact">last played %1$s</string>
     <string name="show_meta_sep"> · </string>
 

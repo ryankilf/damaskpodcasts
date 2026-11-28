@@ -1,6 +1,5 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
-import androidx.compose.ui.graphics.compositeOver
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_plays_next
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.selected
@@ -41,14 +40,11 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.DamaskTextStyles
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 
-/** How strongly a highlighted row on a tinted panel deepens it with the primary colour. */
-private const val SELECTED_LAYER_ALPHA = 0.14f
-
 /**
- * A highlighted row's colour. On the page, secondary-container (design hand-off). On a tinted
- * panel (In progress), the panel deepened with a layer of primary: a different container tone
- * can come out paler than the panel in some schemes (wallpaper colours), which reads as the one
- * row *not* selected.
+ * A highlighted row's colour. On the page, secondary-container (design hand-off). On the In
+ * progress panel, which is primary-container with most of it see-through ([panelColor]), the same
+ * colour at full strength: one colour, so the highlighted row is always the stronger one in every
+ * scheme (two different container tones can swap places with wallpaper colours).
  */
 @Composable
 private fun highlightOn(background: Color): Color {
@@ -57,7 +53,7 @@ private fun highlightOn(background: Color): Color {
     return if (onPage) {
         colors.secondaryContainer
     } else {
-        colors.primary.copy(alpha = SELECTED_LAYER_ALPHA).compositeOver(background)
+        colors.primaryContainer
     }
 }
 
