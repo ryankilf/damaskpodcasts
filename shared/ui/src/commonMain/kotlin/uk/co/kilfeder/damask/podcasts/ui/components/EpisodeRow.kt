@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.material3.contentColorFor
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_plays_next
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.selected
@@ -39,6 +41,26 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.row_show_prefix
 import uk.co.kilfeder.damask.podcasts.ui.theme.DamaskTextStyles
 import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
+
+/** How strongly a highlighted row on a tinted panel darkens it (an M3 selected state layer). */
+private const val SELECTED_LAYER_ALPHA = 0.12f
+
+/**
+ * A highlighted row's colour. On the page, secondary-container (design hand-off). On a tinted
+ * panel (In progress), the panel's own colour with a layer of its content colour over it: a
+ * different container tone can come out paler than the panel in some schemes (wallpaper colours),
+ * which reads as the one row *not* selected.
+ */
+@Composable
+private fun highlightOn(background: Color): Color {
+    val colors = MaterialTheme.colorScheme
+    val onPage = background == colors.surface || background == colors.surfaceContainerLow
+    return if (onPage) {
+        colors.secondaryContainer
+    } else {
+        contentColorFor(background).copy(alpha = SELECTED_LAYER_ALPHA).compositeOver(background)
+    }
+}
 
 /** A played episode's artwork on a show page (design hand-off › Show). */
 private const val DIMMED_ART_ALPHA = 0.5f
@@ -107,7 +129,7 @@ internal fun EpisodeRow(
 ) {
     val opened = player.isOpened(row.id)
     // Highlights run full width, so the row lines up with the rows around it.
-    val tint = if (opened || playsNext) MaterialTheme.colorScheme.secondaryContainer else background
+    val tint = if (opened || playsNext) highlightOn(background) else background
     val playsNextLabel = stringResource(Res.string.show_plays_next)
     EpisodeRow(
         row = row,

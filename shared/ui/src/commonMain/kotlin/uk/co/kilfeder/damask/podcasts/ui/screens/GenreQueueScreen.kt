@@ -98,7 +98,6 @@ private fun GenreQueueContent(
     val colors = MaterialTheme.colorScheme
     val listBackground = if (showHeader && onBack == null) colors.surfaceContainerLow else colors.surface
     val source = PlaySource.Genre(categoryId)
-    val nextId = state.nextUp?.id
     val row: @Composable (EpisodeRowUi, Color) -> Unit = { episode, background ->
         EpisodeRow(
             row = episode,
@@ -108,7 +107,6 @@ private fun GenreQueueContent(
             swipeLabel = markPlayed,
             onSwipe = { onDismissEpisode(episode.id) },
             background = background,
-            playsNext = episode.id == nextId,
         )
     }
     LazyColumn(modifier) {
