@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui
 
+import coil3.network.DeDupeConcurrentRequestStrategy
+import coil3.annotation.ExperimentalCoilApi
 import uk.co.kilfeder.damask.podcasts.presentation.app.ThemeMode
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -54,6 +56,7 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.DamaskTheme
  * The whole app. Each platform entry point creates one [AppGraph] and passes it here. [onReady]
  * fires once the first real frame is ready (Android holds its splash screen until then).
  */
+@OptIn(ExperimentalCoilApi::class)
 @Composable
 fun App(
     graph: AppGraph,
@@ -63,7 +66,12 @@ fun App(
 ) {
     setSingletonImageLoaderFactory { context ->
         ImageLoader.Builder(context)
-            .components { add(KtorNetworkFetcherFactory(graph.imageHttpClient)) }
+            // One network request per image, however many rows ask for it at once: the rest wait,
+            // then read it from the disk cache. (A show's cover sits behind every episode row on its
+            // page while their own art loads, and they all ask at the same moment.)
+            .components {
+                add(KtorNetworkFetcherFactory(graph.imageHttpClient, DeDupeConcurrentRequestStrategy()))
+            }
             // Artwork fades in everywhere once it arrives (not for memory-cache hits, which are instant).
             .crossfade(true)
             .build()
