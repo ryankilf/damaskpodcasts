@@ -42,6 +42,18 @@ Caching isn't done in the clients: feeds use the ETag / Last-Modified stored wit
 
 **Retries** use Ktor's built-in `HttpRequestRetry` (`retryTransientFailures`). Server errors (5xx) and 429 are retried, honouring Retry-After, and so are network failures such as timeouts, dropped connections and DNS hiccups. There are two retries, about 1 s then 3 s apart. Other 4xx responses aren't retried, and neither are certificate or TLS failures, which fail the same way every time. OkHttp's own `retryOnConnectionFailure` (on by default) only covers a stale pooled connection or trying the host's next address, so it doesn't replace this.
 
+### Request log (debug builds)
+
+Every request and response is logged when `HttpClients.logRequests` is on: debug Android builds (Logcat, tag `DamaskHttp`) and `./gradlew :desktopApp:run` (stderr, `[http]`). Release builds never log, because a private feed's URL is its password.
+
+```
+→ #12 GET https://example.com/feed.xml at 2026-11-28T13:55:01.123Z
+← #12 200 https://example.com/feed.xml 48213 B in 230 ms
+✗ #13 https://example.com/other.xml failed after 10358 ms: ClosedByteChannelException
+```
+
+The number pairs a response with its request; every attempt gets its own (retries, redirects). The size is the body as received, counted from a copy (Ktor's `ResponseObserver`), so it's right without a Content-Length; the time runs from sending to the last byte. URLs are logged whole apart from any `user:password@`.
+
 ## Fetching: `FeedFetcher`
 
 - Sends `If-None-Match` / `If-Modified-Since` from `feed_fetch_state`, so an unchanged feed costs a 304.

@@ -33,6 +33,12 @@ const val DAMASK_USER_AGENT = "Damask/0.1"
  * uses the image loader's disk cache.
  */
 object HttpClients {
+    /**
+     * Log every request and response ([logRequests]). Debug builds only: the log has whole URLs,
+     * and a private feed's URL is its password. Each platform's bootstrap sets it at start-up.
+     */
+    var logRequests: Boolean = false
+
     private val base: HttpClient by lazy {
         HttpClient {
             expectSuccess = false
@@ -42,6 +48,7 @@ object HttpClients {
                 connectTimeoutMillis = TIMEOUT_MS
             }
             retryTransientFailures()
+            logRequests()
         }
     }
 

@@ -41,6 +41,11 @@ dependencies {
     testImplementation(libs.kotlin.test)
 }
 
+// Development runs log every HTTP request (see HttpClients.logRequests); packaged apps don't.
+tasks.withType<JavaExec>().configureEach {
+    if (name == "run") systemProperty("damask.httpLog", "true")
+}
+
 compose.desktop {
     application {
         mainClass = "uk.co.kilfeder.damask.podcasts.MainKt"
