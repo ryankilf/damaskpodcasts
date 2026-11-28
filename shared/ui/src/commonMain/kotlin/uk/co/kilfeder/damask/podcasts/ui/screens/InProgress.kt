@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import androidx.compose.ui.graphics.Color
+import uk.co.kilfeder.damask.podcasts.ui.components.panelColor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -61,7 +63,8 @@ internal fun InProgressPanel(
         count = stringResource(Res.string.in_progress_count, rows.size),
         modifier = modifier,
     ) {
-        rows.take(IN_PROGRESS_PREVIEW).forEach { row -> ResumeRow(row, onOpenEpisode, rowPlayer) }
+        val panel = panelColor()
+        rows.take(IN_PROGRESS_PREVIEW).forEach { row -> ResumeRow(row, onOpenEpisode, rowPlayer, background = panel) }
         if (rows.size > IN_PROGRESS_PREVIEW) {
             TextButton(onClick = onSeeAll, modifier = Modifier.align(Alignment.End).padding(end = Spacing.Space1)) {
                 val label = stringResource(Res.string.in_progress_see_all, rows.size)
@@ -100,6 +103,7 @@ private fun ResumeRow(
     onOpenEpisode: (EpisodeId, PlaySource) -> Unit,
     rowPlayer: RowPlayer,
     modifier: Modifier = Modifier,
+    background: Color = MaterialTheme.colorScheme.surface,
 ) {
     EpisodeRow(
         row = row,
@@ -107,5 +111,6 @@ private fun ResumeRow(
         source = PlaySource.Resume,
         onClick = { onOpenEpisode(row.id, PlaySource.Resume) },
         modifier = modifier,
+        background = background,
     )
 }

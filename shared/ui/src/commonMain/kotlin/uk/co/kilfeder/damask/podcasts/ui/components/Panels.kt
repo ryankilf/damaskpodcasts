@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -59,8 +61,22 @@ internal fun PaneHeader(
     }
 }
 
+/** How much of primary-container the panel's wash takes; the rest is the page. */
+private const val PANEL_WASH = 0.4f
+
 /**
- * The primary-container card that holds In progress (design hand-off › Main, GenreQueuePane): a
+ * The In progress panel's colour: a light wash of primary-container over the page, so it marks
+ * the section without shouting, and a highlighted row inside it can stand out ([PrimaryPanel]).
+ * Rows inside pass it as their background.
+ */
+@Composable
+internal fun panelColor(): Color {
+    val colors = MaterialTheme.colorScheme
+    return colors.primaryContainer.copy(alpha = PANEL_WASH).compositeOver(colors.surface)
+}
+
+/**
+ * The tinted card that holds In progress (design hand-off › Main, GenreQueuePane): a
  * heading, an optional count beside it, then [content].
  */
 @Composable
@@ -76,7 +92,7 @@ internal fun PrimaryPanel(
             .fillMaxWidth()
             .padding(horizontal = Spacing.Space3)
             .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.primaryContainer)
+            .background(panelColor())
             .padding(vertical = Spacing.Space2),
     ) {
         Row(

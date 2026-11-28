@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.components.panelColor
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.heading
@@ -117,7 +118,8 @@ private fun GenreQueueContent(
         if (state.inProgress.isNotEmpty()) {
             item(key = "in-progress") {
                 PrimaryPanel(stringResource(Res.string.home_in_progress), Modifier.padding(top = Spacing.Space2)) {
-                    state.inProgress.forEach { row(it, MaterialTheme.colorScheme.primaryContainer) }
+                    val panel = panelColor()
+                    state.inProgress.forEach { row(it, panel) }
                 }
             }
         }
