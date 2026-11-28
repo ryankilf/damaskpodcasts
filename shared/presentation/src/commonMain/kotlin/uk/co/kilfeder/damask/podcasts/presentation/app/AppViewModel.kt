@@ -94,11 +94,14 @@ class AppViewModel internal constructor(private val graph: AppGraph) : ViewModel
         graph.playback.playOrToggle(id, source.toContext())
     }
 
-    /** Opens a show's page; one already showing (beside the list, on wide layouts) is replaced. */
-    fun onOpenShow(showId: String) = nav.update { it.replaceTop(Destination.Show(showId)) }
+    /**
+     * Opens a show's page in Shows, from anywhere (an episode's screen, Discover), so the
+     * navigation follows; in Shows, one already open beside the list is replaced.
+     */
+    fun onOpenShow(showId: String) = nav.update { it.openIn(Tab.SHOWS, Destination.Show(showId)) }
 
-    /** Opens a genre's queue; one already showing (beside the list, on wide layouts) is replaced. */
-    fun onOpenGenre(categoryId: String) = nav.update { it.replaceTop(Destination.GenreQueue(categoryId)) }
+    /** Opens a genre's queue in Genres, from anywhere; in Genres, one already open is replaced. */
+    fun onOpenGenre(categoryId: String) = nav.update { it.openIn(Tab.GENRES, Destination.GenreQueue(categoryId)) }
 
     /**
      * From the show page's menu: unsubscribes, leaves the page, and offers Undo. The show stays

@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui
 
+import uk.co.kilfeder.damask.podcasts.ui.screens.EpisodeLinks
 import uk.co.kilfeder.damask.podcasts.ui.components.ManageGenresButton
 import uk.co.kilfeder.damask.podcasts.ui.screens.ManageGenresScreen
 import androidx.compose.foundation.layout.Column
@@ -229,7 +230,13 @@ private fun TabContent(tab: Tab, graph: AppGraph, actions: ShellActions, modifie
             rowPlayer = actions.rowPlayer,
             modifier = modifier,
         )
-        Tab.SEARCH -> DiscoverScreen(graph, onOpenShow = actions.onOpenShow, modifier = modifier)
+        Tab.SEARCH -> DiscoverScreen(
+            graph = graph,
+            onOpenShow = actions.onOpenShow,
+            // A show you haven't subscribed to isn't in Shows: its preview opens here, in Discover.
+            onPreviewShow = { actions.onNavigate(Destination.Show(it)) },
+            modifier = modifier,
+        )
     }
 }
 
@@ -244,7 +251,7 @@ internal fun EpisodeScreen(
     NowPlayingScreen(
         graph = graph,
         id = id,
-        onOpenGenre = actions.onOpenGenre,
+        links = EpisodeLinks(onOpenShow = actions.onOpenShow, onOpenGenre = actions.onOpenGenre),
         onOpenNotes = { actions.onNavigate(Destination.ShowNotes(id)) },
         modifier = modifier,
         source = source,

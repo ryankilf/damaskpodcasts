@@ -79,6 +79,8 @@
     <string name="show_unsubscribed_untitled">Unsubscribed</string>
     <string name="undo">Undo</string>
     <string name="show_subscribe">Subscribe</string>
+    <string name="episode_open_show">Open %1$s</string>
+    <string name="episode_open_genre">Open the %1$s genre</string>
     <string name="show_episodes_loading">Loading episodes</string>
     <string name="show_resume">Resume</string>
     <string name="show_button_time">· %1$s</string>

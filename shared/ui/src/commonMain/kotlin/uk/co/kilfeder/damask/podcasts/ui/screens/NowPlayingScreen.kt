@@ -1,5 +1,8 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import androidx.compose.foundation.layout.wrapContentHeight
+import uk.co.kilfeder.damask.podcasts.ui.resources.episode_open_genre
+import uk.co.kilfeder.damask.podcasts.ui.resources.episode_open_show
 import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
 import uk.co.kilfeder.damask.podcasts.ui.components.sheetSurface
 import androidx.compose.foundation.background
@@ -93,7 +96,7 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 internal fun NowPlayingScreen(
     graph: AppGraph,
     id: EpisodeId,
-    onOpenGenre: (String) -> Unit,
+    links: EpisodeLinks,
     onOpenNotes: () -> Unit,
     modifier: Modifier = Modifier,
     source: PlaySource? = null,
@@ -110,11 +113,11 @@ internal fun NowPlayingScreen(
                     horizontalArrangement = Arrangement.spacedBy(Spacing.Space6),
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    Player(state, episode, onOpenGenre, controls, onOpenNotes = null, Modifier.weight(1f))
+                    Player(state, episode, links, controls, onOpenNotes = null, Modifier.weight(1f))
                     NotesSheet(state, onClose = null, modifier = Modifier.weight(1f).padding(top = Spacing.Space4))
                 }
             } else {
-                Player(state, episode, onOpenGenre, controls, onOpenNotes)
+                Player(state, episode, links, controls, onOpenNotes)
             }
         }
     }
@@ -149,7 +152,7 @@ internal fun EpisodeLoaded(
 private fun Player(
     state: EpisodeUiState,
     episode: EpisodeRowUi,
-    onOpenGenre: (String) -> Unit,
+    links: EpisodeLinks,
     controls: PlayerActions,
     onOpenNotes: (() -> Unit)?,
     modifier: Modifier = Modifier,
@@ -157,7 +160,7 @@ private fun Player(
     Column(modifier.fillMaxSize()) {
         Column(Modifier.weight(1f).padding(horizontal = Spacing.Space6)) {
             PlayerArtwork(episode.artworkUrl, episode.fallback, Modifier.weight(1f).fillMaxWidth())
-            Details(state, episode, onOpenGenre, Modifier.padding(top = Spacing.Space6))
+            Details(state, episode, links, Modifier.padding(top = Spacing.Space6))
             state.position?.let {
                 PositionBar(
                     position = it,
@@ -205,11 +208,24 @@ private fun PlayerArtwork(url: String?, fallback: ArtworkFallback, modifier: Mod
 private fun Details(
     state: EpisodeUiState,
     episode: EpisodeRowUi,
-    onOpenGenre: (String) -> Unit,
+    links: EpisodeLinks,
     modifier: Modifier = Modifier,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.Space2), modifier = modifier.fillMaxWidth()) {
-        state.genre?.let { GenreChip(it, episode.genreHue) }
+        // The genre chip opens the genre; the show's name opens the show.
+        state.genre?.let { genre ->
+            val genreId = state.genreId
+            val label = stringResource(Res.string.episode_open_genre, genre)
+            GenreChip(
+                genre = genre,
+                hue = episode.genreHue,
+                modifier = if (genreId == null) {
+                    Modifier
+                } else {
+                    Modifier.clickable(onClickLabel = label, role = Role.Button) { links.onOpenGenre(genreId) }
+                },
+            )
+        }
         Text(
             text = episode.title,
             style = DamaskTextStyles.TitleLarge,
@@ -218,14 +234,15 @@ private fun Details(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.semantics { heading() },
         )
-        val showModifier = state.genreId?.let { id ->
-            Modifier.clickable(role = Role.Button) { onOpenGenre(id) }
-        } ?: Modifier
+        val showLabel = stringResource(Res.string.episode_open_show, episode.showTitle)
         Text(
             text = episode.showTitle,
             style = DamaskTextStyles.Body,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = showModifier,
+            modifier = Modifier
+                .clickable(onClickLabel = showLabel, role = Role.Button) { links.onOpenShow(episode.id.showId) }
+                .heightIn(min = Sizes.MinTouchTarget)
+                .wrapContentHeight(Alignment.CenterVertically),
         )
     }
 }

@@ -80,18 +80,19 @@ private class DiscoverActions(
 
 /**
  * Discover (spec › Search): search Apple's podcast directory as you type. Subscribe adds the show
- * in Apple's genre for it, no questions; tapping a show opens its page (unsubscribed, if you
- * don't have it, to listen first).
+ * in Apple's genre for it, no questions. Tapping a show you have opens it in Shows ([onOpenShow]);
+ * one you don't opens its page here, unsubscribed, to listen first ([onPreviewShow]).
  */
 @Composable
 internal fun DiscoverScreen(
     graph: AppGraph,
     onOpenShow: (String) -> Unit,
+    onPreviewShow: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DiscoverViewModel = viewModel { graph.discoverViewModel() },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val open by rememberUpdatedState(onOpenShow)
+    val open by rememberUpdatedState(onPreviewShow)
     // A show you don't have opens once its feed has been read.
     LaunchedEffect(state.openShowId) {
         state.openShowId?.let {

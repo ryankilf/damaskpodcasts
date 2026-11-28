@@ -21,7 +21,7 @@ sealed interface Destination {
 
     data object InProgress : Destination
 
-    /** A show's page, from Shows. */
+    /** A show's page: in Shows, or in Discover for a show you haven't subscribed to. */
     data class Show(val showId: String) : Destination
 
     data object Settings : Destination
@@ -48,6 +48,14 @@ data class NavState(
     fun pop(): NavState? = if (stack.isEmpty()) null else copy(stack = stack.dropLast(1))
 
     fun select(tab: Tab) = NavState(tab = tab)
+
+    /**
+     * Opens [destination] in the section it belongs to (a show in Shows, a genre in Genres), so
+     * the navigation shows where you are: from elsewhere, that tab with just it open; already in
+     * that tab, it replaces what's open (the one beside the list, on wide layouts).
+     */
+    fun openIn(tab: Tab, destination: Destination): NavState =
+        if (this.tab == tab) replaceTop(destination) else NavState(tab = tab, stack = listOf(destination))
 
     /** Pushes [destination], replacing the top one if it's the same kind (another show, say). */
     fun replaceTop(destination: Destination): NavState {
