@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
@@ -44,3 +46,7 @@ internal fun SheetHandle(modifier: Modifier = Modifier) {
             .background(MaterialTheme.colorScheme.outlineVariant, PillShape),
     )
 }
+
+/** The top-rounded surface the show-notes peek and sheet sit on. */
+internal fun Modifier.sheetSurface(color: Color): Modifier =
+    background(color, RoundedCornerShape(topStart = Sizes.SheetCornerRadius, topEnd = Sizes.SheetCornerRadius))

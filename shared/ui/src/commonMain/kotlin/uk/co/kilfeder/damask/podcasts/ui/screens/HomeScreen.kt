@@ -18,6 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.key
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
 import uk.co.kilfeder.damask.podcasts.ui.components.RowPlayer
@@ -138,12 +139,12 @@ private fun HomeContent(
             if (state.upNext.isEmpty()) {
                 item(key = "empty") { EmptyMessage(stringResource(Res.string.home_empty)) }
             }
-            items(state.upNext, key = { "u-${it.id.showId}-${it.id.guid}" }) { row ->
+            items(state.upNext, key = { "u-${it.id.key}" }) { row ->
                 EpisodeRow(
                     row = row,
-                    playing = rowPlayer.isPlaying(row.id),
+                    player = rowPlayer,
+                    source = PlaySource.UpNext,
                     onClick = { onOpenEpisode(row.id, PlaySource.UpNext) },
-                    onPlayPause = { rowPlayer.playPause(row.id, PlaySource.UpNext) },
                     swipeLabel = markPlayed,
                     onSwipe = { onDismissEpisode(row.id) },
                 )

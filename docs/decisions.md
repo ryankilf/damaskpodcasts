@@ -119,3 +119,5 @@ Now specified in [spec › Search](spec.md#search) and [spec › Compliance](spe
 - **Unsubscribe has Undo** (the canvas left it open): Unsubscribe in the show's menu acts at once, leaves the page, and offers Undo in a snackbar. The show row stays as a tombstone (`subscribed = 0`), so Played keeps it and Undo is just a write back. It's reversible and quick, so it needs no confirmation dialog.
 - **Show author and description are stored** (schema 5, `show_feed.author` and `show_feed.description`). The migration forgets the HTTP validators, so the next refresh fills them in for every show.
 - **The "plays next" highlight runs full width** (the user's call on the canvas), so its row lines up with the others.
+- **ViewModels read one snapshot** (found in the DRY sweep): `Rotation` carries the `Library` it orders, and ViewModels collect `graph.rotation` alone. Combining `library` with `rotation` could briefly map rows from a new snapshot while ordering them by the previous one.
+- **The genre sheet lists genres one way everywhere:** A–Z with Uncategorised last (`Library.categoryOptions()`), where the show page had used storage order.

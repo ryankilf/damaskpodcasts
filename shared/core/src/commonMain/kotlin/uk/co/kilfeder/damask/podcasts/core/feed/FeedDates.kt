@@ -1,5 +1,8 @@
 package uk.co.kilfeder.damask.podcasts.core.feed
 
+import uk.co.kilfeder.damask.podcasts.core.model.MINUTE_MS
+import uk.co.kilfeder.damask.podcasts.core.model.SECOND_MS
+
 /**
  * RSS dates are meant to be RFC 822 (`Wed, 02 Oct 2002 13:00:00 GMT`), but feeds also send
  * missing day names, single-digit days, two-digit years, named US zones and ISO 8601. Returns
@@ -35,7 +38,6 @@ internal object FeedDates {
     private const val MINUTE = 5
     private const val SECOND = 6
     private const val ZONE = 7
-    private const val MINUTE_MS = 60_000L
     private const val HOUR_MINUTES = 60
 
     fun parse(raw: String): Long? {
@@ -127,7 +129,6 @@ internal object FeedDates {
 
         private companion object {
             const val MINUTES_PER_DAY = 1_440L
-            const val SECOND_MS = 1_000L
         }
     }
 }

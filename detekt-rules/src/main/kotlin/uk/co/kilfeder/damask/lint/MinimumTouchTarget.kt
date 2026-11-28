@@ -27,9 +27,7 @@ class MinimumTouchTarget(config: Config) : Rule(
 ) {
     private val minSizeDp: Int by config(DEFAULT_MIN_DP)
 
-    private val interactiveFunctions: List<String> by config(
-        listOf("clickable", "combinedClickable", "selectable", "toggleable", "triStateToggleable"),
-    )
+    private val interactiveFunctions: List<String> by config(INTERACTIVE_MODIFIERS)
 
     private val sizeFunctions: List<String> by config(
         listOf("size", "requiredSize", "width", "requiredWidth", "height", "requiredHeight"),

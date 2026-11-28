@@ -27,14 +27,7 @@ class UserStateStore(
         db.transaction {
             val hlc = issue()
             ensureMeta(key, hlc)
-            db.episodeStateQueries.upsertPosition(
-                show_id = key.showId.value,
-                guid = key.guid,
-                position_ms = positionMs,
-                duration_at_save_ms = durationAtSaveMs,
-                play_context = context.encode(),
-                hlc = hlc.value,
-            )
+            writePosition(key, positionMs, durationAtSaveMs, context, hlc)
         }
 
     fun markPlayed(key: EpisodeKey, by: PlayedBy) = db.transaction {
@@ -48,14 +41,7 @@ class UserStateStore(
         val hlc = issue()
         ensureMeta(key, hlc)
         writePlayed(key, played = false, by = null, hlc = hlc)
-        db.episodeStateQueries.upsertPosition(
-            show_id = key.showId.value,
-            guid = key.guid,
-            position_ms = 0,
-            duration_at_save_ms = null,
-            play_context = PlayContext.None.encode(),
-            hlc = issue().value,
-        )
+        writePosition(key, positionMs = 0, durationAtSaveMs = null, context = PlayContext.None, hlc = issue())
     }
 
     /** The player's duration replaces the feed's as soon as media is prepared. */
@@ -90,6 +76,21 @@ class UserStateStore(
             hlc = issue().value,
         )
     }
+
+    private fun writePosition(
+        key: EpisodeKey,
+        positionMs: Long,
+        durationAtSaveMs: Long?,
+        context: PlayContext,
+        hlc: Hlc,
+    ) = db.episodeStateQueries.upsertPosition(
+        show_id = key.showId.value,
+        guid = key.guid,
+        position_ms = positionMs,
+        duration_at_save_ms = durationAtSaveMs,
+        play_context = context.encode(),
+        hlc = hlc.value,
+    )
 
     private fun writePlayed(key: EpisodeKey, played: Boolean, by: PlayedBy?, hlc: Hlc) {
         db.episodeStateQueries.upsertPlayed(

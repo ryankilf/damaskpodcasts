@@ -46,11 +46,7 @@ internal fun PaneHeader(
             .padding(start = if (onBack == null) Spacing.Space4 else Spacing.Space1, end = Spacing.Space4)
             .padding(vertical = Spacing.Space2),
     ) {
-        onBack?.let {
-            IconButton(onClick = it) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(Res.string.back))
-            }
-        }
+        onBack?.let { BackButton(it) }
         Column(verticalArrangement = Arrangement.Center) {
             Text(
                 text = title,

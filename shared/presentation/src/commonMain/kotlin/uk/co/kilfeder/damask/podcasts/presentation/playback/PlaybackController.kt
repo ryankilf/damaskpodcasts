@@ -60,6 +60,15 @@ class PlaybackController internal constructor(
         engine.seekTo(positionMs.coerceAtLeast(0))
     }
 
+    /** Plays or pauses [id] if it's the one loaded, else starts it (same rules as [play]). */
+    fun playOrToggle(id: EpisodeId, context: PlayContext?) {
+        if (state.value?.id == id) togglePlayPause() else play(id, context)
+    }
+
+    fun skipBack() = skipBy(-SKIP_BACK_MS)
+
+    fun skipForward() = skipBy(SKIP_FORWARD_MS)
+
     fun skipBy(deltaMs: Long) {
         val now = state.value ?: return
         val target = (engine.positionMs + deltaMs).coerceAtLeast(0)
@@ -71,5 +80,11 @@ class PlaybackController internal constructor(
     /** Marking the playing episode played stops it without saving a position over the mark. */
     fun onMarkedPlayed(id: EpisodeId) {
         scope.launch { core.locked { if (isCurrent(id.toKey())) stopWithoutSaving() } }
+    }
+
+    companion object {
+        /** The skip buttons everywhere: in the app, the notification, media keys, the car. */
+        const val SKIP_BACK_MS = 10_000L
+        const val SKIP_FORWARD_MS = 30_000L
     }
 }

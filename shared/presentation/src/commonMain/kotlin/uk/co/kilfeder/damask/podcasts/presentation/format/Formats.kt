@@ -27,7 +27,18 @@ object Formats {
     private const val PERCENT = 100
     private const val TWO_DIGITS = 2
     private val WEEKDAYS = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+    private val WEEKDAYS_PLURAL =
+        listOf("Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays", "Sundays")
     private val MONTHS = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+    /** "Mar 2023". */
+    fun monthYear(epochMs: Long, zone: TimeZone = TimeZone.currentSystemDefault()): String {
+        val date = Instant.fromEpochMilliseconds(epochMs).toLocalDateTime(zone)
+        return "${MONTHS[date.month.ordinal]} ${date.year}"
+    }
+
+    /** "Thursdays", for "Usually publishes Thursdays". */
+    fun weekdays(day: kotlinx.datetime.DayOfWeek): String = WEEKDAYS_PLURAL[day.ordinal]
 
     /** "Today", "Yesterday", "3 days ago", "2 weeks ago", "5 months ago", "2 years ago". */
     fun relativeDate(epochMs: Long, nowMs: Long, zone: TimeZone = TimeZone.currentSystemDefault()): String {

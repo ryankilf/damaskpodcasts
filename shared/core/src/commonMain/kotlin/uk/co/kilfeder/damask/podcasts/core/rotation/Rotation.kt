@@ -19,7 +19,8 @@ import uk.co.kilfeder.damask.podcasts.core.rules.ListeningRules
  * `drop(offset).take(pageSize)`. Generation ends when a full round adds nothing.
  */
 class Rotation(
-    private val library: Library,
+    /** The snapshot this rotation orders. Read it from here, so rows and order always agree. */
+    val library: Library,
     private val rules: ListeningRules,
     private val nowMs: Long,
 ) {

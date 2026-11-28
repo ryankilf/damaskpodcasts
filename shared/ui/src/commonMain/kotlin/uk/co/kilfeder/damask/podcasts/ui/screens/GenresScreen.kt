@@ -1,8 +1,10 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.components.SelectableListRow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -36,6 +38,7 @@ import uk.co.kilfeder.damask.podcasts.presentation.genres.GenresViewModel
 import uk.co.kilfeder.damask.podcasts.ui.components.CoverStack
 import uk.co.kilfeder.damask.podcasts.ui.components.ExactValueText
 import uk.co.kilfeder.damask.podcasts.ui.components.GenreChip
+import uk.co.kilfeder.damask.podcasts.ui.components.LastPlayedText
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.genres_empty_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.genres_empty_title
@@ -91,27 +94,16 @@ private fun GenresContent(
 
 @Composable
 private fun GenreRow(genre: GenreRowUi, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val background = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(Spacing.Space3),
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = Spacing.Space3, vertical = Spacing.Space1 / 2)
-            .clip(MaterialTheme.shapes.medium)
-            .background(background)
-            .semantics { this.selected = selected }
-            .clickable(role = Role.Button, onClick = onClick)
-            .heightIn(min = Sizes.GenreRowMinHeight)
-            .padding(horizontal = Spacing.Space3, vertical = Spacing.Space2),
+    SelectableListRow(
+        selected = selected,
+        onClick = onClick,
+        minHeight = Sizes.GenreRowMinHeight,
+        modifier = modifier.padding(vertical = Spacing.Space1 / 2),
+        shape = MaterialTheme.shapes.medium,
+        contentPadding = PaddingValues(horizontal = Spacing.Space3, vertical = Spacing.Space2),
     ) {
         CoverStack(genre.covers, maxCovers = COVER_COUNT)
         GenreText(genre, Modifier.weight(1f))
-        Icon(
-            imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 
@@ -125,17 +117,6 @@ private fun GenreText(genre: GenreRowUi, modifier: Modifier = Modifier) {
             Text(genre.name, style = DamaskTextStyles.Title, color = MaterialTheme.colorScheme.onSurface)
             if (genre.stalest) GenreChip(stringResource(Res.string.genres_longest_unplayed))
         }
-        val color = MaterialTheme.colorScheme.onSurfaceVariant
-        val last = genre.lastListened
-        if (last == null) {
-            Text(stringResource(Res.string.genres_never), style = DamaskTextStyles.BodySmall, color = color)
-        } else {
-            ExactValueText(
-                value = last,
-                display = stringResource(Res.string.genres_last, last.summary),
-                style = DamaskTextStyles.BodySmall,
-                color = color,
-            )
-        }
+        LastPlayedText(genre.lastListened)
     }
 }

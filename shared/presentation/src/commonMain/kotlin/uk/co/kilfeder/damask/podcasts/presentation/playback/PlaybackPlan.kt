@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.presentation.playback
 
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.key
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
 import uk.co.kilfeder.damask.podcasts.core.model.Episode
 import uk.co.kilfeder.damask.podcasts.core.model.EpisodeKey
@@ -24,12 +26,12 @@ internal data class PlaybackPlan(
             requested: PlayContext?,
             speed: Float,
         ): PlaybackPlan? {
-            val episode = library.episodesOf(key.showId).firstOrNull { it.key == key } ?: return null
+            val episode = library.episode(key) ?: return null
             val media = graph.onDb { graph.lookup.media(key) } ?: return null
             val show = library.showsById[key.showId]
             return PlaybackPlan(
                 request = MediaRequest(
-                    mediaId = "${key.showId.value}/${key.guid}",
+                    mediaId = EpisodeId(key.showId.value, key.guid).key,
                     uri = media.localPath ?: media.url,
                     startMs = startPosition(graph, library, episode),
                     title = episode.title,

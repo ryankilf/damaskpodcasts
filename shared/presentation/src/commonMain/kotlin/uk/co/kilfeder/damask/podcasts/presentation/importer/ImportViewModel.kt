@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.presentation.importer
 
+import uk.co.kilfeder.damask.podcasts.presentation.genres.categoryOptions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -156,9 +157,7 @@ class ImportViewModel internal constructor(private val graph: AppGraph) : ViewMo
     }
 
     private suspend fun review(categoryIds: List<String>): ImportUiState.Review {
-        val categories = graph.library.first().categories
-            .sortedWith(compareBy({ it.isSystem }, { it.name.lowercase() }))
-            .map { CategoryOptionUi(it.id.value, it.name) }
+        val categories = graph.library.first().categoryOptions()
         val rows = candidates.mapIndexed { index, c ->
             ImportRowUi(
                 index = index,

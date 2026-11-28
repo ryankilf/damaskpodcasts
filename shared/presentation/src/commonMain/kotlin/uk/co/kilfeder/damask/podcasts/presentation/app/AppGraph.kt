@@ -101,7 +101,7 @@ class AppGraph internal constructor(
         db.feedQueries.selectShowFeeds().asFlow(),
     ) { _, _, _, _, _ -> }
         .mapLatest { onDb { repository.load() } }
-        .shareIn(scope, SharingStarted.WhileSubscribed(SHARE_TIMEOUT_MS), replay = 1)
+        .shareIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), replay = 1)
 
     /** The one playback controller; the engine is created on first use, on the main thread. */
     val playback: PlaybackController by lazy {
@@ -136,9 +136,8 @@ class AppGraph internal constructor(
 
     fun settingsViewModel() = SettingsViewModel(this)
 
-    companion object {
-        private const val SHARE_TIMEOUT_MS = 5_000L
-    }
+    /** Each platform adds its own `create` (it knows how to open the database). */
+    companion object
 }
 
 /**

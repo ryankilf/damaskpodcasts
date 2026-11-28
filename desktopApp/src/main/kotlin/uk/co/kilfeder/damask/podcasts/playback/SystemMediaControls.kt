@@ -12,8 +12,6 @@ import kotlinx.coroutines.launch
 import uk.co.kilfeder.damask.podcasts.presentation.playback.NowPlaying
 import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaybackController
 
-private const val SKIP_BACK_MS = 10_000L
-private const val SKIP_FORWARD_MS = 30_000L
 
 /**
  * The OS's own media controls on desktop (spec › Desktop playback): media keys and Now Playing in
@@ -63,8 +61,8 @@ internal object SystemMediaControls {
             MediaControlEvent.Play -> if (!playing) playback.togglePlayPause()
             MediaControlEvent.Pause, MediaControlEvent.Stop -> if (playing) playback.togglePlayPause()
             MediaControlEvent.Toggle -> playback.togglePlayPause()
-            MediaControlEvent.Next -> playback.skipBy(SKIP_FORWARD_MS)
-            MediaControlEvent.Previous -> playback.skipBy(-SKIP_BACK_MS)
+            MediaControlEvent.Next -> playback.skipForward()
+            MediaControlEvent.Previous -> playback.skipBack()
             is MediaControlEvent.SeekBy -> playback.skipBy(event.offsetMs)
             is MediaControlEvent.SetPosition -> playback.seekTo(event.positionMs)
             else -> Unit

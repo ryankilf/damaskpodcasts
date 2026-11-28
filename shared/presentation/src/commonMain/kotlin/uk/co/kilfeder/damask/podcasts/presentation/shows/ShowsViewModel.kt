@@ -1,19 +1,17 @@
 package uk.co.kilfeder.damask.podcasts.presentation.shows
 
+import uk.co.kilfeder.damask.podcasts.presentation.format.lastPlayed
+import uk.co.kilfeder.damask.podcasts.presentation.app.stateInUi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import uk.co.kilfeder.damask.podcasts.core.model.Show
 import uk.co.kilfeder.damask.podcasts.core.rotation.Library
 import uk.co.kilfeder.damask.podcasts.core.rotation.Rotation
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
-import uk.co.kilfeder.damask.podcasts.presentation.app.STOP_TIMEOUT_MS
 import uk.co.kilfeder.damask.podcasts.presentation.format.ArtworkFallback
-import uk.co.kilfeder.damask.podcasts.presentation.format.Formats
 import uk.co.kilfeder.damask.podcasts.presentation.format.Summarised
 
 /** One subscribed show (design hand-off › ShowListPane). */
@@ -43,7 +41,8 @@ data class ShowsUiState(
 class ShowsViewModel internal constructor(graph: AppGraph) : ViewModel() {
     private val query = MutableStateFlow("")
 
-    val uiState: StateFlow<ShowsUiState> = combine(graph.library, graph.rotation, query) { library, rotation, q ->
+    val uiState: StateFlow<ShowsUiState> = combine(graph.rotation, query) { rotation, q ->
+        val library = rotation.library
         val now = graph.wallClockMs()
         val needle = q.trim()
         ShowsUiState(
@@ -55,7 +54,7 @@ class ShowsViewModel internal constructor(graph: AppGraph) : ViewModel() {
             total = library.subscribedShows.size,
             query = q,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), ShowsUiState())
+    }.stateInUi(viewModelScope, ShowsUiState())
 
     /** "Search your shows": filters by name as you type. */
     fun onQueryChange(text: String) {
@@ -74,6 +73,6 @@ internal fun Show.toRow(library: Library, rotation: Rotation, nowMs: Long) = Sho
     title = title,
     artworkUrl = imageUrl,
     fallback = ArtworkFallback.of(id.value, title),
-    genre = library.effectiveCategory(this)?.let { id -> library.categories.firstOrNull { it.id == id }?.name },
-    lastListened = rotation.history.lastListened(id)?.let { Formats.lastPlayed(it.wallMs, nowMs) },
+    genre = library.categoryOf(this)?.name,
+    lastListened = rotation.lastPlayed(id, nowMs),
 )

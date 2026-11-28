@@ -39,4 +39,11 @@ data class NavState(
     fun pop(): NavState? = if (stack.isEmpty()) null else copy(stack = stack.dropLast(1))
 
     fun select(tab: Tab) = NavState(tab = tab)
+
+    /** Pushes [destination], replacing the top one if it's the same kind (another show, say). */
+    fun replaceTop(destination: Destination): NavState {
+        val current = top
+        val sameKind = current != null && current::class == destination::class
+        return (if (sameKind) copy(stack = stack.dropLast(1)) else this).push(destination)
+    }
 }

@@ -1,21 +1,20 @@
 package uk.co.kilfeder.damask.podcasts.presentation.home
 
+import uk.co.kilfeder.damask.podcasts.presentation.app.PAGE_SIZE
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.markPlayed
+import uk.co.kilfeder.damask.podcasts.presentation.app.page
+import uk.co.kilfeder.damask.podcasts.presentation.app.stateInUi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import uk.co.kilfeder.damask.podcasts.core.model.PlayedBy
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
-import uk.co.kilfeder.damask.podcasts.presentation.app.STOP_TIMEOUT_MS
 import uk.co.kilfeder.damask.podcasts.presentation.app.refreshFeeds
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeRowUi
-import uk.co.kilfeder.damask.podcasts.presentation.episodes.toKey
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.toRow
 
 data class HomeUiState(
@@ -35,29 +34,28 @@ class HomeViewModel internal constructor(private val graph: AppGraph) : ViewMode
     private val refreshing = MutableStateFlow(false)
 
     val uiState: StateFlow<HomeUiState> = combine(
-        graph.library,
         graph.rotation,
         upNextSize,
         refreshing,
-    ) { library, rotation, size, refreshing ->
+    ) { rotation, size, refreshing ->
+        val library = rotation.library
         val now = graph.wallClockMs()
-        val upNext = rotation.upNext().take(size + 1).toList()
+        val (upNext, more) = rotation.upNext().page(size)
         HomeUiState(
             loading = false,
             hasSubscriptions = library.subscribedShows.isNotEmpty(),
             inProgress = rotation.inProgress().map { it.toRow(library, rotation, now) },
-            upNext = upNext.take(size).map { it.toRow(library, rotation, now) },
-            canLoadMore = upNext.size > size,
+            upNext = upNext.map { it.toRow(library, rotation, now) },
+            canLoadMore = more,
             refreshing = refreshing,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HomeUiState())
+    }.stateInUi(viewModelScope, HomeUiState())
 
     fun onLoadMore() = upNextSize.update { it + PAGE_SIZE }
 
     /** Swipe to mark played: the episode leaves every queue; undo from Played. */
     fun onMarkPlayed(id: EpisodeId) {
-        graph.playback.onMarkedPlayed(id)
-        viewModelScope.launch { graph.onDb { graph.userState.markPlayed(id.toKey(), PlayedBy.MARKED) } }
+        viewModelScope.launch { graph.markPlayed(id) }
     }
 
     fun onRefresh() {
@@ -72,7 +70,4 @@ class HomeViewModel internal constructor(private val graph: AppGraph) : ViewMode
         }
     }
 
-    private companion object {
-        const val PAGE_SIZE = 30
-    }
 }

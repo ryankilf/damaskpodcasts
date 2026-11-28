@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.key
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeRowUi
 import uk.co.kilfeder.damask.podcasts.presentation.home.HomeViewModel
@@ -86,7 +87,7 @@ internal fun InProgressScreen(
         return
     }
     LazyColumn(modifier) {
-        items(state.inProgress, key = { "p-${it.id.showId}-${it.id.guid}" }) { row ->
+        items(state.inProgress, key = { "p-${it.id.key}" }) { row ->
             ResumeRow(row, onOpenEpisode, rowPlayer)
         }
     }
@@ -102,9 +103,9 @@ private fun ResumeRow(
 ) {
     EpisodeRow(
         row = row,
-        playing = rowPlayer.isPlaying(row.id),
+        player = rowPlayer,
+        source = PlaySource.Resume,
         onClick = { onOpenEpisode(row.id, PlaySource.Resume) },
-        onPlayPause = { rowPlayer.playPause(row.id, PlaySource.Resume) },
         modifier = modifier,
     )
 }

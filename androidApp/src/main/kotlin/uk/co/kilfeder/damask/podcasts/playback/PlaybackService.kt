@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.playback
 
+import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaybackController
 import android.app.PendingIntent
 import android.content.Intent
 import androidx.annotation.OptIn
@@ -16,8 +17,6 @@ import androidx.media3.session.MediaSessionService
 import uk.co.kilfeder.damask.podcasts.MainActivity
 import uk.co.kilfeder.damask.podcasts.R
 
-private const val SKIP_BACK_MS = 10_000L
-private const val SKIP_FORWARD_MS = 30_000L
 
 /**
  * Background playback: ExoPlayer in a media session, so playback carries on with the app closed and
@@ -41,8 +40,8 @@ class PlaybackService : MediaSessionService() {
             .setAudioAttributes(attributes, true)
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_NETWORK)
-            .setSeekBackIncrementMs(SKIP_BACK_MS)
-            .setSeekForwardIncrementMs(SKIP_FORWARD_MS)
+            .setSeekBackIncrementMs(PlaybackController.SKIP_BACK_MS)
+            .setSeekForwardIncrementMs(PlaybackController.SKIP_FORWARD_MS)
             .build()
         val openApp = PendingIntent.getActivity(
             this,

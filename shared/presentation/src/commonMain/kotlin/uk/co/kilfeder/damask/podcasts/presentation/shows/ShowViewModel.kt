@@ -1,11 +1,13 @@
 package uk.co.kilfeder.damask.podcasts.presentation.shows
 
+import kotlinx.coroutines.flow.map
+import uk.co.kilfeder.damask.podcasts.presentation.format.lastPlayed
+import uk.co.kilfeder.damask.podcasts.presentation.genres.categoryOptions
+import uk.co.kilfeder.damask.podcasts.presentation.app.stateInUi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
 import uk.co.kilfeder.damask.podcasts.core.model.Show
@@ -13,11 +15,9 @@ import uk.co.kilfeder.damask.podcasts.core.model.ShowId
 import uk.co.kilfeder.damask.podcasts.core.rotation.Library
 import uk.co.kilfeder.damask.podcasts.core.rotation.Rotation
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
-import uk.co.kilfeder.damask.podcasts.presentation.app.STOP_TIMEOUT_MS
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeRowUi
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.toRow
 import uk.co.kilfeder.damask.podcasts.presentation.format.ArtworkFallback
-import uk.co.kilfeder.damask.podcasts.presentation.format.Formats
 import uk.co.kilfeder.damask.podcasts.presentation.genres.CategoryOptionUi
 
 data class ShowUiState(
@@ -43,10 +43,11 @@ data class ShowUiState(
 class ShowViewModel internal constructor(private val graph: AppGraph, showId: String) : ViewModel() {
     private val id = ShowId(showId)
 
-    val uiState: StateFlow<ShowUiState> = combine(graph.library, graph.rotation) { library, rotation ->
-        val show = library.showsById[id] ?: return@combine ShowUiState(loading = false)
+    val uiState: StateFlow<ShowUiState> = graph.rotation.map { rotation ->
+        val library = rotation.library
+        val show = library.showsById[id] ?: return@map ShowUiState(loading = false)
         state(show, library, rotation)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), ShowUiState())
+    }.stateInUi(viewModelScope, ShowUiState())
 
     private fun state(show: Show, library: Library, rotation: Rotation): ShowUiState {
         val now = graph.wallClockMs()
@@ -69,13 +70,13 @@ class ShowViewModel internal constructor(private val graph: AppGraph, showId: St
                 NextUpUi(row.id, resume = rotation.isInProgress(episode), title = row.title, length = row.length)
             },
             startAt = if (order == ShowOrder.OLDEST_FIRST) rows.indexOfFirst { !it.played }.takeIf { it > 0 } else null,
-            genres = library.categories.map { CategoryOptionUi(it.id.value, it.name) },
+            genres = library.categoryOptions(),
         )
     }
 
     private fun page(show: Show, library: Library, rotation: Rotation, now: Long): ShowPageUi {
         val episodes = library.episodesOf(id)
-        val categoryId = library.effectiveCategory(show)
+        val category = library.categoryOf(show)
         return ShowPageUi(
             showId = id.value,
             title = show.title,
@@ -83,13 +84,13 @@ class ShowViewModel internal constructor(private val graph: AppGraph, showId: St
             artworkUrl = show.imageUrl,
             fallback = ArtworkFallback.of(id.value, show.title),
             subscribed = show.subscribed,
-            genreId = (categoryId ?: show.categoryId).value,
-            genre = library.categories.firstOrNull { it.id == categoryId }?.name,
+            genreId = (category?.id ?: show.categoryId).value,
+            genre = category?.name,
             cadence = ShowFacts.cadence(episodes),
             usualDay = ShowFacts.usualDay(episodes),
             episodeCount = episodes.size,
             since = ShowFacts.since(episodes),
-            lastPlayed = rotation.history.lastListened(id)?.let { Formats.lastPlayed(it.wallMs, now) },
+            lastPlayed = rotation.lastPlayed(id, now),
             description = ShowFacts.plainText(show.description),
             feedUrl = show.feedUrl,
         )

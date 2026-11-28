@@ -5,6 +5,7 @@ import uk.co.kilfeder.damask.podcasts.core.db.Feed_fetch_state
 import uk.co.kilfeder.damask.podcasts.core.feed.FeedDocument
 import uk.co.kilfeder.damask.podcasts.core.model.Category
 import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
+import uk.co.kilfeder.damask.podcasts.core.model.Show
 import uk.co.kilfeder.damask.podcasts.core.model.ShowId
 import uk.co.kilfeder.damask.podcasts.core.model.ShowType
 import uk.co.kilfeder.damask.podcasts.core.retention.Retention
@@ -38,7 +39,7 @@ class FeedStore(
     fun subscribe(feedUrl: String, categoryId: CategoryId, feed: FetchedFeed?): ShowId {
         val id = ShowIds.fromFeedUrl(feedUrl)
         db.transaction {
-            val existing = db.showQueries.selectById(id.value).executeAsOneOrNull()
+            val existing = db.showRow(id)
             writeShow(
                 (existing ?: newShowRow(id, feedUrl)).copy(
                     feed_url = feedUrl.trim(),
@@ -52,7 +53,7 @@ class FeedStore(
         return id
     }
 
-    fun show(id: ShowId): ShowRow? = db.showQueries.selectById(id.value).executeAsOneOrNull()
+    fun show(id: ShowId): ShowRow? = db.showRow(id)
 
     fun subscribedShowIds(): List<ShowId> = db.showQueries.selectSubscribedIds().executeAsList().map(::ShowId)
 
@@ -100,13 +101,13 @@ class FeedStore(
      * `itunes:new-feed-url`). The show keeps its ID, category, settings and history.
      */
     fun moveFeed(id: ShowId, newUrl: String) = db.transaction {
-        val show = db.showQueries.selectById(id.value).executeAsOneOrNull() ?: return@transaction
+        val show = db.showRow(id) ?: return@transaction
         if (show.feed_url == newUrl.trim()) return@transaction
         writeShow(show.copy(feed_url = newUrl.trim(), feed_url_norm = FeedUrl.normalise(newUrl)))
     }
 
     private fun prune(id: ShowId, type: ShowType) {
-        val row = db.showQueries.selectById(id.value).executeAsOneOrNull() ?: return
+        val row = db.showRow(id) ?: return
         val episodes = db.libraryQueries.selectFeedEpisodesForShow(id.value, ::episodeRow).executeAsList()
         retention.episodesToPrune(row.toModel(type), episodes, clock.nowMs()).forEach { key ->
             db.feedQueries.deleteEpisode(key.showId.value, key.guid)
@@ -120,24 +121,9 @@ class FeedStore(
         category_id = Category.UNCATEGORISED_ID.value,
         episode_order = null,
         keep_mode = null,
-        keep_count = DEFAULT_KEEP_COUNT,
+        keep_count = Show.DEFAULT_KEEP_COUNT.toLong(),
         subscribed = 1,
         hlc = 0,
     )
 
-    private fun writeShow(row: ShowRow) = db.showQueries.upsert(
-        id = row.id,
-        feed_url = row.feed_url,
-        feed_url_norm = row.feed_url_norm,
-        category_id = row.category_id,
-        episode_order = row.episode_order,
-        keep_mode = row.keep_mode,
-        keep_count = row.keep_count,
-        subscribed = row.subscribed,
-        hlc = clock.issue().value,
-    )
-
-    private companion object {
-        const val DEFAULT_KEEP_COUNT = 10L
-    }
-}
+    private fun writeShow(row: ShowRow) = db.writeShow(row, clock.issue())}

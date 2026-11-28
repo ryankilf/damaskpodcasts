@@ -11,9 +11,9 @@ import uk.co.kilfeder.damask.podcasts.core.model.PlayedBy
 import uk.co.kilfeder.damask.podcasts.core.model.ShowId
 import uk.co.kilfeder.damask.podcasts.core.model.ShowType
 import uk.co.kilfeder.damask.podcasts.core.rotation.Rotation
-import uk.co.kilfeder.damask.podcasts.core.rules.DAY_MS
+import uk.co.kilfeder.damask.podcasts.core.model.DAY_MS
 import uk.co.kilfeder.damask.podcasts.core.rules.ListeningRules
-import uk.co.kilfeder.damask.podcasts.core.rules.MINUTE_MS
+import uk.co.kilfeder.damask.podcasts.core.model.MINUTE_MS
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -11,6 +11,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.key
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
 import uk.co.kilfeder.damask.podcasts.ui.components.RowPlayer
@@ -57,25 +58,16 @@ private fun PlayedContent(
     }
     val markUnplayed = stringResource(Res.string.mark_unplayed)
     LazyColumn(modifier) {
-        items(state.rows, key = { "${it.episode.id.showId}-${it.episode.id.guid}" }) { row ->
+        items(state.rows, key = { it.episode.id.key }) { row ->
             // Only played episodes can be marked unplayed; in-progress ones are just listed.
-            if (row.isPlayed) {
-                EpisodeRow(
-                    row = row.episode,
-                    playing = rowPlayer.isPlaying(row.episode.id),
-                    onClick = { onOpenEpisode(row.episode.id) },
-                    onPlayPause = { rowPlayer.playPause(row.episode.id, PlaySource.Played) },
-                    swipeLabel = markUnplayed,
-                    onSwipe = { onRestoreEpisode(row.episode.id) },
-                )
-            } else {
-                EpisodeRow(
-                    row = row.episode,
-                    playing = rowPlayer.isPlaying(row.episode.id),
-                    onClick = { onOpenEpisode(row.episode.id) },
-                    onPlayPause = { rowPlayer.playPause(row.episode.id, PlaySource.Played) },
-                )
-            }
+            EpisodeRow(
+                row = row.episode,
+                player = rowPlayer,
+                source = PlaySource.Played,
+                onClick = { onOpenEpisode(row.episode.id) },
+                swipeLabel = markUnplayed.takeIf { row.isPlayed },
+                onSwipe = { onRestoreEpisode(row.episode.id) },
+            )
         }
     }
 }

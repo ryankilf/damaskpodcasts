@@ -1,15 +1,13 @@
 package uk.co.kilfeder.damask.podcasts.presentation.genres
 
+import kotlinx.coroutines.flow.map
+import uk.co.kilfeder.damask.podcasts.presentation.format.lastPlayed
+import uk.co.kilfeder.damask.podcasts.presentation.app.stateInUi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
-import uk.co.kilfeder.damask.podcasts.presentation.app.STOP_TIMEOUT_MS
 import uk.co.kilfeder.damask.podcasts.presentation.format.ArtworkFallback
-import uk.co.kilfeder.damask.podcasts.presentation.format.Formats
 import uk.co.kilfeder.damask.podcasts.presentation.format.Summarised
 
 data class GenreRowUi(
@@ -37,7 +35,8 @@ data class GenresUiState(
 
 /** Genres: categories by LRP. Empty categories are hidden (see docs/decisions.md). */
 class GenresViewModel internal constructor(graph: AppGraph) : ViewModel() {
-    val uiState: StateFlow<GenresUiState> = combine(graph.library, graph.rotation) { library, rotation ->
+    val uiState: StateFlow<GenresUiState> = graph.rotation.map { rotation ->
+        val library = rotation.library
         val now = graph.wallClockMs()
         val rows = rotation.genres().mapNotNull { category ->
             val shows = library.showsByCategory[category.id].orEmpty()
@@ -46,7 +45,7 @@ class GenresViewModel internal constructor(graph: AppGraph) : ViewModel() {
                 categoryId = category.id.value,
                 name = category.name,
                 showCount = shows.size,
-                lastListened = rotation.history.lastListened(category.id)?.let { Formats.lastPlayed(it.wallMs, now) },
+                lastListened = rotation.lastPlayed(category.id, now),
                 covers = rotation.coverShows(category.id, COVER_COUNT)
                     .map { CoverUi(it.imageUrl, ArtworkFallback.of(it.id.value, it.title)) },
             )
@@ -54,5 +53,5 @@ class GenresViewModel internal constructor(graph: AppGraph) : ViewModel() {
         // Genres come least recently played first, so the first is the one to flag.
         val flagged = rows.mapIndexed { i, row -> row.copy(stalest = i == 0 && rows.size > 1) }
         GenresUiState(loading = false, genres = flagged)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), GenresUiState())
+    }.stateInUi(viewModelScope, GenresUiState())
 }

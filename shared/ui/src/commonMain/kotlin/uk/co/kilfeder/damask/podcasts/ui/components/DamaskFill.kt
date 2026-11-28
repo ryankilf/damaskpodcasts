@@ -1,5 +1,9 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.background
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -44,3 +48,10 @@ internal fun Modifier.damaskFill(color: Color, pitch: Dp, alpha: Float = DIAPER_
     }
     drawPath(path, color, alpha = alpha)
 }
+
+/**
+ * A filled primary button's surface: clipped to [shape], filled with [fill], and the damask
+ * pattern in [pattern] over it. Play buttons in rows, the show page's Resume / Play.
+ */
+internal fun Modifier.damaskButton(fill: Color, pattern: Color, pitch: Dp, shape: Shape = CircleShape): Modifier =
+    clip(shape).background(fill).damaskFill(pattern, pitch)

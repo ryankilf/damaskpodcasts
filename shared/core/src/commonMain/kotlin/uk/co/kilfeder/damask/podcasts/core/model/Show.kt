@@ -65,8 +65,14 @@ data class Category(
     }
 }
 
-/** Orders a show's episodes in its own order (newest- or oldest-first); ties broken by GUID. */
+/** Newest first; ties broken by GUID so the order is stable. */
+val newestFirst: Comparator<Episode> = compareByDescending<Episode> { it.publishedAt }.thenBy { it.key.guid }
+
+/** Oldest first; ties broken by GUID. */
+val oldestFirst: Comparator<Episode> = compareBy<Episode> { it.publishedAt }.thenBy { it.key.guid }
+
+/** Orders a show's episodes in its own order (newest- or oldest-first). */
 fun Show.episodeComparator(): Comparator<Episode> = when (episodeOrder) {
-    EpisodeOrder.NEWEST_FIRST -> compareByDescending<Episode> { it.publishedAt }.thenBy { it.key.guid }
-    EpisodeOrder.OLDEST_FIRST -> compareBy<Episode> { it.publishedAt }.thenBy { it.key.guid }
+    EpisodeOrder.NEWEST_FIRST -> newestFirst
+    EpisodeOrder.OLDEST_FIRST -> oldestFirst
 }

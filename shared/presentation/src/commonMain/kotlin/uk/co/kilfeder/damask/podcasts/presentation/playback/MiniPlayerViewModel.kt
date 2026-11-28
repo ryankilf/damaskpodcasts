@@ -1,16 +1,14 @@
 package uk.co.kilfeder.damask.podcasts.presentation.playback
 
+import kotlinx.coroutines.flow.map
+import uk.co.kilfeder.damask.podcasts.presentation.format.fraction
+import uk.co.kilfeder.damask.podcasts.presentation.app.stateInUi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
-import uk.co.kilfeder.damask.podcasts.presentation.app.STOP_TIMEOUT_MS
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.format.ArtworkFallback
-import uk.co.kilfeder.damask.podcasts.presentation.episodes.toKey
 
 /** The mini-player above the tabs (design hand-off › MiniPlayer). */
 data class MiniPlayerUi(
@@ -31,29 +29,23 @@ data class MiniPlayerUiState(
 )
 
 class MiniPlayerViewModel internal constructor(private val graph: AppGraph) : ViewModel() {
-    val uiState: StateFlow<MiniPlayerUiState> = combine(graph.playback.state, graph.library) { now, library ->
-        val episode = now?.let { library.episodesOf(it.id.toKey().showId).firstOrNull { e -> e.key == it.id.toKey() } }
-        if (now == null || episode == null) {
-            MiniPlayerUiState()
-        } else {
-            MiniPlayerUiState(
+    /** Everything comes from what's playing; no library lookup needed. */
+    val uiState: StateFlow<MiniPlayerUiState> = graph.playback.state.map { now ->
+        MiniPlayerUiState(
+            now?.let {
                 MiniPlayerUi(
-                    id = now.id,
-                    title = episode.title,
-                    showTitle = library.showsById[episode.key.showId]?.title.orEmpty(),
-                    artworkUrl = episode.imageUrl,
-                    fallback = ArtworkFallback.of(
-                        episode.key.showId.value,
-                        library.showsById[episode.key.showId]?.title.orEmpty(),
-                    ),
-                    isPlaying = now.isPlaying,
-                    buffering = now.buffering,
-                    progress = now.durationMs?.takeIf { it > 0 }
-                        ?.let { (now.positionMs.toFloat() / it).coerceIn(0f, 1f) },
-                ),
-            )
-        }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), MiniPlayerUiState())
+                    id = it.id,
+                    title = it.title,
+                    showTitle = it.showTitle,
+                    artworkUrl = it.artworkUrl,
+                    fallback = ArtworkFallback.of(it.id.showId, it.showTitle),
+                    isPlaying = it.isPlaying,
+                    buffering = it.buffering,
+                    progress = fraction(it.positionMs, it.durationMs),
+                )
+            },
+        )
+    }.stateInUi(viewModelScope, MiniPlayerUiState())
 
     fun onPlayPause() = graph.playback.togglePlayPause()
 }

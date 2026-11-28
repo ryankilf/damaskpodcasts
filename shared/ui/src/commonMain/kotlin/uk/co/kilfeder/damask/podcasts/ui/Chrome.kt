@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui
 
+import uk.co.kilfeder.damask.podcasts.ui.components.SettingsButton
+import uk.co.kilfeder.damask.podcasts.ui.components.BackButton
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
@@ -67,12 +69,7 @@ internal fun TopBar(
         title = { Text(stringResource(title)) },
         navigationIcon = {
             if (showBack) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = stringResource(Res.string.back),
-                    )
-                }
+                BackButton(onBack)
             }
         },
         actions = { action?.invoke() },
@@ -140,9 +137,7 @@ internal fun TabRail(selected: Tab, onSelectTab: (Tab) -> Unit, onSettings: () -
             )
         }
         Spacer(Modifier.weight(1f))
-        IconButton(onClick = onSettings, modifier = Modifier.padding(bottom = Spacing.Space4)) {
-            Icon(imageVector = Icons.Rounded.Settings, contentDescription = stringResource(Res.string.settings))
-        }
+        SettingsButton(onSettings, Modifier.padding(bottom = Spacing.Space4))
     }
 }
 
@@ -191,11 +186,7 @@ internal fun topLevelAction(
     if (state.nav.top != null) return null
     return when {
         state.nav.tab == Tab.HOME && compact -> {
-            {
-                IconButton(onClick = onSettings) {
-                    Icon(imageVector = Icons.Rounded.Settings, contentDescription = stringResource(Res.string.settings))
-                }
-            }
+            { SettingsButton(onSettings) }
         }
         else -> null
     }

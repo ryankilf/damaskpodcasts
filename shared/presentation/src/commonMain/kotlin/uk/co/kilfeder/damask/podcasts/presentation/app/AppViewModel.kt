@@ -1,14 +1,13 @@
 package uk.co.kilfeder.damask.podcasts.presentation.app
 
+import uk.co.kilfeder.damask.podcasts.presentation.app.stateInUi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import uk.co.kilfeder.damask.podcasts.core.model.ShowId
@@ -57,7 +56,7 @@ class AppViewModel internal constructor(private val graph: AppGraph) : ViewModel
         graph.playback.state.map { it?.id to (it?.isPlaying == true) }.distinctUntilChanged(),
     ) { settings, nav, message, (playing, playingNow) ->
         AppUiState(Stage.MAIN, nav, settings.useWallpaperColours, message, playing, playingNow)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), AppUiState())
+    }.stateInUi(viewModelScope, AppUiState())
 
     fun onSelectTab(tab: Tab) = nav.update { it.select(tab) }
 
@@ -85,21 +84,14 @@ class AppViewModel internal constructor(private val graph: AppGraph) : ViewModel
 
     /** A row's own play button: pauses or resumes the playing episode, or plays this one, in place. */
     fun onRowPlayPause(id: EpisodeId, source: PlaySource) {
-        val playback = graph.playback
-        if (playback.state.value?.id == id) playback.togglePlayPause() else playback.play(id, source.toContext())
+        graph.playback.playOrToggle(id, source.toContext())
     }
 
     /** Opens a show's page; one already showing (beside the list, on wide layouts) is replaced. */
-    fun onOpenShow(showId: String) = nav.update { state ->
-        val page = Destination.Show(showId)
-        if (state.top is Destination.Show) state.pop()?.push(page) ?: state.push(page) else state.push(page)
-    }
+    fun onOpenShow(showId: String) = nav.update { it.replaceTop(Destination.Show(showId)) }
 
     /** Opens a genre's queue; one already showing (beside the list, on wide layouts) is replaced. */
-    fun onOpenGenre(categoryId: String) = nav.update { state ->
-        val queue = Destination.GenreQueue(categoryId)
-        if (state.top is Destination.GenreQueue) state.pop()?.push(queue) ?: state.push(queue) else state.push(queue)
-    }
+    fun onOpenGenre(categoryId: String) = nav.update { it.replaceTop(Destination.GenreQueue(categoryId)) }
 
     /**
      * From the show page's menu: unsubscribes, leaves the page, and offers Undo. The show stays
@@ -122,5 +114,3 @@ class AppViewModel internal constructor(private val graph: AppGraph) : ViewModel
         return true
     }
 }
-
-internal const val STOP_TIMEOUT_MS = 5_000L

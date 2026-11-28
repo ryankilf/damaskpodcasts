@@ -1,5 +1,7 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.components.DropdownChip
+import uk.co.kilfeder.damask.podcasts.ui.components.damaskButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -71,10 +73,10 @@ import uk.co.kilfeder.damask.podcasts.ui.resources.show_more_label
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_order_label
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_order_newest
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_order_oldest
-import uk.co.kilfeder.damask.podcasts.ui.resources.show_play
+import uk.co.kilfeder.damask.podcasts.ui.resources.play
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_play_label
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_resume
-import uk.co.kilfeder.damask.podcasts.ui.resources.show_resume_label
+import uk.co.kilfeder.damask.podcasts.ui.resources.row_resume
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_subscribe
 import uk.co.kilfeder.damask.podcasts.ui.resources.show_usual_day
 import uk.co.kilfeder.damask.podcasts.ui.resources.shows_untitled
@@ -161,30 +163,10 @@ private fun GenreMenuChip(
     onGenreChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var open by remember { mutableStateOf(false) }
     val name = show.genre.orEmpty()
-    val label = stringResource(Res.string.show_genre_label, name)
-    AssistChip(
-        onClick = { open = true },
-        label = { Text(name) },
-        leadingIcon = { Icon(Icons.Rounded.Category, contentDescription = null) },
-        trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, contentDescription = null) },
-        modifier = modifier.clearAndSetSemantics {
-            contentDescription = label
-            role = Role.DropdownList
-        },
-    )
-    if (open) {
-        CategorySheet(
-            showTitle = show.title,
-            categories = genres,
-            selectedId = show.genreId,
-            onSelect = {
-                open = false
-                onGenreChange(it)
-            },
-            onDismiss = { open = false },
-        )
+    val description = stringResource(Res.string.show_genre_label, name)
+    CategoryPicker(show.title, genres, show.genreId, onGenreChange) { open ->
+        DropdownChip(name, Icons.Rounded.Category, description, open, modifier)
     }
 }
 
@@ -221,7 +203,7 @@ private fun PlayNextButton(next: NextUpUi, onPlay: (EpisodeId) -> Unit, modifier
     val colors = MaterialTheme.colorScheme
     val time = next.length
     val label = if (next.resume) {
-        stringResource(Res.string.show_resume_label, next.title, time?.exact.orEmpty())
+        stringResource(Res.string.row_resume, next.title, time?.exact.orEmpty())
     } else {
         stringResource(Res.string.show_play_label, next.title, time?.exact.orEmpty())
     }
@@ -231,14 +213,12 @@ private fun PlayNextButton(next: NextUpUi, onPlay: (EpisodeId) -> Unit, modifier
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = Sizes.MinTouchTarget)
-            .clip(CircleShape)
-            .background(colors.primary)
-            .damaskFill(colors.onPrimary, Sizes.DamaskPitchMedium)
+            .damaskButton(colors.primary, colors.onPrimary, Sizes.DamaskPitchMedium)
             .clickable(role = Role.Button, onClickLabel = label) { onPlay(next.id) },
     ) {
         Icon(Icons.Rounded.PlayArrow, contentDescription = null, tint = colors.onPrimary)
         Text(
-            text = stringResource(if (next.resume) Res.string.show_resume else Res.string.show_play),
+            text = stringResource(if (next.resume) Res.string.show_resume else Res.string.play),
             style = DamaskTextStyles.Label,
             color = colors.onPrimary,
         )
@@ -311,16 +291,7 @@ internal fun EpisodesHeading(order: ShowOrder, onOrderChange: (ShowOrder) -> Uni
             modifier = Modifier.weight(1f).semantics { heading() },
         )
         Box {
-            AssistChip(
-                onClick = { open = true },
-                label = { Text(name) },
-                leadingIcon = { Icon(Icons.Rounded.SwapVert, contentDescription = null) },
-                trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, contentDescription = null) },
-                modifier = Modifier.clearAndSetSemantics {
-                    contentDescription = label
-                    role = Role.DropdownList
-                },
-            )
+            DropdownChip(name, Icons.Rounded.SwapVert, label, onClick = { open = true })
             DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
                 val pick = { value: ShowOrder ->
                     open = false

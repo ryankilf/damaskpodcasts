@@ -51,9 +51,11 @@ internal fun RowPlayButton(row: EpisodeRowUi, playing: Boolean, onClick: () -> U
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .size(Sizes.RowPauseButton)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
-                        .damaskFill(MaterialTheme.colorScheme.onPrimary, Sizes.DamaskPitchSmall),
+                        .damaskButton(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.onPrimary,
+                            Sizes.DamaskPitchSmall,
+                        ),
                 ) {
                     Icon(Icons.Rounded.Pause, contentDescription = label, tint = MaterialTheme.colorScheme.onPrimary)
                 }

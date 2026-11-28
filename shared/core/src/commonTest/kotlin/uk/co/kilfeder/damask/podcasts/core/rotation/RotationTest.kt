@@ -18,7 +18,7 @@ import uk.co.kilfeder.damask.podcasts.core.model.EpisodeOrder
 import uk.co.kilfeder.damask.podcasts.core.model.Show
 import uk.co.kilfeder.damask.podcasts.core.model.ShowType
 import uk.co.kilfeder.damask.podcasts.core.rules.ListeningRules
-import uk.co.kilfeder.damask.podcasts.core.rules.MINUTE_MS
+import uk.co.kilfeder.damask.podcasts.core.model.MINUTE_MS
 import uk.co.kilfeder.damask.podcasts.core.show
 import kotlin.test.Test
 import kotlin.test.assertEquals

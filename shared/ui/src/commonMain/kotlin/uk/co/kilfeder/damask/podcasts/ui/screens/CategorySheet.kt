@@ -47,12 +47,40 @@ import uk.co.kilfeder.damask.podcasts.ui.theme.Sizes
 import uk.co.kilfeder.damask.podcasts.ui.theme.Spacing
 
 /**
+ * Something that opens the genre sheet ([trigger] gets the call that opens it), and the sheet.
+ * Import's genre button and the show page's genre chip both use it.
+ */
+@Composable
+internal fun CategoryPicker(
+    showTitle: String,
+    categories: List<CategoryOptionUi>,
+    selectedId: String,
+    onSelect: (String) -> Unit,
+    trigger: @Composable (open: () -> Unit) -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+    trigger { open = true }
+    if (open) {
+        CategorySheet(
+            showTitle = showTitle,
+            categories = categories,
+            selectedId = selectedId,
+            onSelect = {
+                open = false
+                onSelect(it)
+            },
+            onDismiss = { open = false },
+        )
+    }
+}
+
+/**
  * Choosing a genre: a searchable list in a full-height bottom sheet, the current one marked.
  * Used wherever a show's genre is picked (Import's review, a show's page).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun CategorySheet(
+private fun CategorySheet(
     showTitle: String,
     categories: List<CategoryOptionUi>,
     selectedId: String,

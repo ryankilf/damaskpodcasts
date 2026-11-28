@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.core.rotation
 
+import uk.co.kilfeder.damask.podcasts.core.model.EpisodeKey
 import uk.co.kilfeder.damask.podcasts.core.model.Category
 import uk.co.kilfeder.damask.podcasts.core.model.CategoryId
 import uk.co.kilfeder.damask.podcasts.core.model.Episode
@@ -47,4 +48,13 @@ class Library(
         if (show.categoryId in categoryIds) show.categoryId else uncategorised
 
     fun episodesOf(showId: ShowId): List<Episode> = episodesByShow[showId].orEmpty()
+
+    private val categoriesById: Map<CategoryId, Category> = categories.associateBy { it.id }
+
+    fun category(id: CategoryId): Category? = categoriesById[id]
+
+    /** The genre a show is in (Uncategorised when its own is gone). */
+    fun categoryOf(show: Show): Category? = effectiveCategory(show)?.let(::category)
+
+    fun episode(key: EpisodeKey): Episode? = episodesOf(key.showId).firstOrNull { it.key == key }
 }

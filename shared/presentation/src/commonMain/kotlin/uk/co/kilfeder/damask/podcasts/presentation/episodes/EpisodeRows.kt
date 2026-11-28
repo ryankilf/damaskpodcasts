@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.presentation.episodes
 
+import uk.co.kilfeder.damask.podcasts.presentation.format.fraction
 import uk.co.kilfeder.damask.podcasts.core.model.Episode
 import uk.co.kilfeder.damask.podcasts.core.model.EpisodeKey
 import uk.co.kilfeder.damask.podcasts.core.model.ShowId
@@ -33,27 +34,26 @@ data class EpisodeRowUi(
 
 internal fun EpisodeId.toKey() = EpisodeKey(ShowId(showId), guid)
 
+/** One string per episode: list keys, media IDs. */
+val EpisodeId.key: String get() = "$showId/$guid"
+
 internal fun Episode.toRow(library: Library, rotation: Rotation, nowMs: Long): EpisodeRowUi {
     val inProgress = rotation.isInProgress(this)
     val position = position?.positionMs?.takeIf { inProgress }
     val total = durationMs
+    val show = library.showsById[key.showId]
+    val showTitle = show?.title.orEmpty()
     return EpisodeRowUi(
         id = EpisodeId(key.showId.value, key.guid),
         title = title,
-        showTitle = library.showsById[key.showId]?.title.orEmpty(),
-        genre = library.showsById[key.showId]
-            ?.let(library::effectiveCategory)
-            ?.let { id -> library.categories.firstOrNull { it.id == id }?.name },
+        showTitle = showTitle,
+        genre = show?.let(library::categoryOf)?.name,
         artworkUrl = imageUrl,
-        fallback = ArtworkFallback.of(key.showId.value, library.showsById[key.showId]?.title.orEmpty()),
+        fallback = ArtworkFallback.of(key.showId.value, showTitle),
         published = Formats.date(publishedAt, nowMs),
         length = Formats.length(total, position),
-        progress = progress(position, total),
+        progress = fraction(position, total),
         played = isPlayed && !inProgress,
     )
 }
 
-private fun progress(positionMs: Long?, totalMs: Long?): Float? {
-    if (positionMs == null || totalMs == null || totalMs <= 0) return null
-    return (positionMs.toFloat() / totalMs).coerceIn(0f, 1f)
-}

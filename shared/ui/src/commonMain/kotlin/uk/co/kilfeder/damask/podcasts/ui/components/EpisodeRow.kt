@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextOverflow
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeRowUi
+import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.row_played
 import uk.co.kilfeder.damask.podcasts.ui.resources.row_show_prefix
@@ -83,6 +84,33 @@ internal fun EpisodeRow(
         RowContent(row, playing, onClick, onPlayPause, Modifier.background(background))
     }
 }
+
+/**
+ * An episode in a list: [player] plays or pauses it in place, starting it from [source]; tapping
+ * the row opens it ([onClick]). Every episode list uses this.
+ */
+@Composable
+internal fun EpisodeRow(
+    row: EpisodeRowUi,
+    player: RowPlayer,
+    source: PlaySource,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    swipeLabel: String? = null,
+    onSwipe: () -> Unit = {},
+    background: Color = MaterialTheme.colorScheme.surface,
+    dimPlayed: Boolean = false,
+) = EpisodeRow(
+    row = row,
+    playing = player.isPlaying(row.id),
+    onClick = onClick,
+    onPlayPause = { player.playPause(row.id, source) },
+    modifier = modifier,
+    swipeLabel = swipeLabel,
+    onSwipe = onSwipe,
+    background = background,
+    dimPlayed = dimPlayed,
+)
 
 @Composable
 private fun RowContent(

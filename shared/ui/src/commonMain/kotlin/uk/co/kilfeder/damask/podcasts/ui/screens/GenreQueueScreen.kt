@@ -16,6 +16,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.key
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.playback.PlaySource
 import uk.co.kilfeder.damask.podcasts.ui.components.RowPlayer
@@ -26,6 +27,7 @@ import uk.co.kilfeder.damask.podcasts.ui.components.EpisodeRow
 import uk.co.kilfeder.damask.podcasts.ui.components.ExactValueText
 import uk.co.kilfeder.damask.podcasts.ui.components.PaneHeader
 import uk.co.kilfeder.damask.podcasts.ui.components.PrimaryPanel
+import uk.co.kilfeder.damask.podcasts.ui.components.LastPlayedText
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.genre_queue_empty_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.genre_queue_empty_title
@@ -87,9 +89,9 @@ private fun GenreQueueContent(
     val row: @Composable (EpisodeRowUi, Color) -> Unit = { episode, background ->
         EpisodeRow(
             row = episode,
-            playing = rowPlayer.isPlaying(episode.id),
+            player = rowPlayer,
+            source = PlaySource.Genre(categoryId),
             onClick = { onOpenEpisode(episode.id) },
-            onPlayPause = { rowPlayer.playPause(episode.id, PlaySource.Genre(categoryId)) },
             swipeLabel = markPlayed,
             onSwipe = { onDismissEpisode(episode.id) },
             background = background,
@@ -108,7 +110,7 @@ private fun GenreQueueContent(
             item(key = "empty") { EmptyQueue(state, Modifier.fillParentMaxHeight(EMPTY_HEIGHT_SHARE)) }
         }
         if (state.upNext.isNotEmpty()) sectionHeader("up-next", stringResourceKey = Res.string.home_up_next)
-        items(state.upNext, key = { "${it.id.showId}-${it.id.guid}" }) { row(it, listBackground) }
+        items(state.upNext, key = { it.id.key }) { row(it, listBackground) }
         loadMore(state.canLoadMore, onLoadMore)
     }
 }
@@ -125,16 +127,7 @@ private fun EmptyQueue(state: GenreQueueUiState, modifier: Modifier = Modifier) 
         title = stringResource(Res.string.genre_queue_empty_title, state.name),
         body = stringResource(Res.string.genre_queue_empty_body, state.name),
         modifier = modifier,
-        meta = last?.let {
-            {
-                ExactValueText(
-                    value = it,
-                    display = stringResource(Res.string.genres_last, it.summary),
-                    style = DamaskTextStyles.BodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
+        meta = last?.let { { LastPlayedText(it) } },
     )
 }
 
@@ -142,20 +135,5 @@ private fun EmptyQueue(state: GenreQueueUiState, modifier: Modifier = Modifier) 
 @Composable
 private fun QueueHeader(state: GenreQueueUiState, onBack: (() -> Unit)?, modifier: Modifier = Modifier) {
     val shows = pluralStringResource(Res.plurals.genres_shows, state.showCount, state.showCount)
-    val last = state.lastListened
-    val color = MaterialTheme.colorScheme.onSurfaceVariant
-    PaneHeader(state.name, modifier, onBack = onBack) {
-        if (last == null) {
-            val text = stringResource(Res.string.row_meta, stringResource(Res.string.genres_never), shows)
-            Text(text, style = DamaskTextStyles.BodySmall, color = color)
-        } else {
-            val lastPlayed = stringResource(Res.string.genres_last, last.summary)
-            ExactValueText(
-                value = last,
-                display = stringResource(Res.string.row_meta, lastPlayed, shows),
-                style = DamaskTextStyles.BodySmall,
-                color = color,
-            )
-        }
-    }
+    PaneHeader(state.name, modifier, onBack = onBack) { LastPlayedText(state.lastListened, after = shows) }
 }

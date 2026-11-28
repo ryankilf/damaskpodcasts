@@ -20,6 +20,18 @@ data class NotesBlock(val spans: List<NotesSpan>, val bullet: Boolean = false)
  * tokenizer, not an HTML parser: feeds' markup is often broken, and nothing here is executed.
  */
 object ShowNotes {
+    /** Every distinct link in the notes, in order, labelled with its text and host. */
+    fun links(notes: List<NotesBlock>): List<NotesLink> = notes
+        .flatMap { it.spans }
+        .mapNotNull { span -> span.link?.let { NotesLink(span.text.trim().ifEmpty { it }, it, host(it)) } }
+        .distinctBy { it.url }
+
+    private fun host(url: String): String = url
+        .substringAfter("://", missingDelimiterValue = url.substringAfter(':'))
+        .substringBefore('/')
+        .substringBefore('?')
+        .removePrefix("www.")
+
     private val TAG_OR_TEXT = Regex("<[^>]*>|[^<]+|<")
     private val TAG_NAME = Regex("^</?\\s*([a-zA-Z0-9]+)")
     private val HREF = Regex("""href\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))""", RegexOption.IGNORE_CASE)

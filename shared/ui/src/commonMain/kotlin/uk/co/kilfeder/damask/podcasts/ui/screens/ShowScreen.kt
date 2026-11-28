@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.components.BackButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -151,9 +152,9 @@ private fun ShowList(
             ) {
                 EpisodeRow(
                     row = row,
-                    playing = rowPlayer.isPlaying(row.id),
+                    player = rowPlayer,
+                    source = source,
                     onClick = { actions.onOpenEpisode(row.id, source) },
-                    onPlayPause = { rowPlayer.playPause(row.id, source) },
                     background = tint,
                     dimPlayed = true,
                 )
@@ -185,11 +186,7 @@ private fun ShowTopBar(show: ShowPageUi?, actions: ShowPageActions, modifier: Mo
             .heightIn(min = Sizes.PaneHeaderHeight)
             .padding(horizontal = Spacing.Space1),
     ) {
-        actions.onBack?.let { back ->
-            IconButton(onClick = back) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(Res.string.back))
-            }
-        }
+        actions.onBack?.let { BackButton(it) }
         Spacer(Modifier.weight(1f))
         if (show != null && show.subscribed) ShowMenu(show, actions.onUnsubscribe)
     }

@@ -7,7 +7,9 @@ import uk.co.kilfeder.damask.podcasts.core.model.EpisodeOrder
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.ShowNotes
 import uk.co.kilfeder.damask.podcasts.presentation.format.ArtworkFallback
+import uk.co.kilfeder.damask.podcasts.presentation.format.Formats
 import uk.co.kilfeder.damask.podcasts.presentation.format.Summarised
+import uk.co.kilfeder.damask.podcasts.core.model.DAY_MS
 import kotlin.time.Instant
 
 /** How often a show publishes, from the gaps between its recent episodes. */
@@ -57,15 +59,12 @@ data class NextUpUi(
 
 internal object ShowFacts {
     private const val SAMPLE = 10
-    private const val DAY_MS = 86_400_000L
     private const val DAILY_MAX_DAYS = 1.5
     private const val WEEKLY_MAX_DAYS = 9.0
     private const val FORTNIGHTLY_MAX_DAYS = 18.0
     private const val MONTHLY_MAX_DAYS = 40.0
     private const val MIN_GAPS = 3
     private const val DAY_SHARE = 0.6
-    private val DAYS = listOf("Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays", "Sundays")
-    private val MONTHS = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
     /** Dated episodes, newest first (undated ones are stored as 0). */
     private fun dated(episodes: List<Episode>) = episodes.map { it.publishedAt }.filter { it > 0 }.sortedDescending()
@@ -90,14 +89,11 @@ internal object ShowFacts {
             .map { Instant.fromEpochMilliseconds(it).toLocalDateTime(zone).dayOfWeek }
         if (days.size < MIN_GAPS) return null
         val (day, count) = days.groupingBy { it }.eachCount().maxBy { it.value }
-        return if (count >= days.size * DAY_SHARE) DAYS[day.ordinal] else null
+        return if (count >= days.size * DAY_SHARE) Formats.weekdays(day) else null
     }
 
     fun since(episodes: List<Episode>, zone: TimeZone = TimeZone.currentSystemDefault()): String? =
-        dated(episodes).lastOrNull()?.let {
-            val date = Instant.fromEpochMilliseconds(it).toLocalDateTime(zone)
-            "${MONTHS[date.month.ordinal]} ${date.year}"
-        }
+        dated(episodes).lastOrNull()?.let { Formats.monthYear(it, zone) }
 
     fun plainText(html: String): String =
         ShowNotes.parse(html).joinToString("\n\n") { block -> block.spans.joinToString("") { it.text }.trim() }

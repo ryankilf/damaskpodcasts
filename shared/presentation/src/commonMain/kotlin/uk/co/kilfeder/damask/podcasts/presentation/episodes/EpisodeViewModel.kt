@@ -1,18 +1,16 @@
 package uk.co.kilfeder.damask.podcasts.presentation.episodes
 
+import uk.co.kilfeder.damask.podcasts.presentation.format.fraction
+import uk.co.kilfeder.damask.podcasts.presentation.app.stateInUi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import uk.co.kilfeder.damask.podcasts.core.model.Episode
-import uk.co.kilfeder.damask.podcasts.core.model.PlayedBy
 import uk.co.kilfeder.damask.podcasts.core.rotation.Library
 import uk.co.kilfeder.damask.podcasts.core.rotation.Rotation
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
-import uk.co.kilfeder.damask.podcasts.presentation.app.STOP_TIMEOUT_MS
 import uk.co.kilfeder.damask.podcasts.presentation.format.Formats
 import uk.co.kilfeder.damask.podcasts.presentation.playback.NowPlaying
 import kotlin.math.roundToInt
@@ -67,25 +65,26 @@ class EpisodeViewModel internal constructor(
     private val id: EpisodeId,
 ) : ViewModel() {
     val uiState: StateFlow<EpisodeUiState> =
-        combine(graph.library, graph.rotation, graph.playback.state) { library, rotation, now ->
+        combine(graph.rotation, graph.playback.state) { rotation, now ->
+            val library = rotation.library
             val key = id.toKey()
-            val episode = library.episodesOf(key.showId).firstOrNull { it.key == key }
+            val episode = library.episode(key)
             if (episode == null) {
                 EpisodeUiState(loading = false)
             } else {
                 val notes = ShowNotes.parse(graph.onDb { graph.lookup.notes(key) })
                 withPlayback(stateFor(episode, library, rotation, notes), now?.takeIf { it.id == id })
             }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), EpisodeUiState())
+        }.stateInUi(viewModelScope, EpisodeUiState())
 
     /** Plays or pauses this episode; starting it keeps the context saved with it. */
     fun onPlayPause() {
-        if (graph.playback.state.value?.id == id) graph.playback.togglePlayPause() else graph.playback.play(id, null)
+        graph.playback.playOrToggle(id, null)
     }
 
-    fun onSkipBack() = whenCurrent { graph.playback.skipBy(-SKIP_BACK_MS) }
+    fun onSkipBack() = whenCurrent { graph.playback.skipBack() }
 
-    fun onSkipForward() = whenCurrent { graph.playback.skipBy(SKIP_FORWARD_MS) }
+    fun onSkipForward() = whenCurrent { graph.playback.skipForward() }
 
     /** [fraction] 0..1 of the length. */
     fun onSeek(fraction: Float) = whenCurrent { now ->
@@ -100,14 +99,16 @@ class EpisodeViewModel internal constructor(
     }
 
     fun onMarkPlayed() {
-        graph.playback.onMarkedPlayed(id)
-        viewModelScope.launch { graph.onDb { graph.userState.markPlayed(id.toKey(), PlayedBy.MARKED) } }
+        viewModelScope.launch { graph.markPlayed(id) }
     }
 
     /** Also resets the position, per the spec. */
     fun onMarkUnplayed() {
-        viewModelScope.launch { graph.onDb { graph.userState.markUnplayed(id.toKey()) } }
+        viewModelScope.launch { graph.markUnplayed(id) }
     }
+
+    /** The Played tick: marks played or unplayed. */
+    fun onPlayedChange(played: Boolean) = if (played) onMarkPlayed() else onMarkUnplayed()
 
     private fun stateFor(
         episode: Episode,
@@ -115,9 +116,7 @@ class EpisodeViewModel internal constructor(
         rotation: Rotation,
         notes: List<NotesBlock>,
     ): EpisodeUiState {
-        val category = library.showsById[episode.key.showId]
-            ?.let(library::effectiveCategory)
-            ?.let { id -> library.categories.firstOrNull { it.id == id } }
+        val category = library.showsById[episode.key.showId]?.let(library::categoryOf)
         val positionMs = episode.position?.positionMs?.takeIf { rotation.isInProgress(episode) } ?: 0
         return EpisodeUiState(
             loading = false,
@@ -128,7 +127,7 @@ class EpisodeViewModel internal constructor(
             isPlayed = episode.isPlayed,
             notes = notes,
             notesPreview = notes.firstOrNull()?.spans?.joinToString("") { it.text }?.lineSequence()?.firstOrNull(),
-            links = links(notes),
+            links = ShowNotes.links(notes),
         )
     }
 
@@ -150,8 +149,6 @@ class EpisodeViewModel internal constructor(
     }
 
     private companion object {
-        const val SKIP_BACK_MS = 10_000L
-        const val SKIP_FORWARD_MS = 30_000L
         const val SPEED_EPSILON = 0.01f
 
         /** The speed button steps through these, then wraps to the slowest. */
@@ -168,7 +165,7 @@ private fun speedLabel(speed: Float): String {
 private fun position(positionMs: Long, totalMs: Long?): PlayerPositionUi {
     val played = Formats.clock(positionMs)
     if (totalMs == null || totalMs <= 0) return PlayerPositionUi(played, null, 0f, played)
-    val fraction = (positionMs.toFloat() / totalMs).coerceIn(0f, 1f)
+    val fraction = fraction(positionMs, totalMs) ?: 0f
     val percent = (fraction * PERCENT).toInt()
     return PlayerPositionUi(
         played = played,
@@ -177,18 +174,6 @@ private fun position(positionMs: Long, totalMs: Long?): PlayerPositionUi {
         description = "$played of ${Formats.clock(totalMs)}, $percent%",
     )
 }
-
-/** Every distinct link in the notes, in order, labelled with its text and host. */
-private fun links(notes: List<NotesBlock>): List<NotesLink> = notes
-    .flatMap { it.spans }
-    .mapNotNull { span -> span.link?.let { NotesLink(span.text.trim().ifEmpty { it }, it, host(it)) } }
-    .distinctBy { it.url }
-
-private fun host(url: String): String = url
-    .substringAfter("://", missingDelimiterValue = url.substringAfter(':'))
-    .substringBefore('/')
-    .substringBefore('?')
-    .removePrefix("www.")
 
 private const val PERCENT = 100
 private const val TENTHS = 10

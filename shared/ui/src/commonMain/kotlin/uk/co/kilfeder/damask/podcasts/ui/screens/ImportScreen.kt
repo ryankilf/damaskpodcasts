@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.presentation.genres.nameOf
 import androidx.compose.runtime.setValue
 
 import androidx.compose.runtime.getValue
@@ -48,6 +49,7 @@ import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 import uk.co.kilfeder.damask.podcasts.presentation.genres.CategoryOptionUi
 import uk.co.kilfeder.damask.podcasts.presentation.importer.ImportRowUi
 import uk.co.kilfeder.damask.podcasts.presentation.importer.ImportUiState
+import uk.co.kilfeder.damask.podcasts.presentation.importer.LatestShowUi
 import uk.co.kilfeder.damask.podcasts.presentation.importer.ImportViewModel
 import uk.co.kilfeder.damask.podcasts.ui.components.Artwork
 import uk.co.kilfeder.damask.podcasts.ui.components.LatestShowCard
@@ -121,16 +123,14 @@ private fun ImportContent(
             onAction = onChooseFile,
             modifier = modifier,
         )
-        is ImportUiState.Reading -> Column(modifier.fillMaxSize()) {
-            LatestShowCard(state.latest, Modifier.weight(1f).fillMaxWidth().padding(Spacing.Space4))
-            Progress(
+        is ImportUiState.Reading ->
+            Working(
                 label = stringResource(Res.string.import_reading, state.done, state.total),
                 done = state.done,
                 total = state.total,
-                modifier = Modifier.fillMaxWidth(),
-                fill = false,
+                latest = state.latest,
+                modifier = modifier,
             )
-        }
         is ImportUiState.Review -> Review(
             state = state,
             onCategoryChange = onCategoryChange,
@@ -139,16 +139,14 @@ private fun ImportContent(
             onConfirm = onConfirm,
             modifier = modifier,
         )
-        is ImportUiState.Subscribing -> Column(modifier.fillMaxSize()) {
-            LatestShowCard(state.latest, Modifier.weight(1f).fillMaxWidth().padding(Spacing.Space4))
-            Progress(
+        is ImportUiState.Subscribing ->
+            Working(
                 label = stringResource(Res.string.import_subscribing, state.done, state.total),
                 done = state.done,
                 total = state.total,
-                modifier = Modifier.fillMaxWidth(),
-                fill = false,
+                latest = state.latest,
+                modifier = modifier,
             )
-        }
         // Momentary: the app leaves this screen as soon as it sees Done.
         is ImportUiState.Done -> Unit
         is ImportUiState.Failed -> Message(
@@ -179,6 +177,15 @@ private fun Message(
 }
 
 /** A determinate bar once the total is known (before then, an indeterminate one). */
+/** Reading feeds or saving shows: the latest show's cover, then progress. */
+@Composable
+private fun Working(label: String, done: Int, total: Int, latest: LatestShowUi?, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxSize()) {
+        LatestShowCard(latest, Modifier.weight(1f).fillMaxWidth().padding(Spacing.Space4))
+        Progress(label = label, done = done, total = total, modifier = Modifier.fillMaxWidth(), fill = false)
+    }
+}
+
 @Composable
 private fun Progress(label: String, done: Int, total: Int, modifier: Modifier = Modifier, fill: Boolean = true) {
     Column(
@@ -269,7 +276,7 @@ private fun ImportRow(
                     color = MaterialTheme.colorScheme.error,
                 )
             }
-            CategoryPicker(row, categories, onCategoryChange)
+            RowCategoryButton(row, categories, onCategoryChange)
         }
     }
 }
@@ -305,29 +312,17 @@ private fun SelectAll(
 }
 
 @Composable
-private fun CategoryPicker(
+private fun RowCategoryButton(
     row: ImportRowUi,
     categories: List<CategoryOptionUi>,
     onCategoryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var open by remember { mutableStateOf(false) }
-    val current = categories.firstOrNull { it.id == row.categoryId }?.name.orEmpty()
+    val current = categories.nameOf(row.categoryId)
     val description = stringResource(Res.string.import_category, row.title, current)
-    OutlinedButton(
-        onClick = { open = true },
-        modifier = modifier.semantics { contentDescription = description },
-    ) { Text(current) }
-    if (open) {
-        CategorySheet(
-            showTitle = row.title,
-            categories = categories,
-            selectedId = row.categoryId,
-            onSelect = {
-                open = false
-                onCategoryChange(it)
-            },
-            onDismiss = { open = false },
-        )
+    CategoryPicker(row.title, categories, row.categoryId, onCategoryChange) { open ->
+        OutlinedButton(onClick = open, modifier = modifier.semantics { contentDescription = description }) {
+            Text(current)
+        }
     }
 }

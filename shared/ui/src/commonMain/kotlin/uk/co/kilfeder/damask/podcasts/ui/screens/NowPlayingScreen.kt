@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.components.sheetSurface
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -49,6 +50,7 @@ import coil3.compose.AsyncImage
 import org.jetbrains.compose.resources.stringResource
 import uk.co.kilfeder.damask.podcasts.presentation.app.AppGraph
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeId
+import uk.co.kilfeder.damask.podcasts.presentation.episodes.key
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeRowUi
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeUiState
 import uk.co.kilfeder.damask.podcasts.presentation.episodes.EpisodeViewModel
@@ -96,14 +98,7 @@ internal fun NowPlayingScreen(
     viewModel: EpisodeViewModel = viewModel(key = episodeKey(id)) { graph.episodeViewModel(id) },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val controls = PlayerActions(
-        onPlayPause = viewModel::onPlayPause,
-        onSkipBack = viewModel::onSkipBack,
-        onSkipForward = viewModel::onSkipForward,
-        onCycleSpeed = viewModel::onCycleSpeed,
-        onSeek = viewModel::onSeek,
-        onPlayedChange = { played -> if (played) viewModel.onMarkPlayed() else viewModel.onMarkUnplayed() },
-    )
+    val controls = playerActions(viewModel)
     BoxWithConstraints(modifier) {
         // With room for both, the show notes sit beside the player instead of behind the peek.
         val notesBeside = maxWidth >= Sizes.NotesBesideMinWidth
@@ -124,7 +119,7 @@ internal fun NowPlayingScreen(
 }
 
 /** One ViewModel per episode, shared by its player and show notes screens. */
-internal fun episodeKey(id: EpisodeId) = "episode/${id.showId}/${id.guid}"
+internal fun episodeKey(id: EpisodeId) = "episode/${id.key}"
 
 /** Loading, "episode not available", or [content] once the episode is known. */
 @Composable
@@ -167,7 +162,7 @@ private fun Player(
                     modifier = Modifier.padding(top = Spacing.Space4),
                 )
             }
-            Controls(state, controls, Modifier.padding(top = Spacing.Space3))
+            TransportRow(state, controls, Modifier.padding(top = Spacing.Space3))
             state.error?.let {
                 Text(
                     text = it,
@@ -185,15 +180,6 @@ private fun Player(
     }
 }
 
-/** What the player's controls do. */
-internal class PlayerActions(
-    val onPlayPause: () -> Unit,
-    val onSkipBack: () -> Unit,
-    val onSkipForward: () -> Unit,
-    val onCycleSpeed: () -> Unit,
-    val onSeek: (Float) -> Unit,
-    val onPlayedChange: (Boolean) -> Unit,
-)
 
 /** The artwork fills the space left over, square, at most [Sizes.NowPlayingArtworkMax]. */
 @Composable
@@ -240,43 +226,7 @@ private fun Details(
     }
 }
 
-/** Speed, back 10, play, forward 30, mark played (NowPlayingPane artboard). */
-@Composable
-private fun Controls(state: EpisodeUiState, actions: PlayerActions, modifier: Modifier = Modifier) {
-    val live = state.playbackAvailable && state.isCurrent
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        val speedLabel = stringResource(Res.string.playback_speed, state.speed)
-        SpeedButton(state.speed, speedLabel, live, actions.onCycleSpeed)
-        SkipButton(Icons.Rounded.Replay10, stringResource(Res.string.skip_back), live, actions.onSkipBack)
-        PlayButton(
-            size = Sizes.NowPlayingPlayButton,
-            iconSize = Sizes.NowPlayingPlayIcon,
-            pitch = Sizes.DamaskPitchLarge,
-            playing = state.isPlaying,
-            enabled = state.playbackAvailable,
-            onClick = actions.onPlayPause,
-        )
-        SkipButton(Icons.Rounded.Forward30, stringResource(Res.string.skip_forward), live, actions.onSkipForward)
-        PlayedToggle(state.isPlayed, actions.onPlayedChange)
-    }
-}
 
-/** Mark played (an outlined tick), or Mark unplayed once played (a filled one). */
-@Composable
-internal fun PlayedToggle(isPlayed: Boolean, onPlayedChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
-    val colors = MaterialTheme.colorScheme
-    IconButton(onClick = { onPlayedChange(!isPlayed) }, modifier = modifier) {
-        Icon(
-            imageVector = if (isPlayed) Icons.Rounded.CheckCircle else Icons.Outlined.CheckCircle,
-            contentDescription = stringResource(if (isPlayed) Res.string.mark_unplayed else Res.string.mark_played),
-            tint = if (isPlayed) colors.primary else colors.onSurfaceVariant,
-        )
-    }
-}
 
 /** The show notes peek at the bottom (NowPlayingPane artboard); tapping opens the notes view. */
 @Composable
@@ -286,10 +236,7 @@ private fun NotesPeek(preview: String?, onOpen: () -> Unit, modifier: Modifier =
         verticalArrangement = Arrangement.spacedBy(Spacing.Space1),
         modifier = modifier
             .fillMaxWidth()
-            .background(
-                MaterialTheme.colorScheme.surfaceContainerLow,
-                RoundedCornerShape(topStart = Sizes.SheetCornerRadius, topEnd = Sizes.SheetCornerRadius),
-            )
+            .sheetSurface(MaterialTheme.colorScheme.surfaceContainerLow)
             .clickable(enabled = preview != null, onClickLabel = label, role = Role.Button, onClick = onOpen)
             .then(if (preview != null) Modifier.sheetDrag(up = onOpen) else Modifier)
             .padding(horizontal = Spacing.Space6, vertical = Spacing.Space3),

@@ -1,10 +1,8 @@
 <resources>
     <!-- App -->
-    <string name="app_name">Damask</string>
     <string name="back">Back</string>
     <string name="settings">Settings</string>
     <string name="load_more">Show more</string>
-    <string name="loading">Loading…</string>
 
     <!-- Tabs -->
     <string name="tab_home">Home</string>
@@ -18,7 +16,6 @@
     <string name="home_up_next">Up next</string>
     <string name="in_progress_count">%1$d</string>
     <string name="in_progress_see_all">See all %1$d</string>
-    <string name="home_refresh">Check for new episodes</string>
     <string name="home_no_shows_title">No shows yet</string>
     <string name="home_no_shows_body">Find shows by name, or bring your subscriptions over from another podcast app.</string>
     <string name="home_search">Search for shows</string>
@@ -82,9 +79,7 @@
     <string name="undo">Undo</string>
     <string name="show_subscribe">Subscribe</string>
     <string name="show_resume">Resume</string>
-    <string name="show_play">Play</string>
     <string name="show_button_time">· %1$s</string>
-    <string name="show_resume_label">Resume %1$s, %2$s</string>
     <string name="show_play_label">Play %1$s, %2$s</string>
     <string name="show_more">More</string>
     <string name="show_more_label">Show description, tap to read all of it</string>
@@ -105,8 +100,6 @@
     </plurals>
     <string name="show_last_exact">last played %1$s</string>
     <string name="show_meta_sep"> · </string>
-    <string name="row_progress">%1$s, %2$s</string>
-    <string name="artwork_of">Artwork for %1$s</string>
 
     <!-- Genres -->
     <plurals name="genres_shows">
@@ -118,12 +111,10 @@
     <string name="genres_never">Not played yet</string>
     <string name="genres_longest_unplayed">Longest unplayed</string>
     <string name="genres_last">Last played %1$s</string>
-    <string name="genre_queue_empty">Nothing waiting in this genre.</string>
 
     <!-- Played -->
     <string name="played_empty_title">Nothing played yet</string>
     <string name="played_empty">Everything you start or finish lands here, newest first, so you can pick it back up or undo a mark-played.</string>
-    <string name="played_last">Last played %1$s</string>
 
     <!-- Search -->
     <string name="search_coming">Search is coming soon.</string>
@@ -154,7 +145,6 @@
     <string name="category_search">Search genres</string>
     <string name="category_no_match">No genres match “%1$s”</string>
     <string name="import_screen_title">Import your shows</string>
-    <string name="import_from_settings">Bring shows from another app</string>
 
     <!-- Settings -->
     <string name="settings_group_appearance">Appearance</string>

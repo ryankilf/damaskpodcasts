@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.core.retention
 
+import uk.co.kilfeder.damask.podcasts.core.model.newestFirst
 import uk.co.kilfeder.damask.podcasts.core.model.Episode
 import uk.co.kilfeder.damask.podcasts.core.model.EpisodeKey
 import uk.co.kilfeder.damask.podcasts.core.model.KeepMode
@@ -18,7 +19,7 @@ class Retention(private val rules: ListeningRules) {
     fun episodesToPrune(show: Show, episodes: List<Episode>, nowMs: Long): List<EpisodeKey> {
         if (show.keepMode == KeepMode.ALL) return emptyList()
         val kept = episodes
-            .sortedWith(compareByDescending<Episode> { it.publishedAt }.thenBy { it.key.guid })
+            .sortedWith(newestFirst)
             .take(show.keepCount.coerceAtLeast(0))
             .mapTo(mutableSetOf()) { it.key }
         return episodes

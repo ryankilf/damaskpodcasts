@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.components.sheetSurface
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -91,14 +92,7 @@ internal fun ShowNotesScreen(
     viewModel: EpisodeViewModel = viewModel(key = episodeKey(id)) { graph.episodeViewModel(id) },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val controls = PlayerActions(
-        onPlayPause = viewModel::onPlayPause,
-        onSkipBack = viewModel::onSkipBack,
-        onSkipForward = viewModel::onSkipForward,
-        onCycleSpeed = viewModel::onCycleSpeed,
-        onSeek = viewModel::onSeek,
-        onPlayedChange = { played -> if (played) viewModel.onMarkPlayed() else viewModel.onMarkUnplayed() },
-    )
+    val controls = playerActions(viewModel)
     Box(modifier) {
         EpisodeLoaded(state) { episode -> ShowNotesContent(state, episode, controls, onClose) }
     }
@@ -132,10 +126,7 @@ internal fun NotesSheet(state: EpisodeUiState, onClose: (() -> Unit)?, modifier:
         verticalArrangement = Arrangement.spacedBy(Spacing.Space4),
         modifier = modifier
             .fillMaxWidth()
-            .background(
-                MaterialTheme.colorScheme.surfaceContainerLow,
-                RoundedCornerShape(topStart = Sizes.SheetCornerRadius, topEnd = Sizes.SheetCornerRadius),
-            )
+            .sheetSurface(MaterialTheme.colorScheme.surfaceContainerLow)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = Spacing.Space6, vertical = Spacing.Space3),
     ) {
@@ -213,47 +204,10 @@ private fun Header(
                 modifier = Modifier.padding(horizontal = Spacing.Space3),
             )
         }
-        CompactControls(state, controls, Modifier.padding(horizontal = Spacing.Space3))
+        TransportRow(state, controls, Modifier.padding(horizontal = Spacing.Space3), compact = true)
     }
 }
 
-/** Speed, back 10, play/pause, forward 30 and mark played: the full player's row, smaller. */
-@Composable
-private fun CompactControls(state: EpisodeUiState, controls: PlayerActions, modifier: Modifier = Modifier) {
-    val live = state.playbackAvailable && state.isCurrent
-    Row(
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        SpeedButton(state.speed, stringResource(Res.string.playback_speed, state.speed), live, controls.onCycleSpeed)
-        SkipButton(
-            icon = Icons.Rounded.Replay10,
-            label = stringResource(Res.string.skip_back),
-            enabled = live,
-            onClick = controls.onSkipBack,
-            size = Sizes.MinTouchTarget,
-            iconSize = Sizes.Icon,
-        )
-        PlayButton(
-            size = Sizes.MinTouchTarget,
-            iconSize = Sizes.Icon,
-            pitch = Sizes.DamaskPitchSmall,
-            playing = state.isPlaying,
-            enabled = state.playbackAvailable,
-            onClick = controls.onPlayPause,
-        )
-        SkipButton(
-            icon = Icons.Rounded.Forward30,
-            label = stringResource(Res.string.skip_forward),
-            enabled = live,
-            onClick = controls.onSkipForward,
-            size = Sizes.MinTouchTarget,
-            iconSize = Sizes.Icon,
-        )
-        PlayedToggle(state.isPlayed, controls.onPlayedChange)
-    }
-}
 
 @Composable
 private fun Notes(blocks: List<NotesBlock>, links: LinkInteractionListener, modifier: Modifier = Modifier) {

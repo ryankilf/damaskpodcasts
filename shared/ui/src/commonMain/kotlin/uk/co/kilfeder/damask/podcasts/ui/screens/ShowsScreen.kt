@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui.screens
 
+import uk.co.kilfeder.damask.podcasts.ui.components.SelectableListRow
 import uk.co.kilfeder.damask.podcasts.ui.resources.shows_no_match
 import uk.co.kilfeder.damask.podcasts.ui.resources.shows_filter_clear
 import uk.co.kilfeder.damask.podcasts.ui.resources.shows_filter
@@ -47,6 +48,7 @@ import uk.co.kilfeder.damask.podcasts.presentation.shows.ShowsUiState
 import uk.co.kilfeder.damask.podcasts.presentation.shows.ShowsViewModel
 import uk.co.kilfeder.damask.podcasts.ui.components.Artwork
 import uk.co.kilfeder.damask.podcasts.ui.components.ExactValueText
+import uk.co.kilfeder.damask.podcasts.ui.components.LastPlayedText
 import uk.co.kilfeder.damask.podcasts.ui.resources.Res
 import uk.co.kilfeder.damask.podcasts.ui.resources.genres_last
 import uk.co.kilfeder.damask.podcasts.ui.resources.genres_never
@@ -124,53 +126,25 @@ private fun ShowsContent(
 
 @Composable
 private fun ShowRow(show: ShowRowUi, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val colors = MaterialTheme.colorScheme
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(Spacing.Space3),
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = Spacing.Space3)
-            .clip(MaterialTheme.shapes.small)
-            .background(if (selected) colors.secondaryContainer else colors.surface)
-            .semantics { this.selected = selected }
-            .clickable(role = Role.Button, onClick = onClick)
-            .heightIn(min = Sizes.ShowRowMinHeight)
-            .padding(horizontal = Spacing.Space1, vertical = Spacing.Space2),
-    ) {
+    SelectableListRow(selected, onClick, Sizes.ShowRowMinHeight, modifier) {
         Artwork(show.artworkUrl, show.fallback, size = Sizes.ShowRowArtwork)
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.Space1 / 2), modifier = Modifier.weight(1f)) {
             Text(
                 text = show.title.ifBlank { stringResource(Res.string.shows_untitled) },
                 style = DamaskTextStyles.Title,
-                color = colors.onSurface,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             ShowMeta(show)
         }
-        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = colors.onSurfaceVariant)
     }
 }
 
 /** "History · Last played 4 days ago", the exact time on long press. */
 @Composable
-internal fun ShowMeta(show: ShowRowUi, modifier: Modifier = Modifier) {
-    val color = MaterialTheme.colorScheme.onSurfaceVariant
-    val last = show.lastListened
-    val played = if (last == null) {
-        stringResource(Res.string.genres_never)
-    } else {
-        stringResource(Res.string.genres_last, last.summary)
-    }
-    val text = show.genre?.let { stringResource(Res.string.row_meta, it, played) } ?: played
-    val style = DamaskTextStyles.BodySmall
-    if (last == null) {
-        Text(text, style = style, color = color, maxLines = 1, modifier = modifier)
-    } else {
-        ExactValueText(value = last, display = text, style = style, color = color, modifier = modifier)
-    }
-}
+internal fun ShowMeta(show: ShowRowUi, modifier: Modifier = Modifier) =
+    LastPlayedText(show.lastListened, modifier, before = show.genre)
 
 /** "Search your shows" (design hand-off › ShowListPane): filters your own shows; Discover finds new ones. */
 @Composable
