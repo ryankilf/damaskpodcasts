@@ -1,10 +1,13 @@
 package uk.co.kilfeder.damask.podcasts.ui.components
 
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.pluralStringResource
@@ -27,14 +30,23 @@ internal fun CategoryNameDialog(
     modifier: Modifier = Modifier,
     initial: String = "",
 ) {
-    TextEntryDialog(
-        title = title,
-        label = stringResource(Res.string.category_name),
-        confirm = confirm,
-        onConfirm = onConfirm,
-        onDismiss = onDismiss,
+    var name by rememberSaveable { mutableStateOf(initial) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                singleLine = true,
+                label = { Text(stringResource(Res.string.category_name)) },
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(name) }, enabled = name.isNotBlank()) { Text(confirm) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
         modifier = modifier,
-        initial = initial,
     )
 }
 

@@ -3,9 +3,6 @@ package uk.co.kilfeder.damask.podcasts.ui.screens
 import uk.co.kilfeder.damask.podcasts.ui.resources.add_feed
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import uk.co.kilfeder.damask.podcasts.presentation.discover.AddFeedViewModel
 import uk.co.kilfeder.damask.podcasts.ui.resources.discover_try_again
 import uk.co.kilfeder.damask.podcasts.ui.resources.discover_failed_body
 import uk.co.kilfeder.damask.podcasts.ui.resources.discover_busy_body
@@ -105,15 +102,12 @@ internal fun DiscoverScreen(
     graph: AppGraph,
     onOpenShow: (String) -> Unit,
     onPreviewShow: (String) -> Unit,
+    onAddFeed: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DiscoverViewModel = viewModel { graph.discoverViewModel() },
-    addFeed: AddFeedViewModel = viewModel { graph.addFeedViewModel() },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val adding by addFeed.uiState.collectAsStateWithLifecycle()
-    var addOpen by rememberSaveable { mutableStateOf(false) }
     val preview by rememberUpdatedState(onPreviewShow)
-    val openShow by rememberUpdatedState(onOpenShow)
     // A show you don't have opens once its feed has been read.
     LaunchedEffect(state.openShowId) {
         state.openShowId?.let {
@@ -121,18 +115,6 @@ internal fun DiscoverScreen(
             viewModel.onShowOpened()
         }
     }
-    AddFeedFlow(
-        open = addOpen,
-        state = adding,
-        intents = AddFeedIntents(
-            onAdd = addFeed::onAdd,
-            onEdit = addFeed::onEdit,
-            onReset = addFeed::onOpened,
-            onClose = { addOpen = false },
-            onOpenShow = { openShow(it) },
-            onPreviewShow = { preview(it) },
-        ),
-    )
     Column(modifier) {
         // The refining bar sits in the field's bottom margin, so nothing below moves when it shows.
         Box(contentAlignment = Alignment.BottomCenter) {
@@ -159,7 +141,7 @@ internal fun DiscoverScreen(
                 onOpen = viewModel::onOpen,
                 onOpenShow = onOpenShow,
                 onRetry = viewModel::onRetry,
-                onAddFeed = { addOpen = true },
+                onAddFeed = onAddFeed,
             ),
             modifier = Modifier.weight(1f),
         )

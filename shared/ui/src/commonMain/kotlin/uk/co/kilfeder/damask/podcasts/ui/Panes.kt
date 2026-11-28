@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui
 
+import uk.co.kilfeder.damask.podcasts.ui.screens.AddFeedScreen
 import uk.co.kilfeder.damask.podcasts.ui.screens.EpisodeLinks
 import uk.co.kilfeder.damask.podcasts.ui.components.ManageGenresButton
 import uk.co.kilfeder.damask.podcasts.ui.screens.ManageGenresScreen
@@ -201,6 +202,13 @@ private fun SinglePane(state: AppUiState, graph: AppGraph, actions: ShellActions
                 SettingsScreen(graph, onImport = { actions.onNavigate(Destination.Import) }, modifier = readable)
             Destination.Import -> ImportScreen(graph, onFinish = actions.onImportFinish, modifier = readable)
             Destination.ManageGenres -> ManageGenresScreen(graph, modifier = readable)
+            Destination.AddFeed -> AddFeedScreen(
+                graph = graph,
+                onOpenShow = actions.onOpenShow,
+                // The preview takes this screen's place, so Back goes to Discover, not the form.
+                onPreviewShow = { actions.onReplace(Destination.Show(it)) },
+                modifier = readable,
+            )
             null -> TabContent(state.nav.tab, graph, actions, readable)
         }
     }
@@ -236,6 +244,7 @@ private fun TabContent(tab: Tab, graph: AppGraph, actions: ShellActions, modifie
             onOpenShow = actions.onOpenShow,
             // A show you haven't subscribed to isn't in Shows: its preview opens here, in Discover.
             onPreviewShow = { actions.onNavigate(Destination.Show(it)) },
+            onAddFeed = { actions.onNavigate(Destination.AddFeed) },
             modifier = modifier,
         )
     }

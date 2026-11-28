@@ -170,6 +170,11 @@ private fun ShellLayout(
             onUnsubscribe = intents.onUnsubscribe,
             onImportFinish = intents.onImportFinish,
             onBack = { intents.onBack() },
+            // Back then on, in one go: the screen it replaces never shows in between.
+            onReplace = { destination ->
+                intents.onBack()
+                intents.onNavigate(destination)
+            },
             rowPlayer = RowPlayer(state.playing, state.playingNow, intents.onRowPlayPause, openedEpisode(state)),
         )
         Row(Modifier.fillMaxSize()) {
@@ -239,6 +244,8 @@ internal class ShellActions(
     val onUnsubscribe: (String, String) -> Unit,
     val onImportFinish: (Int) -> Unit,
     val onBack: () -> Unit,
+    /** Replaces the screen on top with [Destination] (a form with its result): Back skips the form. */
+    val onReplace: (Destination) -> Unit,
     val rowPlayer: RowPlayer,
 )
 

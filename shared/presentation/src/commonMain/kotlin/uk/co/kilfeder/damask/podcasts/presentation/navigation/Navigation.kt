@@ -30,6 +30,9 @@ sealed interface Destination {
     data object ManageGenres : Destination
 
     data object Import : Destination
+
+    /** "Add a feed by URL", from Discover. */
+    data object AddFeed : Destination
 }
 
 /**

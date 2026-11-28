@@ -126,8 +126,9 @@
     <string name="discover_searching">Searching</string>
     <string name="add_feed">Add a feed by URL</string>
     <string name="add_feed_label">Feed URL</string>
+    <string name="add_feed_intro">Paste the link to a show’s feed: a private feed from a membership, or a show that search can’t find.</string>
     <string name="add_feed_confirm">Add</string>
-    <string name="add_feed_hint">Paste the link from the show’s website, or from your membership page for a private feed.</string>
+    <string name="add_feed_hint">It usually ends in .xml or .rss, or has “feed” in it.</string>
     <string name="add_feed_checking">Checking the feed…</string>
     <string name="add_feed_not_link">That doesn’t look like a link. Paste the feed’s whole address.</string>
     <string name="add_feed_needs_login">This feed needs a username and password, which Damask can’t send yet.</string>

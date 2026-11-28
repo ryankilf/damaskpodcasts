@@ -1,5 +1,6 @@
 package uk.co.kilfeder.damask.podcasts.ui
 
+import uk.co.kilfeder.damask.podcasts.ui.resources.add_feed
 import uk.co.kilfeder.damask.podcasts.ui.components.ManageGenresButton
 import uk.co.kilfeder.damask.podcasts.ui.resources.manage_genres
 import uk.co.kilfeder.damask.podcasts.ui.components.SettingsButton
@@ -11,7 +12,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Home
@@ -21,7 +21,6 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
@@ -147,6 +146,7 @@ internal fun titleOf(state: AppUiState): StringResource = when (state.nav.top) {
     Destination.Settings -> Res.string.settings
     Destination.ManageGenres -> Res.string.manage_genres
     Destination.Import -> Res.string.import_screen_title
+    Destination.AddFeed -> Res.string.add_feed
     Destination.InProgress -> Res.string.home_in_progress
     is Destination.GenreQueue -> Res.string.tab_genres
     is Destination.Show -> Res.string.tab_shows
